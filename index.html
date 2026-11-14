@@ -906,18 +906,20 @@ if(st.panelHidden)setPanel(false);
 $("undo").onclick=undo;$("undo2").onclick=undo;
 $("zin").onclick=()=>{if(G.on)G.zoomBy(0.7);else map.zoomIn()};$("zout").onclick=()=>{if(G.on)G.zoomBy(1.4);else map.zoomOut()};$("fit").onclick=()=>{if(G.on)exitGlobe();fitAll()};
 let watchId=null,ownMarker=null,first=true;
+let ownHdg=0;{const p=map.createPane("own");p.style.zIndex=650;p.style.pointerEvents="none"} // own-ship above labels, airports, marks and ruler
 const planeSVG='<svg viewBox="0 0 24 24" class="plane"><path fill="currentColor" stroke="#fff" stroke-width=".8" d="M12 2c.8 0 1.3 1 1.3 2.2V9l7.7 4.4v2l-7.7-2.3v4.6l2.2 1.7V21L12 20l-3.5 1v-1.6l2.2-1.7v-4.6L3 15.4v-2L10.7 9V4.2C10.7 3 11.2 2 12 2z"/></svg>';
 $("gps").onclick=()=>{
   if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;ownL.clearLayers();ownMarker=null;ownPos=null;chOwnP=null;chOwnDraw();drawDirect();$("posbox").hidden=true;$("gps").setAttribute("aria-pressed","false");return}
   if(!("geolocation" in navigator)){toast("This browser does not support location");return}
   toast("Requesting position…");first=true;
   try{watchId=navigator.geolocation.watchPosition(pos=>{
-    const p=[pos.coords.latitude,pos.coords.longitude],hd=pos.coords.heading,sp=pos.coords.speed;ownPos=p;ownFix={p,acc:pos.coords.accuracy,alt:pos.coords.altitude,gs:sp,t:pos.timestamp||Date.now(),err:null};if(typeof tbRefresh==="function")tbRefresh();chOwnP=p;chOwnH=hd;chOwnDraw();if(typeof drawDirect==="function")drawDirect();ownGS=(sp!==null&&isFinite(sp))?sp*1.94384:null;
+    const p=[pos.coords.latitude,pos.coords.longitude],hd=pos.coords.heading,sp=pos.coords.speed;ownPos=p;ownFix={p,acc:pos.coords.accuracy,alt:pos.coords.altitude,gs:sp,t:pos.timestamp||Date.now(),err:null};if(typeof tbRefresh==="function")tbRefresh();chOwnP=p;chOwnH=(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)?hd:ownHdg;chOwnDraw();if(typeof drawDirect==="function")drawDirect();ownGS=(sp!==null&&isFinite(sp))?sp*1.94384:null;
     $("gps").setAttribute("aria-pressed","true");
-    const html='<div style="transform:translate(-17px,-17px) rotate('+(isFinite(hd)&&hd!==null?hd:0)+'deg)">'+planeSVG+'</div>';
-    if(!ownMarker){ownMarker=L.marker(p,{interactive:false,icon:L.divIcon({className:"",html,iconSize:[0,0]})}).addTo(ownL)}else{ownMarker.setLatLng(p);ownMarker.setIcon(L.divIcon({className:"",html,iconSize:[0,0]}))}
+    if(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)ownHdg=hd; // keep the last track while stopped: GPS heading is noise below ~5 kt
+    const html='<div style="width:34px;height:34px;transform-origin:17px 17px;transform:translate(-17px,-17px) rotate('+ownHdg+'deg)">'+planeSVG+'</div>';
+    if(!ownMarker){ownMarker=L.marker(p,{interactive:false,pane:"own",icon:L.divIcon({className:"",html,iconSize:[0,0]})}).addTo(ownL)}else{ownMarker.setLatLng(p);ownMarker.setIcon(L.divIcon({className:"",html,iconSize:[0,0]}))}
     if(first){map.setView(p,Math.max(map.getZoom(),9));first=false;$("toast").hidden=true}
-    let t=fmt(p);if(sp!==null&&isFinite(sp))t+="  GS "+Math.round(sp*1.94384)+"kt";if(hd!==null&&isFinite(hd))t+="  TRK "+deg3(hd);
+    let t=fmt(p);if(sp!==null&&isFinite(sp))t+="  GS "+Math.round(sp*1.94384)+"kt";if(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)t+="  TRK "+deg3(hd);
     if(pos.coords.altitude!==null)t+="  ALT "+Math.round(pos.coords.altitude*3.28084)+"ft";
     $("posbox").textContent=t;$("posbox").hidden=false;
   },err=>{ownFix=Object.assign({},ownFix||{},{err:err&&err.message||"Position unavailable"});if(typeof tbRefresh==="function")tbRefresh();if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}$("gps").setAttribute("aria-pressed","false");
