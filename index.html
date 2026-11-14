@@ -7,7 +7,7 @@
 :root{
   --bg:#eef0e6; --chart:#e7ead6; --grid:#b9c3a4; --gridtext:#6f7d5c;
   --panel:#fbfbf7; --line:#d8dccb; --fg:#1d2418; --muted:#5f6a56;
-  --route:#1f3fd6; --hold:#c0168a; --own:#e36a00; --ref:#2d6b3a; --awy:#6b7896;
+  --route:#1f2fe0; --hold:#c0168a; --own:#b51f7f; --ref:#2d6b3a; --awy:#6b7896;
   --btn:#1d2418; --btnfg:#fbfbf7; --soft:#eceee3; --border:#ffffff; --rwy:#1f2fe0; --mapfilter:none;
   --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -15,12 +15,12 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#10150f; --chart:#141b14; --grid:#2c3a2b; --gridtext:#7f9474;
   --panel:#181f17; --line:#2c3629; --fg:#e7ecdf; --muted:#9aa78f;
-  --route:#6f8cff; --hold:#ff5cc6; --own:#ff9a3d; --ref:#7fd08f; --awy:#8e9bbb;
+  --route:#1f2fe0; --hold:#ff5cc6; --own:#d63c96; --ref:#7fd08f; --awy:#8e9bbb;
   --btn:#e7ecdf; --btnfg:#141a13; --soft:#212a1f; --mapfilter:brightness(.78) saturate(.9); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#10150f; --chart:#141b14; --grid:#2c3a2b; --gridtext:#7f9474;
   --panel:#181f17; --line:#2c3629; --fg:#e7ecdf; --muted:#9aa78f;
-  --route:#6f8cff; --hold:#ff5cc6; --own:#ff9a3d; --ref:#7fd08f; --awy:#8e9bbb;
+  --route:#1f2fe0; --hold:#ff5cc6; --own:#d63c96; --ref:#7fd08f; --awy:#8e9bbb;
   --btn:#e7ecdf; --btnfg:#141a13; --soft:#212a1f; --mapfilter:brightness(.78) saturate(.9); color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;margin:0}
@@ -63,6 +63,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .leg{font-family:var(--mono);font-size:11.5px;color:var(--muted);direction:ltr;text-align:left}
 .ops{display:flex;gap:2px}
 .ops button{border:0;background:transparent;color:var(--muted);font-size:15px;width:28px;height:28px;border-radius:6px;cursor:pointer}
+.ops button.ok{color:#1f8a4c}
 .ops button:hover{background:var(--soft);color:var(--fg)}
 .empty{padding:14px;text-align:center;color:var(--muted);font-size:13px}
 .check{display:flex;align-items:center;gap:8px;font-size:14px}
@@ -101,6 +102,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #chvImg{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 #chvOwn{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;color:var(--own,#e0218a)}
 #chvOwn .plane{width:34px;height:34px;display:block}
+.ownW{position:absolute;left:-17px;top:-17px;width:34px;height:34px;pointer-events:none}
+.ownR{position:relative;width:34px;height:34px;transform-origin:17px 17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.ownP{position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;background:rgba(214,130,240,.6);opacity:0}
+.ownW.still .ownP{animation:ownPulse 2s ease-out infinite}
+.ownW.still .ownP.p2{animation-delay:1s}
+@keyframes ownPulse{0%{transform:scale(.5);opacity:.9}100%{transform:scale(2.8);opacity:0}}
 #chvMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 15px var(--sans);color:#6b7584;pointer-events:none}
 .rulh{width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(255,255,255,.3);border:3px solid #111;box-sizing:border-box;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .rulm{position:absolute;height:44px;cursor:move;background:rgba(0,0,0,0.001)}
@@ -173,9 +180,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .crow{display:flex;align-items:center;gap:10px}
 .cpy{flex:none;font:600 13px var(--sans);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 12px;cursor:pointer}
 .cpy.ok{background:#1f8a4c;color:#fff;border-color:#1f8a4c}
-.dctT{width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:3px solid #ff2fd0;background:rgba(255,47,208,.25);box-sizing:border-box}
-.dctL{position:absolute;transform:translate(-50%,-150%);white-space:nowrap;font:700 calc(13px*var(--mts,1)) var(--sans);color:#fff;background:#b0168f;border-radius:6px;padding:4px 8px;cursor:pointer}
-.sbtn.dct{color:#b0168f}
+.dctT{width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:3px solid #1f2fe0;background:rgba(31,47,224,.25);box-sizing:border-box}
+.dctL{position:absolute;transform:translate(-50%,-150%);white-space:nowrap;font:700 calc(13px*var(--mts,1)) var(--sans);color:#fff;background:#1f2fe0;border-radius:6px;padding:4px 8px;cursor:pointer}
+.sbtn.dct{color:#1f2fe0}
 .wpdrag .wpi,.wpdrag.wpi,.hit.wpdrag>div{transform:scale(1.5);box-shadow:0 0 0 4px rgba(255,154,61,.6)}
 .kv2{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line);font-size:13px}
 .kv2 span:nth-child(odd){color:var(--muted)}
@@ -244,6 +251,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .awf{white-space:nowrap;font:600 11px var(--mono);color:var(--awy);transform:translate(12px,-6px);text-shadow:0 0 3px var(--chart),0 0 3px var(--chart)}
 .awn{background:var(--awy)}
 .aptring{position:absolute;left:2px;top:2px;width:32px;height:32px;line-height:0}
+.aptid.l{left:auto;right:33px}
 .aptid{position:absolute;left:33px;top:6px;padding:2px 4px;white-space:nowrap;font:800 calc(15px*var(--mts,1)) var(--sans);color:#1d22e6;letter-spacing:.02em}
 .asplbl{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;font:700 calc(11px*var(--mts,1)) var(--mono);color:#fff;white-space:nowrap;text-shadow:0 0 3px rgba(0,0,0,.95),0 0 2px rgba(0,0,0,.95);line-height:1.15}
 .asplbl small{font:600 calc(9.5px*var(--mts,1)) var(--mono);opacity:.9}
@@ -537,10 +545,11 @@ function drawRoute(){
   routeL.clearLayers();const w=st.wps;const col=css("--route");
   if(w.length>1){const pts=w.slice();if(st.closed&&w.length>2)pts.push(w[0]);
     for(let i=1;i<pts.length;i++){L.polyline(gc(pts[i-1],pts[i]),{color:col,weight:5,opacity:.9,interactive:false}).addTo(routeL)}}
-  w.forEach((p,i)=>{
-    const mk=L.marker(p,{icon:L.divIcon({className:"hit",html:'<div class="wpi">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
+  const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})}); // points at the same position share one marker: "1+10"
+  grp.forEach(({p,ix})=>{const i=ix[0],t=ix.map(k=>k+1).join("+"),wd=Math.max(26,12+t.length*8);
+    const mk=L.marker(p,{icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
     wpDragHook(mk,i);
-    L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate(16px,-8px)">'+(p[2]?escH(p[2])+'  ':'')+fmt(p)+'</div>',iconSize:[0,0]})}).addTo(routeL);
+    L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate('+(wd/2+3)+'px,-8px)">'+(p[2]?escH(p[2])+'  ':'')+fmt(p)+'</div>',iconSize:[0,0]})}).addTo(routeL);
   });
   if(st.center&&st.center.p){L.marker(st.center.p,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>',iconSize:[24,24],iconAnchor:[12,12]})}).on("click",showCenter).addTo(routeL)}
 }
@@ -559,7 +568,7 @@ function wpDragHook(mk,i){const el=mk.getElement();if(!el)return;let t=null,s0=n
     ev.preventDefault();const ll=map.mouseEventToLatLng(ev);np=ll;mk.setLatLng(ll);prev(ll)};
   const up=()=>{clearTimeout(t);t=null;window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",up);
     if(on){on=false;wpDragEnd=Date.now();suppress=Date.now();map.dragging.enable();el.classList.remove("wpdrag");wpPrevL.clearLayers();
-      if(np){const o=st.wps[i];st.wps[i]=[np.lat,np.lng].concat(o.length>2?[o[2]]:[]);update()}}};
+      if(np){const o=st.wps[i];st.wps[i]=[np.lat,np.lng].concat(o.length>2?[o[2]]:[]);if(st.direct&&samePt(st.direct.p,o)&&!st.wps.some((w,k)=>k!==i&&samePt(w,o)))st.direct.p=[np.lat,np.lng];update()}}};
   el.addEventListener("pointerdown",ev=>{stop(ev);s0=[ev.clientX,ev.clientY];np=null;
     window.addEventListener("pointermove",move,{passive:false});window.addEventListener("pointerup",up);window.addEventListener("pointercancel",up);
     t=setTimeout(()=>{t=null;on=true;map.dragging.disable();el.classList.add("wpdrag");if(navigator.vibrate)try{navigator.vibrate(15)}catch(_){}toast("Drag to move waypoint "+(i+1))},450)});
@@ -597,9 +606,10 @@ function renderList(){
     const li=document.createElement("li");
     let legTxt="";if(i>0){const d=dist(w[i-1],p),b=brg(w[i-1],p);legTxt=deg3(b)+"T / "+deg3(b-v)+"M · "+d.toFixed(1)+" NM"}
     else if(st.closed&&w.length>2){const d=dist(w[w.length-1],p),b=brg(w[w.length-1],p);legTxt="↩ "+deg3(b)+"T / "+deg3(b-v)+"M · "+d.toFixed(1)+" NM"}
-    li.innerHTML='<span class="num">'+(i+1)+'</span><div style="min-width:0"><div class="coord">'+(p[2]?'<b>'+escH(p[2])+'</b>  ':'')+fmt(p)+'</div><div class="leg">'+legTxt+'</div></div><div class="ops"><button aria-label="Delete" data-a="del">✕</button></div>';
+    li.innerHTML='<span class="num">'+(i+1)+'</span><div style="min-width:0"><div class="coord">'+(p[2]?'<b>'+escH(p[2])+'</b>  ':'')+fmt(p)+'</div><div class="leg">'+legTxt+'</div></div><div class="ops"><button aria-label="Copy coordinates" data-a="cpy"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="display:block;margin:auto"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button><button aria-label="Delete" data-a="del">✕</button></div>';
     li.querySelector(".coord").parentElement.style.cursor="pointer";li.querySelector(".coord").parentElement.onclick=()=>{if(Date.now()-listDragEnd<500)return;wpMenu(i)};
-    li.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{const a=btn.dataset.a;
+    li.querySelectorAll("button").forEach(btn=>btn.onclick=ev=>{const a=btn.dataset.a;
+      if(a==="cpy"){ev.stopPropagation();const t=fmt(p),ok=()=>{btn.classList.add("ok");clearTimeout(btn._t);btn._t=setTimeout(()=>btn.classList.remove("ok"),1500);toast("Copied "+t)};(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(ok,()=>toast(t));return}
       if(a==="del")w.splice(i,1);else if(a==="up"&&i>0)[w[i-1],w[i]]=[w[i],w[i-1]];else if(a==="dn"&&i<w.length-1)[w[i+1],w[i]]=[w[i],w[i+1]];update()});
     li.dataset.i=i;listDragHook(li,ul);
     ul.appendChild(li);
@@ -608,7 +618,11 @@ function renderList(){
 }
 const snap=()=>JSON.stringify({wps:st.wps,closed:st.closed,center:st.center||null,airways:st.airways});
 let hist=[],cur=snap();
-function update(){const now=snap();if(now!==cur){hist.push(cur);if(hist.length>50)hist.shift();cur=now}save();drawRoute();renderList();drawAwy();renderAwy();refreshUndo()}
+function samePt(a,b){return !!(a&&b&&Math.abs(a[0]-b[0])<1e-7&&Math.abs(a[1]-b[1])<1e-7)}
+// a Direct To that was set on a route waypoint ends when that waypoint is deleted (or the route is cleared)
+function dctOrphan(){const d=st.direct;return !!(d&&(d.wp||/^WPT \d+$/.test(d.n))&&!st.wps.some(w=>samePt(w,d.p)))}
+function dctSync(){if(!dctOrphan())return;st.direct=null;try{drawDirect();closeSheet()}catch(e){}}
+function update(){dctSync();const now=snap();if(now!==cur){hist.push(cur);if(hist.length>50)hist.shift();cur=now}save();drawRoute();renderList();drawAwy();renderAwy();refreshUndo()}
 function refreshUndo(){["undo","undo2"].forEach(id=>{const b=$(id);if(b)b.disabled=!hist.length})}
 function undo(){if(!hist.length){toast("Nothing to undo");return}const s=JSON.parse(hist.pop());st.wps=s.wps;st.closed=s.closed;st.center=s.center||null;if(s.airways)st.airways=s.airways;cur=snap();syncClosed();save();drawRoute();renderList();drawAwy();renderAwy();refreshUndo();closeSheet();toast("Undone. Waypoints: "+st.wps.length)}
 function fitAll(){const pts=st.wps.slice();if(st.hold&&st.hold.pts)pts.push(...st.hold.pts);if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11})}
@@ -729,7 +743,7 @@ function openSheet(o){if(selIls){selIls=null;drawAD()}
      ((o.extra||[]).length?'<div class="ex"><div class="ex-h">Additional Info</div>'+o.extra.map(t=>'<div class="ln">'+esc(t)+'</div>').join("")+'</div>':'')+'</div>';
   const p=o.p.slice();
   const acts=(o.custom||defaultActs(o,p)).filter(c=>!/^Direct To/.test(c.label));
-  if(!o.noDct)acts.unshift({label:"Direct To",small:"line from present position",cls:"dct",fn:()=>setDirect(p,o.title)});
+  if(!o.noDct)acts.unshift({label:"Direct To",small:"line from present position",cls:"dct",fn:()=>setDirect(p,o.title,o.wpIndex!=null)});
   h+='<div class="sh-a">'+acts.map((c,k)=>'<button class="sbtn'+(c.cls?' '+c.cls:'')+'" id="shC'+k+'"'+(c.disabled?' disabled':'')+'>'+esc(c.label)+'<small>'+esc(c.small||"")+'</small></button>').join("")+'</div>';
   sh.innerHTML=h;sh.hidden=false;
   $("shX").onclick=closeSheet;if(o.back)$("shBack").onclick=o.back;
@@ -907,7 +921,7 @@ $("undo").onclick=undo;$("undo2").onclick=undo;
 $("zin").onclick=()=>{if(G.on)G.zoomBy(0.7);else map.zoomIn()};$("zout").onclick=()=>{if(G.on)G.zoomBy(1.4);else map.zoomOut()};$("fit").onclick=()=>{if(G.on)exitGlobe();fitAll()};
 let watchId=null,ownMarker=null,first=true;
 let ownHdg=0;{const p=map.createPane("own");p.style.zIndex=650;p.style.pointerEvents="none"} // own-ship above labels, airports, marks and ruler
-const planeSVG='<svg viewBox="0 0 24 24" class="plane"><path fill="currentColor" stroke="#fff" stroke-width=".8" d="M12 2c.8 0 1.3 1 1.3 2.2V9l7.7 4.4v2l-7.7-2.3v4.6l2.2 1.7V21L12 20l-3.5 1v-1.6l2.2-1.7v-4.6L3 15.4v-2L10.7 9V4.2C10.7 3 11.2 2 12 2z"/></svg>';
+const planeSVG='<svg viewBox="0 0 24 24" class="plane"><defs><linearGradient id="ownG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2489f"/><stop offset="1" stop-color="#6a1a70"/></linearGradient></defs><path fill="url(#ownG)" stroke="#fff" stroke-width=".9" d="M12 2c.8 0 1.3 1 1.3 2.2V9l7.7 4.4v2l-7.7-2.3v4.6l2.2 1.7V21L12 20l-3.5 1v-1.6l2.2-1.7v-4.6L3 15.4v-2L10.7 9V4.2C10.7 3 11.2 2 12 2z"/></svg>';
 $("gps").onclick=()=>{
   if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;ownL.clearLayers();ownMarker=null;ownPos=null;chOwnP=null;chOwnDraw();drawDirect();$("posbox").hidden=true;$("gps").setAttribute("aria-pressed","false");return}
   if(!("geolocation" in navigator)){toast("This browser does not support location");return}
@@ -916,8 +930,9 @@ $("gps").onclick=()=>{
     const p=[pos.coords.latitude,pos.coords.longitude],hd=pos.coords.heading,sp=pos.coords.speed;ownPos=p;ownFix={p,acc:pos.coords.accuracy,alt:pos.coords.altitude,gs:sp,t:pos.timestamp||Date.now(),err:null};if(typeof tbRefresh==="function")tbRefresh();chOwnP=p;chOwnH=(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)?hd:ownHdg;chOwnDraw();if(typeof drawDirect==="function")drawDirect();ownGS=(sp!==null&&isFinite(sp))?sp*1.94384:null;
     $("gps").setAttribute("aria-pressed","true");
     if(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)ownHdg=hd; // keep the last track while stopped: GPS heading is noise below ~5 kt
-    const html='<div style="width:34px;height:34px;transform-origin:17px 17px;transform:translate(-17px,-17px) rotate('+ownHdg+'deg)">'+planeSVG+'</div>';
-    if(!ownMarker){ownMarker=L.marker(p,{interactive:false,pane:"own",icon:L.divIcon({className:"",html,iconSize:[0,0]})}).addTo(ownL)}else{ownMarker.setLatLng(p);ownMarker.setIcon(L.divIcon({className:"",html,iconSize:[0,0]}))}
+    const still=!(sp!==null&&isFinite(sp)&&sp>=0.5); // stopped (or no speed reported): pulse around the aircraft
+    if(!ownMarker){ownMarker=L.marker(p,{interactive:false,pane:"own",icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ownW"><div class="ownP"></div><div class="ownP p2"></div><div class="ownR">'+planeSVG+'</div></div>'})}).addTo(ownL)}else ownMarker.setLatLng(p);
+    {const oe=ownMarker.getElement();if(oe){const r=oe.querySelector(".ownR"),wv=oe.querySelector(".ownW");if(r)r.style.transform="rotate("+ownHdg+"deg)";if(wv)wv.classList.toggle("still",still)}}
     if(first){map.setView(p,Math.max(map.getZoom(),9));first=false;$("toast").hidden=true}
     let t=fmt(p);if(sp!==null&&isFinite(sp))t+="  GS "+Math.round(sp*1.94384)+"kt";if(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)t+="  TRK "+deg3(hd);
     if(pos.coords.altitude!==null)t+="  ALT "+Math.round(pos.coords.altitude*3.28084)+"ft";
@@ -1238,7 +1253,8 @@ function showApt(k,back){const [icao,name,traffic,la,lo,el,src]=APTS[k];suppress
     note:src==="AIP"?"ARP from Saudi eAIP AD 2 "+icao+", AIRAC AMDT 11/26.":"Listed in Saudi eAIP AD 1.3 (AMDT 11/26). AD 2 page could not be read, so the position is from OurAirports (unofficial).",rows:relRows([la,lo])})}
 function chGo(icao,kind){closeSheet();st.chApt=icao;save();$("chrail").hidden=false;$("cht").setAttribute("aria-pressed","true");chRail();chList(kind)}
 APTS.forEach(([icao,name,traffic,la,lo,el,src])=>{
-  L.marker([la,lo],{pane:"apt",keyboard:false,icon:L.divIcon({className:"hit",iconSize:[36,36],iconAnchor:[18,18],html:'<div class="aptring">'+SYM.APT+'</div><div class="aptid">'+icao+'</div>'})})
+  const nearV=SA_NAV.some(n=>dist([la,lo],[n[5],n[6]])<12); // a VOR box sits to the right of its station, so put the airport ident on the left
+  L.marker([la,lo],{pane:"apt",keyboard:false,icon:L.divIcon({className:"hit",iconSize:[36,36],iconAnchor:[18,18],html:'<div class="aptring">'+SYM.APT+'</div><div class="aptid'+(nearV?' l':'')+'">'+icao+'</div>'})})
    .on("click",()=>inspectAt(L.latLng(la,lo),true))
    .addTo(aptL)});
 function aptVis(){if(st.showApt!==false&&map.getZoom()>=6.5)aptL.addTo(map);else map.removeLayer(aptL)}
@@ -1287,13 +1303,13 @@ drawMarks();
 // ---- Direct To: magenta line from present position to the chosen point, follows the GPS
 map.createPane("dct").style.zIndex=630;
 const dctL=L.layerGroup().addTo(map);
-function setDirect(p,name){st.direct={p:[p[0],p[1]],n:String(name||"POINT").slice(0,14)};save();closeSheet();
+function setDirect(p,name,wp){st.direct={p:[p[0],p[1]],n:String(name||"POINT").slice(0,14),wp:!!wp};save();closeSheet();
   if(watchId===null)$("gps").click();drawDirect();toast(ownPos?"Direct To "+st.direct.n:"Direct To "+st.direct.n+" · waiting for GPS position")}
-function drawDirect(){dctL.clearLayers();const d=st.direct;if(!d)return;
+function drawDirect(){dctL.clearLayers();if(dctOrphan()){st.direct=null;save()}const d=st.direct;if(!d)return;
   L.marker(d.p,{pane:"dct",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"hit",iconSize:[30,30],iconAnchor:[15,15],html:'<div class="dctT" style="margin:6px"></div>'})}).on("click",()=>{suppress=Date.now();showDirect()}).addTo(dctL);
   if(!ownPos)return;const a=ownPos,b=d.p,nm=dist(a,b),pts=gc(a,b,Math.max(2,Math.ceil(nm/20)));
   const open=()=>{suppress=Date.now();showDirect()};
-  L.polyline(pts,{pane:"dct",color:"#ff2fd0",weight:4,opacity:.95,interactive:false}).addTo(dctL);
+  L.polyline(pts,{pane:"dct",color:"#1f2fe0",weight:4,opacity:.95,interactive:false}).addTo(dctL);
   L.polyline(pts,{pane:"dct",opacity:0,weight:24,interactive:true,bubblingMouseEvents:false}).on("click",open).addTo(dctL);
   const m=pts[Math.floor(pts.length/2)],mb=deg3(brg(a,b)-decAt(b));
   L.marker(m,{pane:"dct",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="dctL">DCT '+escH(d.n)+' · '+mb+'°M · '+(nm<100?nm.toFixed(1):Math.round(nm))+' NM</div>'})}).on("click",open).addTo(dctL)}
@@ -1391,7 +1407,7 @@ function wpMenu(i){const p=st.wps[i];if(!p)return;const N=escH(wpNm(i));
   $("wpm").hidden=false;
   $("wpmBox").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{const m=b.dataset.m;
     if(m==="show"){wpClose();map.setView([p[0],p[1]],Math.max(map.getZoom(),9));pinL.clearLayers();L.marker([p[0],p[1]],{interactive:false,icon:L.divIcon({className:"",html:'<div class="pin"></div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(pinL);clearTimeout(window._showPinT);window._showPinT=setTimeout(()=>pinL.clearLayers(),3000);if(window.innerWidth<700&&!st.panelHidden)$("panelBtn").click()}
-    else if(m==="dct"){wpClose();setDirect([p[0],p[1]],wpNm(i))}
+    else if(m==="dct"){wpClose();setDirect([p[0],p[1]],wpNm(i),true)}
     else if(m==="del"){const nm=wpNm(i);wpClose();st.wps.splice(i,1);update();toast("Deleted "+nm)}
     else wpAsk(i,m)})}
 function wpAsk(i,m){const p=st.wps[i],N=wpNm(i),title=m==="edit"?"Edit "+N:m==="before"?"Insert Before "+N:"Insert After "+N;
