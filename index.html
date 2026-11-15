@@ -1532,8 +1532,6 @@ chEl("chTAXI").onclick=()=>{if(!chEl("chpop").hidden&&chKind==="TAXI"&&chEl("chT
 chEl("cht").onclick=()=>{const on=chEl("chrail").hidden;chEl("chrail").hidden=!on;chEl("cht").setAttribute("aria-pressed",String(on));if(on)chRail();else{chClosePop();chEl("chv").hidden=true}};
 drawGrid();update();fitAll();drawAD();
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{drawGrid();drawRoute();drawAwy();drawHold()});
-})();
-
 // ---- search box (top centre): VOR, airports, ENR 4.4 points, airways, airspace, marks, route points, cities
 (function(){const inp=$("srchIn"),box=$("srchR"),cx=$("srchX");if(!inp)return;
   const go=(p,z)=>{if(G.on)try{exitGlobe()}catch(e){}map.setView([p[0],p[1]],Math.max(map.getZoom(),z||9))};
@@ -1558,8 +1556,9 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>
     const f=typeof parse==="function"?parse(q):null;
     res=[];if(f)res.push({tg:"POS",id:fmt(f),nm:"",sub:"Coordinates",open:()=>{go(f);showPoint(f)},r:-1});
     all().forEach(o=>{const id=o.id.toUpperCase(),nm=(o.nm||"").toUpperCase();
-      const r=id===q?0:id.startsWith(q)?1:nm.startsWith(q)?2:id.includes(q)?3:nm.includes(q)?4:9;if(r<9){o.r=r;res.push(o)}});
-    res.sort((a,b)=>a.r-b.r||a.id.length-b.id.length||a.id.localeCompare(b.id));res=res.slice(0,30);
+      const r=id===q?0:(id.startsWith(q)||nm.startsWith(q))?1:(id.includes(q)||nm.includes(q))?3:9;if(r<9){o.r=r;res.push(o)}});
+    const TO=["POS","VOR","APT","WPT","RTE","MARK","DP","AWY","CITY","ASP","P","R","D"],tw=o=>{const k=TO.indexOf(o.tg);return k<0?99:k};
+    res.sort((a,b)=>a.r-b.r||tw(a)-tw(b)||a.id.length-b.id.length||a.id.localeCompare(b.id));res=res.slice(0,30);
     box.innerHTML=res.length?res.map((o,k)=>'<button type="button" data-k="'+k+'"><span class="tg">'+escH(o.tg)+'</span><b>'+escH(o.id)+(o.nm&&o.nm.toUpperCase()!==o.id.toUpperCase()?' <small>'+escH(o.nm)+'</small>':'')+'</b><small>'+escH(o.sub||"")+'</small></button>').join(""):'<div class="none">No match</div>';
     box.hidden=false;box.scrollTop=0;
     box.querySelectorAll("button").forEach(b=>b.onclick=()=>pick(res[+b.dataset.k]))}
@@ -1570,4 +1569,6 @@ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>
   cx.onclick=done;
   ["pointerdown","touchstart","wheel","dblclick","click"].forEach(ev=>$("srch").addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
   map.on("movestart",()=>{if(document.activeElement!==inp)box.hidden=true})})();
+
+})();
 </script>
