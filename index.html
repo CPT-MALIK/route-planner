@@ -113,6 +113,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .rulm{position:absolute;height:44px;cursor:move;background:rgba(0,0,0,0.001)}
 .rull{position:absolute;white-space:nowrap;font:700 15px/1 ui-monospace,Menlo,monospace;color:#fff;background:#7a7a7a;padding:6px 12px;pointer-events:none}
 .tbar{position:absolute;top:12px;right:calc(max(12px,env(safe-area-inset-right,0px)) + 54px);display:flex;gap:4px;background:#20232a;border-radius:12px;padding:4px;z-index:1100;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+ .srch{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1120;display:flex;align-items:center;gap:10px;width:clamp(170px,34vw,420px)}
+.srch-f{flex:1;display:flex;align-items:center;gap:8px;height:46px;padding:0 14px;background:#2b2e36;border:1px solid #454955;border-radius:12px;color:#a9adb8;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.srch-f input{flex:1;min-width:0;border:0;outline:0;background:none;color:#fff;font:500 17px var(--sans);-webkit-appearance:none;appearance:none}
+.srch-f input::placeholder{color:#a9adb8}
+.srch-f input::-webkit-search-cancel-button{-webkit-appearance:none}
+.srch button{border:0;background:none;color:#4ea1ff;font:600 17px var(--sans);cursor:pointer;padding:6px 2px}
+.srch-r{position:absolute;top:54px;left:0;right:0;max-height:min(420px,60vh);overflow-y:auto;background:#22252c;border:1px solid #3a3e48;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.srch-r button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;color:#fff;font:600 15px var(--sans);padding:10px 14px;border-bottom:1px solid #30343d}
+.srch-r button:last-child{border-bottom:0}
+.srch-r button b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.srch-r button small{color:#9aa0ac;font:500 12px var(--sans);white-space:nowrap}
+.srch-r .tg{flex:none;font:700 10px var(--mono);color:#fff;background:#1f2fe0;border-radius:5px;padding:3px 6px;min-width:34px;text-align:center}
+.srch-r .none{padding:14px;color:#9aa0ac;font:500 14px var(--sans);text-align:center}
 .tbar button{width:42px;height:38px;border:0;border-radius:9px;background:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .tbar button.on{background:#2f7bd2}
 .tbpop{position:absolute;top:62px;right:calc(max(12px,env(safe-area-inset-right,0px)) + 54px);width:min(340px,calc(100% - 90px));max-height:calc(100% - 74px);overflow-y:auto;background:#eef1f5;color:#1d232c;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.3);z-index:1150}
@@ -393,6 +406,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <div class="chv-h"><div class="chv-t"><b id="chvT"></b><span id="chvS"></span></div><button class="sh-x" id="chvX" aria-label="Close chart">✕</button></div>
       <div id="chvBox"><img id="chvImg" alt="" draggable="false"><div id="chvMsg"></div><div id="chvOwn" hidden></div></div>
     </div>
+    <div class="srch" id="srch"><label class="srch-f"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><input id="srchIn" type="search" placeholder="Search" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search"></label><button id="srchX" type="button" hidden>Cancel</button><div class="srch-r" id="srchR" hidden></div></div>
     <div class="tbar" id="tbar">
       <button id="tbGps" aria-label="GPS status" title="GPS status"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 3.5l3 3-3 3-3-3z" fill="currentColor"/><path d="M12.5 6.5l2 2"/><path d="M14 10l-3.5 3.5"/><path d="M15 9l3 3-3 3-3-3z" fill="currentColor"/><path d="M5 15a4 4 0 0 0 4 4"/><path d="M3 15a6 6 0 0 0 6 6"/></svg></button>
       <button id="tbSet" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 2.5l1.6 2.3 2.7-.7.6 2.7 2.6 1-1 2.6 1.6 2.3-2.3 1.6.3 2.8-2.8.2-1.1 2.5-2.5-1.2-2.5 1.2-1.1-2.5-2.8-.2.3-2.8L3.4 12 5 9.7 4 7.1l2.6-1 .6-2.7 2.7.7z"/><circle cx="12" cy="12" r="3.2"/></svg></button>
@@ -1519,4 +1533,41 @@ chEl("cht").onclick=()=>{const on=chEl("chrail").hidden;chEl("chrail").hidden=!o
 drawGrid();update();fitAll();drawAD();
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{drawGrid();drawRoute();drawAwy();drawHold()});
 })();
+
+// ---- search box (top centre): VOR, airports, ENR 4.4 points, airways, airspace, marks, route points, cities
+(function(){const inp=$("srchIn"),box=$("srchR"),cx=$("srchX");if(!inp)return;
+  const go=(p,z)=>{if(G.on)try{exitGlobe()}catch(e){}map.setView([p[0],p[1]],Math.max(map.getZoom(),z||9))};
+  function showSig(n){const q=WPTS[n],p=[q[0],q[1],n];suppress=Date.now();pinL.clearLayers();
+    L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="pin"></div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(pinL);
+    openSheet({title:n,sub:"Significant point (ENR 4.4)",p,rows:relRows(p),note:"Saudi eAIP ENR 4.4, AIRAC AMDT 11/26."})}
+  function all(){const L_=[];
+    NAV.forEach((n,k)=>{if(n.kind==="nav")L_.push({tg:"VOR",id:n.ident,nm:n.id||"",sub:String(n.freq||"").split(" (")[0],p:n.p,open:()=>{go(n.p);showNav(k)}})});
+    APTS.forEach((a,k)=>L_.push({tg:"APT",id:a[0],nm:a[1],sub:"Airport",p:[a[3],a[4]],open:()=>{go([a[3],a[4]]);if(st.showApt===false){st.showApt=true;$("apt").setAttribute("aria-pressed","true");save();aptVis();drawAD()}showApt(k)}}));
+    Object.keys(WPTS).forEach(n=>L_.push({tg:"WPT",id:n,nm:"",sub:"ENR 4.4 point",p:WPTS[n],open:()=>{go(WPTS[n]);showSig(n)}}));
+    const awn={};Object.keys(AWYS).forEach(n=>{awn[n]=1;L_.push({tg:"AWY",id:n,nm:"",sub:"Airway",open:()=>{const pts=AWYS[n].map(resolveFix).filter(Boolean);if(pts.length)map.fitBounds(L.latLngBounds(pts.map(x=>[x[0],x[1]])).pad(0.2))}})});
+    (st.airways||[]).forEach(a=>{if(!a.name||awn[a.name])return;L_.push({tg:"AWY",id:a.name,nm:"",sub:"Airway · "+(a.pts||[]).length+" points",open:()=>{if(!st.showAwy){st.showAwy=true;save();drawAwy()}if(a.pts&&a.pts.length)map.fitBounds(L.latLngBounds(a.pts.map(q=>q.p)).pad(0.2))}})});
+    ["A","P","R","D"].forEach(cat=>(ASP[cat]||[]).forEach(it=>{if(!it.id||it.id==="JEDDAH FIR")return;
+      L_.push({tg:cat==="A"?"ASP":cat,id:it.id,nm:it.n||"",sub:(it.u||"")+" / "+(it.l||""),open:()=>{const b=L.latLngBounds([]);it.g.forEach(sg=>{for(let k=0;k<sg.length;k+=2)b.extend([sg[k],sg[k+1]])});if(b.isValid())map.fitBounds(b.pad(0.15));const c=aspLabelPt(it);setTimeout(()=>{try{highlightAsp(cat,it)}catch(e){}showAsp(cat,it,L.latLng(c[0],c[1]))},350)}})}));
+    (st.marks||[]).forEach((m,k)=>L_.push({tg:m.t==="DP"?"DP":"MARK",id:m.n||("MARK "+(k+1)),nm:"",sub:fmt(m.p),open:()=>{go(m.p);showMark(k)}}));
+    st.wps.forEach((p,k)=>L_.push({tg:"RTE",id:wpName(p,k),nm:"",sub:"Route point "+(k+1)+" · "+fmt(p),open:()=>{go(p);showWp(k)}}));
+    CITIES.forEach(([t,n,la,lo])=>L_.push({tg:"CITY",id:n,nm:"",sub:"",open:()=>go([la,lo],8.5)}));
+    return L_}
+  let res=[];
+  function run(){const q=inp.value.trim().toUpperCase();cx.hidden=false;
+    if(!q){box.hidden=true;return}
+    const f=typeof parse==="function"?parse(q):null;
+    res=[];if(f)res.push({tg:"POS",id:fmt(f),nm:"",sub:"Coordinates",open:()=>{go(f);showPoint(f)},r:-1});
+    all().forEach(o=>{const id=o.id.toUpperCase(),nm=(o.nm||"").toUpperCase();
+      const r=id===q?0:id.startsWith(q)?1:nm.startsWith(q)?2:id.includes(q)?3:nm.includes(q)?4:9;if(r<9){o.r=r;res.push(o)}});
+    res.sort((a,b)=>a.r-b.r||a.id.length-b.id.length||a.id.localeCompare(b.id));res=res.slice(0,30);
+    box.innerHTML=res.length?res.map((o,k)=>'<button type="button" data-k="'+k+'"><span class="tg">'+escH(o.tg)+'</span><b>'+escH(o.id)+(o.nm&&o.nm.toUpperCase()!==o.id.toUpperCase()?' <small>'+escH(o.nm)+'</small>':'')+'</b><small>'+escH(o.sub||"")+'</small></button>').join(""):'<div class="none">No match</div>';
+    box.hidden=false;box.scrollTop=0;
+    box.querySelectorAll("button").forEach(b=>b.onclick=()=>pick(res[+b.dataset.k]))}
+  function done(){inp.value="";box.hidden=true;cx.hidden=true;inp.blur()}
+  function pick(o){if(!o)return;done();try{o.open()}catch(e){toast("Could not open "+o.id)}}
+  inp.addEventListener("input",run);inp.addEventListener("focus",()=>{cx.hidden=false;if(inp.value)run()});
+  inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();pick(res[0])}else if(e.key==="Escape")done()});
+  cx.onclick=done;
+  ["pointerdown","touchstart","wheel","dblclick","click"].forEach(ev=>$("srch").addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
+  map.on("movestart",()=>{if(document.activeElement!==inp)box.hidden=true})})();
 </script>
