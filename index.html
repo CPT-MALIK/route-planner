@@ -593,15 +593,16 @@ function navVis(){const z=map.getZoom();
   if(z>=6.5&&st.showNav!==false)navL.addTo(map);else map.removeLayer(navL)}
 map.on("zoomend",navVis);navVis();
 
+{const p_=map.createPane("wpt");p_.style.zIndex=620} // route waypoint circles + labels: above navaids, airway points (600) and marks (612)
 function drawRoute(){
   routeL.clearLayers();const w=st.wps;const col=css("--route");
   if(w.length>1){const pts=w.slice();if(st.closed&&w.length>2)pts.push(w[0]);
     for(let i=1;i<pts.length;i++){L.polyline(gc(pts[i-1],pts[i]),{color:col,weight:5,opacity:.9,interactive:false}).addTo(routeL)}}
   const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})}); // points at the same position share one marker: "1+10"
   grp.forEach(({p,ix})=>{const i=ix[0],t=ix.map(k=>k+1).join("+"),wd=Math.max(26,12+t.length*8);
-    const mk=L.marker(p,{icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
+    const mk=L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
     wpDragHook(mk,i);
-    L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate('+(wd/2+3)+'px,-8px)">'+(p[2]?escH(p[2])+'  ':'')+fmt(p)+'</div>',iconSize:[0,0]})}).addTo(routeL);
+    L.marker(p,{pane:"wpt",interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate('+(wd/2+3)+'px,-8px)">'+(p[2]?escH(p[2])+'  ':'')+fmt(p)+'</div>',iconSize:[0,0]})}).addTo(routeL);
   });
   if(st.center&&st.center.p){L.marker(st.center.p,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>',iconSize:[24,24],iconAnchor:[12,12]})}).on("click",showCenter).addTo(routeL)}
 }
