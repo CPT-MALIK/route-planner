@@ -404,7 +404,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button id="apt" aria-label="Show or hide airports" title="Airports" aria-pressed="true" style="font-size:11px">APT</button>
       <button id="vor" aria-label="Show or hide VOR/VORTAC stations" title="VOR / VORTAC" aria-pressed="true" style="font-size:11px">VOR</button>
       <button id="aws" aria-label="Show or hide ATS routes" title="ATS routes (ENR 3)" aria-pressed="true" style="font-size:11px">AWY</button>
-      <button id="ils" aria-label="Show or hide ILS (NAVAIDS) on runways" title="NAVAIDS (ILS)" aria-pressed="true" style="font-size:11px">ILS</button>
       <button id="cht" aria-label="Airport charts" title="Charts" aria-pressed="false" style="font-size:11px">CHT</button>
       <button id="rul" aria-label="Measuring ruler" title="Ruler" aria-pressed="false" style="font-size:11px">RUL</button>
     </div>
@@ -1068,7 +1067,7 @@ function showIls(ad,E,p,q){suppress=Date.now();pinL.clearLayers();
     note:"Source: "+ad.src+" (AD 2.12 / 2.19). Magnetic course is the published true bearing minus the "+(nv?nv.ident+" ":"")+"declination ("+dec+"°), so it may differ slightly from the chart."});selIls=ad.icao+"/"+E.id;drawAD()}
 function drawAD(){
   adL.clearLayers();adLblL.clearLayers();const z=map.getZoom();
-  if(z<9||st.showApt===false){map.removeLayer(adL);map.removeLayer(adLblL);return}
+  if(z<11||st.showApt===false){map.removeLayer(adL);map.removeLayer(adLblL);return}
   adL.addTo(map);if(z>=11)adLblL.addTo(map);else map.removeLayer(adLblL);
   const rcol=css("--rwy"),fcol=css("--fg");
   const vb=map.getBounds().pad(0.6);
@@ -1085,7 +1084,7 @@ function drawAD(){
         if(lpx>bp*3)L.polyline([a,b],{pane:"rwy",color:"#f0f0f2",weight:Math.round(wpx)-2*Math.floor(bpx),lineCap:"butt",opacity:1,interactive:false,noClip:true,dashArray:"0 "+bp+" "+(lpx-2*bp).toFixed(1)+" 100000"}).addTo(adL)}
       [[A,a,b],[B,b,a]].forEach(([E,p,q])=>{
         const out=brg(q,p),L4=Math.min(5,Math.max(1.6,mPerPx(p[0])*120/1852)); // feather length NM, ~120 px
-        if(E.ils&&st.showIls!==false){const sel=selIls===ad.icao+"/"+E.id,G=sel?"#3fae6a":"#55606e",tip=dest(p,L4*0.86,out),l=dest(p,L4,out-3.2),r=dest(p,L4,out+3.2),open=()=>showIls(ad,E,p,q);
+        if(E.ils){const sel=selIls===ad.icao+"/"+E.id,G=sel?"#3fae6a":"#55606e",tip=dest(p,L4*0.86,out),l=dest(p,L4,out-3.2),r=dest(p,L4,out+3.2),open=()=>showIls(ad,E,p,q);
           L.polygon([p,l,tip,r],{pane:"rwy",color:G,weight:2,fill:true,fillColor:"#fff",fillOpacity:0.01,interactive:true,bubblingMouseEvents:false}).on("click",open).addTo(adL);
           for(let k=1;k<=14;k++){const t=k/15;if(t>0.86)break;L.polyline([dest(p,L4*t,out),dest(p,L4*t,out+3.2)],{pane:"rwy",color:G,weight:1.2,interactive:false}).addTo(adL)}
           const side=((out+270)%360),lp=dest(p,mPerPx(p[0])*(wpx/2+14)/1852,side),sx=Math.sin(side*D2R)>=0;
@@ -1125,8 +1124,6 @@ function showRwy(ad,A,B,dim){
             {label:"Copy THR "+A.id,small:A.thr,fn:()=>copyTxt(A.thr)},{label:"Copy THR "+B.id,small:B.thr,fn:()=>copyTxt(B.thr)}]});
 }
 map.on("moveend",drawAD);
-$("ils").setAttribute("aria-pressed",String(st.showIls!==false));
-$("ils").onclick=()=>{st.showIls=st.showIls===false;$("ils").setAttribute("aria-pressed",String(st.showIls));save();drawAD();if(st.showIls&&map.getZoom()<9)toast("Zoom in to an airport to see the ILS")};
 
 // Saudi FIR boundary over the sea (Red Sea / Arabian Gulf): drawn like the national border; legs that run along land borders are skipped
 function drawSeaBoundary(it){
