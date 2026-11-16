@@ -1182,7 +1182,7 @@ function drawAD(){const ilsTags=[],rwySegs=[];
         if(lpx>bp*3)L.polyline([a,b],{pane:"rwy",color:"#f0f0f2",weight:Math.round(wpx)-2*Math.floor(bpx),lineCap:"butt",opacity:1,interactive:false,noClip:true,dashArray:"0 "+bp+" "+(lpx-2*bp).toFixed(1)+" 100000"}).addTo(adL)}
       [[A,a,b],[B,b,a]].forEach(([E,p,q])=>{
         const out=brg(q,p),L4=Math.min(5,Math.max(1.6,mPerPx(p[0])*120/1852)); // feather length NM, ~120 px
-        if(E.ils){const sel=selIls===ad.icao+"/"+E.id,G=sel?"#3fae6a":"#55606e",tip=dest(p,L4*0.86,out),l=dest(p,L4,out-3.2),r=dest(p,L4,out+3.2),open=()=>showIls(ad,E,p,q);
+        if(E.ils&&z>=12){const sel=selIls===ad.icao+"/"+E.id, /* ILS feathers and tags from zoom 12 */G=sel?"#3fae6a":"#55606e",tip=dest(p,L4*0.86,out),l=dest(p,L4,out-3.2),r=dest(p,L4,out+3.2),open=()=>showIls(ad,E,p,q);
           L.polygon([p,l,tip,r],{pane:"rwy",color:G,weight:2,fill:true,fillColor:"#fff",fillOpacity:0.01,interactive:true,bubblingMouseEvents:false}).on("click",open).addTo(adL);
           for(let k=1;k<=14;k++){const t=k/15;if(t>0.86)break;L.polyline([dest(p,L4*t,out),dest(p,L4*t,out+3.2)],{pane:"rwy",color:G,weight:1.2,interactive:false}).addTo(adL)}
           // tag just beyond the feather's tip, on the approach side; placed after all runways are drawn so overlapping tags can be pushed apart
