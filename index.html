@@ -1569,7 +1569,7 @@ chEl("cht").onclick=()=>{const on=chEl("chrail").hidden;chEl("chrail").hidden=!o
 drawGrid();update();fitAll();drawAD();
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{drawGrid();drawRoute();drawAwy();drawHold()});
 // ---- ATS routes from the eAIP (ENR 3.1 / 3.2): thin black lines, designator + distance labels, one-way arrows
-map.createPane("aipawy").style.zIndex=300;map.createPane("aipawyp").style.zIndex=600; // above the airspace canvas (410), or taps on the points never reach themmap.createPane("aipawyl").style.zIndex=310;map.getPane("aipawyl").style.pointerEvents="none";
+map.createPane("aipawy").style.zIndex=300;map.createPane("aipawyp").style.zIndex=600;/* above the airspace canvas (410), so taps reach the points */map.createPane("aipawyl").style.zIndex=310;map.getPane("aipawyl").style.pointerEvents="none";
 const awR=L.canvas({pane:"aipawy",padding:0.3,tolerance:8}),awLL=L.layerGroup(),awLblL=L.layerGroup(),awPtL=L.layerGroup();
 if(st.showAip===undefined)st.showAip=true;
 const AW_LEGS=(()=>{const m=new Map();Object.keys(AIP_AWY).forEach(k=>{AIP_AWY[k].forEach(seg=>{
