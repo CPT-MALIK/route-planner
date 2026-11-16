@@ -441,6 +441,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 const R=3440.065, D2R=Math.PI/180;
 const $=id=>document.getElementById(id);
 const norm=a=>((a%360)+360)%360;
+// WGS-84 ellipsoid distance in NM (Vincenty inverse); falls back to the sphere if it does not converge
+function distE(a,b){const A=6378137,f=1/298.257223563,B=A*(1-f),L_=(b[1]-a[1])*D2R,U1=Math.atan((1-f)*Math.tan(a[0]*D2R)),U2=Math.atan((1-f)*Math.tan(b[0]*D2R)),
+  s1=Math.sin(U1),c1=Math.cos(U1),s2=Math.sin(U2),c2=Math.cos(U2);let l=L_,ss,cs,sg,c2a,c2m,k=0;
+  do{const sl=Math.sin(l),cl=Math.cos(l);ss=Math.hypot(c2*sl,c1*s2-s1*c2*cl);if(ss===0)return 0;cs=s1*s2+c1*c2*cl;sg=Math.atan2(ss,cs);
+    const sa=c1*c2*sl/ss;c2a=1-sa*sa;c2m=c2a?cs-2*s1*s2/c2a:0;const C=f/16*c2a*(4+f*(4-3*c2a)),lp=l;
+    l=L_+(1-C)*f*sa*(sg+C*ss*(c2m+C*cs*(-1+2*c2m*c2m)));if(Math.abs(l-lp)<1e-12)break}while(++k<200);
+  if(k>=200)return dist(a,b);const u2=c2a*(A*A-B*B)/(B*B),AA=1+u2/16384*(4096+u2*(-768+u2*(320-175*u2))),BB=u2/1024*(256+u2*(-128+u2*(74-47*u2))),
+  ds=BB*ss*(c2m+BB/4*(cs*(-1+2*c2m*c2m)-BB/6*c2m*(-3+4*ss*ss)*(-3+4*c2m*c2m)));return B*AA*(sg-ds)/1852}
 function dist(a,b){const dl=(b[0]-a[0])*D2R,dn=(b[1]-a[1])*D2R;const h=Math.sin(dl/2)**2+Math.cos(a[0]*D2R)*Math.cos(b[0]*D2R)*Math.sin(dn/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)))}
 function brg(a,b){const p1=a[0]*D2R,p2=b[0]*D2R,dl=(b[1]-a[1])*D2R;return norm(Math.atan2(Math.sin(dl)*Math.cos(p2),Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl))/D2R)}
 function dest(a,d,b){const dr=d/R,t=b*D2R,p1=a[0]*D2R,l1=a[1]*D2R;const p2=Math.asin(Math.sin(p1)*Math.cos(dr)+Math.cos(p1)*Math.sin(dr)*Math.cos(t));const l2=l1+Math.atan2(Math.sin(t)*Math.sin(dr)*Math.cos(p1),Math.cos(dr)-Math.sin(p1)*Math.sin(p2));return [p2/D2R,((l2/D2R+540)%360)-180]}
@@ -1459,7 +1467,7 @@ function rulDraw(){rulG.clearLayers();if(!rulA||!rulB)return;
   L.polyline([rulA,rulB],{pane:"ruler",color:"#111",weight:2.5,interactive:false}).addTo(rulG);
   [a,b].forEach((p,i)=>{L.polyline([P(p,-C),P(p,C)],{pane:"ruler",color:"#111",weight:2.5,interactive:false}).addTo(rulG);
     [W,-W].forEach(k=>L.polyline([P(p,k,i?0:-38),P(p,k,i?38:0)],{pane:"ruler",color:"#111",weight:2.5,interactive:false}).addTo(rulG))});
-  const A=[rulA.lat,rulA.lng],B=[rulB.lat,rulB.lng],d=dist(A,B),m=[(A[0]+B[0])/2,(A[1]+B[1])/2],nv=nearestNav(m),dec=nv?nv.decl:0;
+  const A=[rulA.lat,rulA.lng],B=[rulB.lat,rulB.lng],d=distE(A,B),m=[(A[0]+B[0])/2,(A[1]+B[1])/2],nv=nearestNav(m),dec=nv?nv.decl:0;
   const ab=deg3(brg(A,B)-dec),ba=deg3(brg(B,A)-dec),dt=(d<100?d.toFixed(1):Math.round(d)+"")+"nm"+(+d.toFixed(1)<=3?" ("+Math.round(d*6076.12).toLocaleString("en-US")+"ft)":"");
   let ang=Math.atan2(dy,dx)*180/Math.PI,flip=false;if(ang>90||ang<-90){ang+=180;flip=true}
   const top=flip?ba+"°M-> "+dt+" <-"+ab+"°M":ab+"°M-> "+dt+" <-"+ba+"°M",bot=flip?ab+"°M-> "+dt+" <-"+ba+"°M":ba+"°M-> "+dt+" <-"+ab+"°M";
