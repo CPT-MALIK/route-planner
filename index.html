@@ -602,7 +602,7 @@ function drawRoute(){
   grp.forEach(({p,ix})=>{const i=ix[0],t=ix.map(k=>k+1).join("+"),wd=Math.max(26,12+t.length*8);
     const mk=L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
     wpDragHook(mk,i);
-    L.marker(p,{pane:"wpt",interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate('+(wd/2+3)+'px,-8px)">'+(p[2]?escH(p[2])+'  ':'')+fmt(p)+'</div>',iconSize:[0,0]})}).addTo(routeL);
+    if(p[2])L.marker(p,{pane:"wpt",interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate('+(wd/2+3)+'px,-8px)">'+escH(p[2])+'</div>',iconSize:[0,0]})}).addTo(routeL); // name only; coordinates are on the card when the point is tapped
   });
   if(st.center&&st.center.p){L.marker(st.center.p,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>',iconSize:[24,24],iconAnchor:[12,12]})}).on("click",showCenter).addTo(routeL)}
 }
