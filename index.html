@@ -295,7 +295,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .asplbl small{font:600 calc(9.5px*var(--mts,1)) var(--mono);opacity:.9}
 .asplbl.P{color:#f49384}.asplbl.R{color:#d2b08a}.asplbl.D{color:#f4a679}.asplbl.A{color:#a9c4fb}
 .rwyid{position:absolute;white-space:nowrap;text-align:center;font:700 calc(14px*var(--mts,1))/1 var(--sans);letter-spacing:-.3px;color:#1f2fe0;text-shadow:1px 0 #fff,-1px 0 #fff,0 1px #fff,0 -1px #fff,1px 1px #fff,-1px -1px #fff,1px -1px #fff,-1px 1px #fff}
-.ilsbox{position:absolute;top:0;transform:translateY(-50%);font:500 calc(16px*var(--mts,1))/1 var(--sans);color:#55606e;background:#fff;border:1.6px solid #55606e;border-radius:99px;padding:5px 12px;white-space:nowrap;pointer-events:auto;cursor:pointer}
+.ilsbox{position:absolute;top:0;transform:translateY(-50%);font:500 calc(14px*var(--mts,1))/1 var(--sans);color:#55606e;background:#fff;border:1.5px solid #55606e;border-radius:99px;padding:4px 10px;white-space:nowrap;pointer-events:auto;cursor:pointer}
 .ilsbox.on{font-weight:700;color:#fff;background:#3a3d42;border:2.5px solid #3fae6a}
 .adlbl{position:absolute;transform:translate(14px,-50%);display:flex;flex-direction:column;font:800 14px var(--sans);color:#1f2fe0;background:rgba(255,255,255,.85);padding:2px 6px;border-radius:4px;white-space:nowrap;line-height:1.1}
 .adlbl span{font:600 11px var(--mono)}
@@ -1146,15 +1146,24 @@ function showIls(ad,E,p,q){suppress=Date.now();pinL.clearLayers();
     ["Morse Code",E.ils[0].split("").map(c=>MORSE[c]||"").join("   ")+"  ("+E.ils[0]+")"],["RWY "+E.id+" THR",E.thr],["THR elevation",E.elev+" ft"]];
   openSheet({title:E.ils[0],sub:ad.name,p:p.concat([E.ils[0]]),rows,
     note:"Source: "+ad.src+" (AD 2.12 / 2.19). Magnetic course is the published true bearing minus the "+(nv?nv.ident+" ":"")+"declination ("+dec+"°), so it may differ slightly from the chart."});selIls=ad.icao+"/"+E.id;drawAD()}
-// ILS tags: start just beyond the feather tip; a tag that would overlap one already placed is moved further out along its own
-// approach line (parallel or same-end ILS end up staggered), up to 8 steps of 24 px
-function placeIlsTags(tags){const placed=[],mpx=t=>mPerPx(t.p[0])/1852;
-  tags.forEach(t=>{const w=t.txt.length*10+30,h=32;let ll,bx;
-    for(let k=0;k<=8;k++){ll=dest(t.p,t.d0+mpx(t)*(26+k*24),t.out);const c=map.latLngToContainerPoint(ll);bx=[c.x-w/2-3,c.y-h/2-3,c.x+w/2+3,c.y+h/2+3];
-      if(!placed.some(q=>bx[0]<q[2]&&q[0]<bx[2]&&bx[1]<q[3]&&q[1]<bx[3]))break}
-    placed.push(bx);
-    L.marker(ll,{pane:"rwylbl",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ilsbox'+(t.sel?' on':'')+'" style="left:0;transform:translate(-50%,-50%)">'+escH(t.txt)+'</div>'})}).on("click",t.open).addTo(adLblL)})}
-function drawAD(){const ilsTags=[];
+// ILS tags, like the charting app the user showed: a small tag beside the runway end it serves (right or left of the runway,
+// at the threshold or a little inside), keeping a fixed size on screen. The first free spot is used: not over another tag,
+// an airport ident, a VOR box or a runway. Only if none is free does the tag move out along its approach line.
+function placeIlsTags(tags,segs){const mc=map.getContainer(),mr=mc.getBoundingClientRect(),placed=[];
+  const obs=[...mc.querySelectorAll(".aptid,.navbox")].map(e=>{const r=e.getBoundingClientRect();return[r.left-mr.left,r.top-mr.top,r.right-mr.left,r.bottom-mr.top]}).filter(b=>b[2]>b[0]);
+  const S=segs.map(([a,b,w])=>[map.latLngToContainerPoint(a),map.latLngToContainerPoint(b),w/2+3]);
+  const ov=(a,b)=>a[0]<b[2]&&b[0]<a[2]&&a[1]<b[3]&&b[1]<a[3];
+  const onRwy=bx=>S.some(([A,B,hw])=>{const n=Math.max(2,Math.ceil(A.distanceTo(B)/8));
+    for(let k=0;k<=n;k++){const x=A.x+(B.x-A.x)*k/n,y=A.y+(B.y-A.y)*k/n;if(x>bx[0]-hw&&x<bx[2]+hw&&y>bx[1]-hw&&y<bx[3]+hw)return true}return false});
+  tags.forEach(t=>{const w=t.txt.length*8.6+22,h=24,c=map.latLngToContainerPoint(t.p),e=map.latLngToContainerPoint(t.q),L_=Math.max(1,c.distanceTo(e));
+    const ux=(e.x-c.x)/L_,uy=(e.y-c.y)/L_,nx=-uy,ny=ux,ext=Math.abs(nx)*w/2+Math.abs(ny)*h/2,half=t.wpx/2+6+ext,cand=[];
+    [-4,16,40].forEach(a=>[1,-1].forEach(sd=>cand.push([c.x+nx*sd*half+ux*a,c.y+ny*sd*half+uy*a])));
+    const exa=Math.abs(ux)*w/2+Math.abs(uy)*h/2;for(let k=0;k<8;k++)cand.push([c.x-ux*(exa+10+k*26),c.y-uy*(exa+10+k*26)]);
+    const box=([x,y])=>[x-w/2-2,y-h/2-2,x+w/2+2,y+h/2+2];
+    const pick=cand.find(q=>{const b=box(q);return!placed.some(o=>ov(b,o))&&!obs.some(o=>ov(b,o))&&!onRwy(b)})||cand[0];
+    placed.push(box(pick));
+    L.marker(map.containerPointToLatLng(pick),{pane:"rwylbl",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ilsbox'+(t.sel?' on':'')+'" style="left:0;transform:translate(-50%,-50%)">'+escH(t.txt)+'</div>'})}).on("click",t.open).addTo(adLblL)})}
+function drawAD(){const ilsTags=[],rwySegs=[];
   adL.clearLayers();adLblL.clearLayers();const z=map.getZoom();
   if(z<11||st.showApt===false){map.removeLayer(adL);map.removeLayer(adLblL);return}
   adL.addTo(map);if(z>=11)adLblL.addTo(map);else map.removeLayer(adLblL);
@@ -1166,7 +1175,7 @@ function drawAD(){const ilsTags=[];
     ad.rwys.forEach(([A,B,dim])=>{
       const wm=parseFloat((dim.split("x")[1]||"45"))||45;
       const a=dmsP(A.thr),b=dmsP(B.thr),mpp=mPerPx(a[0]),wpx=Math.round(Math.max(z>=11?32:z>=10?14:7,wm/mpp));
-      L.polyline([a,b],{pane:"rwy",color:rcol,weight:wpx,lineCap:"butt",opacity:1,interactive:true,bubblingMouseEvents:false}).on("click",()=>showRwy(ad,A,B,dim)).addTo(adL);
+      L.polyline([a,b],{pane:"rwy",color:rcol,weight:wpx,lineCap:"butt",opacity:1,interactive:true,bubblingMouseEvents:false}).on("click",()=>showRwy(ad,A,B,dim)).addTo(adL);rwySegs.push([a,b,wpx]);
       if(wpx>=12){const bpx=(wpx-Math.max(4,Math.round(wpx*0.2)))/2,inset=bpx*mpp/1852,ab=brg(a,b),len=dist(a,b);
         const lpx=map.latLngToLayerPoint(a).distanceTo(map.latLngToLayerPoint(b)),bp=Math.round(bpx);
         // same end points as the blue line (identical pixel rounding keeps both sides equal); dashes leave the blue ends showing
@@ -1177,13 +1186,13 @@ function drawAD(){const ilsTags=[];
           L.polygon([p,l,tip,r],{pane:"rwy",color:G,weight:2,fill:true,fillColor:"#fff",fillOpacity:0.01,interactive:true,bubblingMouseEvents:false}).on("click",open).addTo(adL);
           for(let k=1;k<=14;k++){const t=k/15;if(t>0.86)break;L.polyline([dest(p,L4*t,out),dest(p,L4*t,out+3.2)],{pane:"rwy",color:G,weight:1.2,interactive:false}).addTo(adL)}
           // tag just beyond the feather's tip, on the approach side; placed after all runways are drawn so overlapping tags can be pushed apart
-          ilsTags.push({p,out,d0:L4,txt:E.ils[0]+(sel?' ILS':''),sel,open})}
+          ilsTags.push({p,q,wpx,txt:E.ils[0]+(sel?' ILS':''),sel,open})}
         const lp=dest(p,Math.min(dist(p,q)*0.3,mPerPx(p[0])*(Math.min(40,(wpx-Math.max(4,Math.round(wpx*0.2)))/2)+16)/1852),brg(p,q));
         L.marker(lp,{pane:"rwylbl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rwyid" style="transform:translate(-50%,-50%) rotate('+(((brg(p,q)+180)%360)-180)+'deg)">'+escH(E.id).replace(/^(\d+)([LRC])$/,'$1<br>$2')+'</div>'})}).addTo(adLblL);
       });
     });
   });
-  placeIlsTags(ilsTags);
+  placeIlsTags(ilsTags,rwySegs);
   // other aerodromes: OurAirports runway ends
   RWYS.forEach((r,k)=>{const [icao,le,he,la1,lo1,la2,lo2,lft,wft]=r,a=[la1,lo1],b=[la2,lo2];
     const wm=(wft||148)*0.3048,wpx=Math.max(6,wm/mPerPx(la1));
