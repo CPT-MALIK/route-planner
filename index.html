@@ -263,10 +263,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .aw-l{position:absolute;white-space:nowrap;transform:translate(-50%,-50%) rotate(var(--r));display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none}
 .aw-s{display:block;overflow:visible}
 .aw-s text{font:700 15px var(--sans);fill:#000}
-.aw-l u{text-decoration:none;text-align:center;font:600 calc(12.5px*var(--mts,1)) var(--sans);color:#000;line-height:15px;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
-.aw-c{position:absolute;white-space:nowrap;transform:translate(-50%,-50%) rotate(var(--r)) translateY(-10px);font:600 calc(12.5px*var(--mts,1)) var(--sans);color:#000;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff;pointer-events:none}
+.aw-l u{text-decoration:none;text-align:center;font:600 calc(12.5px*var(--mts,1)) var(--sans);color:#000;line-height:15px}
+.aw-c{position:absolute;white-space:nowrap;transform:translate(-50%,-50%) rotate(var(--r)) translateY(-10px);font:600 calc(12.5px*var(--mts,1)) var(--sans);color:#000;pointer-events:none}
 .aw-l b{font:700 calc(11px*var(--mts,1)) var(--sans);color:#000;background:#fff;border:1px solid #000;border-radius:2px;padding:0 4px;line-height:14px}
-.aw-l i{font:800 calc(13.5px*var(--mts,1)) var(--sans);font-style:normal;color:#000;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
+.aw-l i{font:800 calc(13.5px*var(--mts,1)) var(--sans);font-style:normal;color:#000}
 .aw-l .ar{color:#000;font-size:10px}
 .aw-p{position:absolute;transform:translate(-6px,-6px);width:0;height:0}
 .aw-p svg{display:block}
@@ -1587,16 +1587,16 @@ function awLim(r){const mea=r.mfa||r.lo,a=[];if(mea)a.push(awAlt(mea)+(r.moca?" 
 const AW_TRI='<svg width="12" height="12" viewBox="0 0 12 12"><path d="M6 1 11 10.5H1Z" fill="#fff" stroke="#000" stroke-width="1.4"/></svg>';
 const NAVID=new Set(NAV.filter(n=>n.kind==="nav").map(n=>n.ident));
 function awDraw(){awLblL.clearLayers();awPtL.clearLayers();if(!st.showAip||!map.hasLayer(awLL))return;const z=map.getZoom(),vb=map.getBounds().pad(0.1);
-  if(z>=7)AW_LEGS.forEach(Lg=>{const A=Lg.a,B=Lg.b;if(!vb.intersects(L.latLngBounds([[A[0],A[1]],[B[0],B[1]]])))return;
+  if(z>=8)AW_LEGS.forEach(Lg=>{const A=Lg.a,B=Lg.b;if(!vb.intersects(L.latLngBounds([[A[0],A[1]],[B[0],B[1]]])))return;
     const pa=map.latLngToLayerPoint([A[0],A[1]]),pb=map.latLngToLayerPoint([B[0],B[1]]),len=pa.distanceTo(pb);if(len<90)return;
     let ang=Math.atan2(pb.y-pa.y,pb.x-pa.x)*180/Math.PI,flip=1;if(ang>90){ang-=180;flip=-1}else if(ang<-90){ang+=180;flip=-1}
     const r0=Lg.r[0],nm=Math.round(r0.d!=null?r0.d:dist(A,B));
-    const full=len>=200&&z>=7.5;
+    const lng=len>=200,full=lng&&z>=9;
     const boxes=Lg.r.map(r=>awShield(r.n,r.ow?r.ow*flip:0)).join("");
     const lim=full?awLim(r0):"";
     const mid=map.layerPointToLatLng(pa.add(pb).divideBy(2));
     L.marker(mid,{pane:"aipawyl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="aw-l" style="--r:'+ang.toFixed(1)+'deg"><i>'+nm+'</i>'+boxes+lim+'</div>'})}).addTo(awLblL);
-    if(full&&z>=8){const tA=r0.trk!=null?(r0.n===Lg.r[0].n?Lg.r[0].trk:null):null,cA=tA!=null?tA:Math.round(norm(brg(A,B)-decAt(A))),cB=tA!=null?(tA+180)%360:Math.round(norm(brg(B,A)-decAt(B)));
+    if(lng&&z>=10){const tA=r0.trk!=null?(r0.n===Lg.r[0].n?Lg.r[0].trk:null):null,cA=tA!=null?tA:Math.round(norm(brg(A,B)-decAt(A))),cB=tA!=null?(tA+180)%360:Math.round(norm(brg(B,A)-decAt(B)));
       const off=Math.min(60,len*0.18);[[pa,pb,cA],[pb,pa,cB]].forEach(([p1,p2,c])=>{const u=p2.subtract(p1),q=p1.add(u.multiplyBy(off/len));
         L.marker(map.layerPointToLatLng(q),{pane:"aipawyl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="aw-c" style="--r:'+ang.toFixed(1)+'deg">'+String(Math.round(c)%360||360).padStart(3,"0")+'°</div>'})}).addTo(awLblL)})}});
   if(z>=7.5){const seen=new Set();AW_LEGS.forEach(Lg=>[Lg.a,Lg.b].forEach(q=>{if(seen.has(q[2])||NAVID.has(q[2]))return;seen.add(q[2]);if(!vb.contains([q[0],q[1]]))return;
