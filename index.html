@@ -289,6 +289,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .aptring{position:absolute;left:2px;top:2px;width:32px;height:32px;line-height:0}
 .aptid.l{left:auto;right:33px}
 .aptid{position:absolute;left:33px;top:6px;padding:2px 4px;white-space:nowrap;font:800 calc(15px*var(--mts,1)) var(--sans);color:#1d22e6;letter-spacing:.02em}
+/* zoom 11+ (runways drawn): the ident gets a white tag so it reads over the blue runway; the ring is hidden */
+.zrwy .aptid{background:#fff;border:2px solid #1d22e6;border-radius:7px;padding:1px 7px;box-shadow:0 1px 4px rgba(0,0,0,.35)}.zrwy .aptring{visibility:hidden}
 .asplbl{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;font:700 calc(11px*var(--mts,1)) var(--mono);color:#fff;white-space:nowrap;text-shadow:0 0 3px rgba(0,0,0,.95),0 0 2px rgba(0,0,0,.95);line-height:1.15}
 .asplbl small{font:600 calc(9.5px*var(--mts,1)) var(--mono);opacity:.9}
 .asplbl.P{color:#f49384}.asplbl.R{color:#d2b08a}.asplbl.D{color:#f4a679}.asplbl.A{color:#a9c4fb}
@@ -1359,6 +1361,7 @@ APTS.forEach(([icao,name,traffic,la,lo,el,src])=>{
    .on("click",()=>inspectAt(L.latLng(la,lo),true))
    .addTo(aptL)});
 function aptVis(){if(st.showApt!==false&&map.getZoom()>=7)aptL.addTo(map);else map.removeLayer(aptL)}
+function aptZ(){map.getContainer().classList.toggle("zrwy",map.getZoom()>=11)}map.on("zoomend",aptZ);aptZ();
 map.on("zoomend",aptVis);
 $("apt").setAttribute("aria-pressed",String(st.showApt!==false));
 $("apt").onclick=()=>{st.showApt=st.showApt===false;$("apt").setAttribute("aria-pressed",String(st.showApt));save();aptVis();drawAD();if(st.showApt&&map.getZoom()<7)toast("Zoom in to see the airports")};
