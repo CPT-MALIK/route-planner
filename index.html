@@ -273,7 +273,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .aw-p svg{display:block}
 .aw-sel i{position:absolute;left:-15px;top:-15px;width:30px;height:30px;border-radius:50%;border:3px solid #a528b9;box-shadow:0 0 0 2px #fff;box-sizing:border-box}
 .aw-sel b{position:absolute;left:12px;top:-12px;white-space:nowrap;font:700 calc(13px*var(--mts,1)) var(--mono);color:#fff;background:#a528b9;border:2px solid #fff;border-radius:99px;padding:2px 8px;line-height:16px}
-.aw-pn{position:absolute;left:8px;top:-9px;white-space:nowrap;font:700 calc(13px*var(--mts,1)) var(--mono);color:#000;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
+.aw-pn{position:absolute;left:8px;top:-9px;white-space:nowrap;cursor:pointer;pointer-events:auto;padding:6px 8px;margin:-6px -8px;font:700 calc(13px*var(--mts,1)) var(--mono);color:#000;text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff}
 .awl{display:inline-block;transform:translate(-50%,-50%);font:600 11px var(--mono);color:var(--awy);background:var(--chart);border:1.5px solid var(--awy);border-radius:3px;padding:0 5px;white-space:nowrap}
 .awf{white-space:nowrap;font:600 11px var(--mono);color:var(--awy);transform:translate(12px,-6px);text-shadow:0 0 3px var(--chart),0 0 3px var(--chart)}
 .awn{background:var(--awy)}
@@ -1204,8 +1204,7 @@ function showAsp(cat,it,ll,back){
   const lp=aspLabelPt(it);
   if(/SECTOR/.test(it.id))kind="ACC sector";
   openSheet({title:it.id,sub:kind,back:back||null,p:[ll.lat,ll.lng],rows,note:"Source: "+ASP_SRC[cat]+". Check NOTAMs for activation.",
-    custom:[{label:"Zoom to area",small:it.id,fn:()=>{const b=L.latLngBounds([]);it.g.forEach(s=>decodeSeg(s).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.15));closeSheet()}},
-            {label:"Copy limits",small:it.u+" / "+it.l,fn:()=>copyTxt(it.id+" "+it.u+" / "+it.l)},
+    custom:[{label:"Zoom to area",small:it.id,fn:()=>{const b=L.latLngBounds([]);it.g.forEach(s=>decodeSeg(s).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.15))}}, // keep the card and the area shading until the card is closed
             {label:"Add To Route",small:"tapped point",cls:"go",fn:()=>{st.wps.push([ll.lat,ll.lng]);update();closeSheet();toast("Added as waypoint "+st.wps.length)}}
             ]});
   highlightAsp(cat,it);
@@ -1216,8 +1215,7 @@ function showFir(it,back,ll){suppress=Date.now();pinL.clearLayers();
   openSheet({title:"OEJD",sub:"JEDDAH (FIR)",back:back||null,p:ll?[ll.lat,ll.lng]:[24.2,44.6],
     rows:[["Type","FIR"],["Upper limit",it.u==="UNL"?"Unlimited":it.u],["Lower limit",it.l==="SFC"?"GND":it.l],["ICAO","OEJD"]],
     note:"Source: "+ASP_SRC.A+". Over the sea the line shown is the FIR boundary; over land it follows the national border.",
-    custom:[{label:"Zoom to FIR",small:"whole FIR",fn:()=>{const b=L.latLngBounds([]);it.g.forEach(sg=>decodeSeg(sg).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.05));closeSheet()}},
-            {label:"Copy limits",small:"UNL / GND",fn:()=>copyTxt("JEDDAH FIR (OEJD) UNL / GND")}]});
+    custom:[{label:"Zoom to FIR",small:"whole FIR",fn:()=>{const b=L.latLngBounds([]);it.g.forEach(sg=>decodeSeg(sg).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.05))}}]});
   highlightAsp("A",it)}
 function segPxDist(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,l=dx*dx+dy*dy;let t=l?((p.x-a.x)*dx+(p.y-a.y)*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
 function inRing(ll,ring){let c=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[0]>ll.lat)!==(b[0]>ll.lat)&&ll.lng<(b[1]-a[1])*(ll.lat-a[0])/(b[0]-a[0])+a[1])c=!c}return c}
