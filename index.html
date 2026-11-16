@@ -261,7 +261,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .ref{font:600 calc(11px*var(--mts,1)) var(--sans);color:var(--ref);white-space:nowrap;text-shadow:0 0 3px var(--chart),0 0 3px var(--chart)}
 .plane{width:34px;height:34px;color:var(--own)}
 .aw-l{position:absolute;white-space:nowrap;transform:translate(-50%,-50%) rotate(var(--r));display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none}
-.aw-s{display:block;overflow:visible}
+.aw-s{display:block;overflow:visible;pointer-events:auto;cursor:pointer}
+.aw-l i,.aw-l u{pointer-events:auto;cursor:pointer}
 .aw-s text{font:700 15px var(--sans);fill:#000}
 .aw-l u{text-decoration:none;text-align:center;font:600 calc(12.5px*var(--mts,1)) var(--sans);color:#000;line-height:15px}
 .aw-c{position:absolute;white-space:nowrap;transform:translate(-50%,-50%) rotate(var(--r)) translateY(-10px);font:600 calc(12.5px*var(--mts,1)) var(--sans);color:#000;pointer-events:none}
@@ -1571,23 +1572,34 @@ chEl("cht").onclick=()=>{const on=chEl("chrail").hidden;chEl("chrail").hidden=!o
 drawGrid();update();fitAll();drawAD();
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{drawGrid();drawRoute();drawAwy();drawHold()});
 // ---- ATS routes from the eAIP (ENR 3.1 / 3.2): thin black lines, designator + distance labels, one-way arrows
-map.createPane("aipawy").style.zIndex=300;map.createPane("aipawyp").style.zIndex=600;{const p_=map.createPane("awsel");p_.style.zIndex=601;p_.style.pointerEvents="none"}/* above the airspace canvas (410), so taps reach the points */map.createPane("aipawyl").style.zIndex=310;map.getPane("aipawyl").style.pointerEvents="none";
+map.createPane("aipawy").style.zIndex=300;map.createPane("aipawyp").style.zIndex=600;{const p_=map.createPane("awsel");p_.style.zIndex=601;p_.style.pointerEvents="none"}/* above the airspace canvas (410), so taps reach the points */map.createPane("aipawyl").style.zIndex=598;map.getPane("aipawyl").style.pointerEvents="none";
 const awR=L.canvas({pane:"aipawy",padding:0.3,tolerance:8}),awLL=L.layerGroup(),awLblL=L.layerGroup(),awPtL=L.layerGroup();
 if(st.showAip===undefined)st.showAip=true;
 const AW_LEGS=(()=>{const m=new Map();Object.keys(AIP_AWY).forEach(k=>{AIP_AWY[k].forEach(seg=>{
     for(let i=1;i<seg.length;i++){const a=seg[i-1],b=seg[i],key=[a[0],b[0]].sort().join("|"),f=a[3]||{};
       let L_=m.get(key);if(!L_){L_={a:[a[1],a[2],a[0]],b:[b[1],b[2],b[0]],r:[]};m.set(key,L_)}
-      const same=L_.a[2]===a[0],ow=f.ow?(same?f.ow:-f.ow):0,trk=f.trk!=null?(same?f.trk:(f.trk+180)%360):null;
+      let t=f.trk;if(t!=null){const m=norm(brgS([a[1],a[2]],[b[1],b[2]])-decAt([a[1],a[2]]));if(Math.abs(((t-m+540)%360)-180)>90)t=(t+180)%360} // some one-way legs publish the track of the flown (reverse) direction: make it listing-order
+      const same=L_.a[2]===a[0],ow=f.ow?(same?f.ow:-f.ow):0,trk=t!=null?(same?t:(t+180)%360):null;
       L_.r.push({n:k,ow,trk,u:f.u,lo:f.lo,mfa:f.mfa,moca:f.moca,d:f.d})}})});return [...m.values()]})();
-function awLegCard(Lg){suppress=Date.now();pinL.clearLayers();const A=Lg.a,B=Lg.b,nm=dist(A,B);
-  L.polyline(gc(A,B),{color:"#1f2fe0",weight:6,opacity:.75,interactive:false}).addTo(pinL);
-  const rows=[[A[2]+" → "+B[2],deg3(brg(A,B)-decAt(A))+"°M ("+deg3(brg(A,B))+"°T)"],[B[2]+" → "+A[2],deg3(brg(B,A)-decAt(B))+"°M ("+deg3(brg(B,A))+"°T)"],["Distance",nm.toFixed(1)+" NM"]];
-  if(Lg.r[0].d)rows[2]=["Distance",Lg.r[0].d.toFixed(1)+" NM (published)"];
-  Lg.r.forEach(r=>{rows.push([r.n,(r.ow?"One-way "+(r.ow>0?A[2]+" → "+B[2]:B[2]+" → "+A[2]):"Two-way")]);
-    const lim=[r.mfa?"MEA "+awAlt(r.mfa):(r.lo?"Lower "+awAlt(r.lo):""),r.moca?"MOCA "+awAlt(r.moca):"",r.u?"MAA "+awAlt(r.u):""].filter(Boolean).join(" · ");if(lim)rows.push([r.n+" levels",lim])});
-  openSheet({title:Lg.r.map(r=>r.n).join(" / "),sub:A[2]+" – "+B[2],p:[(A[0]+B[0])/2,(A[1]+B[1])/2],noDct:true,rows,
+function awLegCard(Lg){suppress=Date.now();pinL.clearLayers();
+  // start = the end the traffic flies from (for a one-way leg), otherwise the first point in the AIP listing
+  const r0=Lg.r[0],rev=r0.ow<0,A=rev?Lg.b:Lg.a,B=rev?Lg.a:Lg.b,pA=[A[0],A[1]],pB=[B[0],B[1]],nm=dist(pA,pB),dA=decAt(pA),dB=decAt(pB);
+  L.polyline(gc(pA,pB),{color:"#1f2fe0",weight:6,opacity:.75,interactive:false}).addTo(pinL);
+  const kind=id=>{const n=NAV.find(x=>x.ident===id);return n?id+" ("+(n.navType==="VORTAC"?"VORTAC":"VOR")+")":id+" (Enroute fix)"};
+  const t0=r0.trk!=null?(rev?(r0.trk+180)%360:r0.trk):null;
+  const out=t0!=null?t0:Math.round(norm(brg(pA,pB)-dA)),inb=t0!=null?t0:Math.round(norm(brg(pB,pA)+180-dB));
+  const c3=v=>String(Math.round(v)%360||360).padStart(3,"0")+"°";
+  const rows=[["Segment start",kind(A[2])],["Lat/Long",fmt(pA)],["Outbound bearing",c3(out)+"M ("+c3(brg(pA,pB))+"T)"],
+    ["Segment end",kind(B[2])],["Lat/Long",fmt(pB)],["Inbound bearing",c3(inb)+"M"],
+    ["Segment distance",r0.d!=null?r0.d+" NM":nm.toFixed(1)+" NM"]];
+  Lg.r.forEach(r=>{const pre=Lg.r.length>1?r.n+" ":"";
+    rows.push([pre+"Direction",r.ow?"One-way "+((r.ow>0)!==rev?A[2]+" → "+B[2]:B[2]+" → "+A[2]):"Two-way"]);
+    if(r.mfa||r.lo)rows.push([pre+(r.mfa?"MEA":"Lower limit"),awAlt(r.mfa||r.lo)+(/^FL/.test(String(r.mfa||r.lo))?"":" ft")]);
+    if(r.moca)rows.push([pre+"MOCA",awAlt(r.moca)+(/^FL/.test(String(r.moca))?"":" ft")]);
+    if(r.u)rows.push([pre+"MAA",awAlt(r.u)])});
+  openSheet({title:Lg.r.map(r=>r.n).join(" / "),sub:"ATS route segment · "+A[2]+" – "+B[2],p:[(A[0]+B[0])/2,(A[1]+B[1])/2],noDct:true,rows,
     note:"Saudi eAIP ENR 3.1 / 3.2, AIRAC AMDT 11/26. Published magnetic track where given, otherwise true minus the nearest VOR declination.",
-    custom:[{label:"Show "+Lg.r[0].n,small:"whole route",fn:()=>{closeSheet();awShowRoute(Lg.r[0].n)}},{label:"Add "+A[2]+" → "+B[2],small:"to the route",cls:"go",fn:()=>{const n=appendFixes([{id:A[2],p:[A[0],A[1]]},{id:B[2],p:[B[0],B[1]]}]);closeSheet();toast("Added "+n+" points")}}]})}
+    custom:[{label:"Show "+r0.n,small:"whole route",fn:()=>{closeSheet();awShowRoute(r0.n)}},{label:"Add "+A[2]+" → "+B[2],small:"to the route",cls:"go",fn:()=>{const n=appendFixes([{id:A[2],p:pA},{id:B[2],p:pB}]);closeSheet();toast("Added "+n+" points")}}]})}
 function awShowRoute(k){const R_=AIP_AWY[k];if(!R_)return;if(!st.showAip){st.showAip=true;$("aws").setAttribute("aria-pressed","true");save();awVis()}
   pinL.clearLayers();const b=L.latLngBounds([]);R_.forEach(seg=>{L.polyline(seg.map(q=>[q[1],q[2]]),{color:"#1f2fe0",weight:6,opacity:.7,interactive:false}).addTo(pinL);seg.forEach(q=>b.extend([q[1],q[2]]))});
   if(b.isValid())map.fitBounds(b.pad(0.12));
@@ -1626,7 +1638,7 @@ function awDraw(){awLblL.clearLayers();awPtL.clearLayers();if(!st.showAip||!map.
     const boxes=Lg.r.map(r=>awShield(r.n,r.ow?r.ow*flip:0)).join("");
     const lim=full?awLim(r0):"";
     const mid=map.layerPointToLatLng(pa.add(pb).divideBy(2));
-    L.marker(mid,{pane:"aipawyl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="aw-l" style="--r:'+ang.toFixed(1)+'deg"><i>'+nm+'</i>'+boxes+lim+'</div>'})}).addTo(awLblL);
+    L.marker(mid,{pane:"aipawyl",interactive:true,bubblingMouseEvents:false,keyboard:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="aw-l" style="--r:'+ang.toFixed(1)+'deg"><i>'+nm+'</i>'+boxes+lim+'</div>'})}).on("click",()=>awLegCard(Lg)).addTo(awLblL);
     if(lng&&z>=11){const tA=r0.trk!=null?(r0.n===Lg.r[0].n?Lg.r[0].trk:null):null,cA=tA!=null?tA:Math.round(norm(brg(A,B)-decAt(A))),cB=tA!=null?(tA+180)%360:Math.round(norm(brg(B,A)-decAt(B)));
       const off=Math.min(60,len*0.18);[[pa,pb,cA],[pb,pa,cB]].forEach(([p1,p2,c])=>{const u=p2.subtract(p1),q=p1.add(u.multiplyBy(off/len));
         L.marker(map.layerPointToLatLng(q),{pane:"aipawyl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="aw-c" style="--r:'+ang.toFixed(1)+'deg">'+String(Math.round(c)%360||360).padStart(3,"0")+'°</div>'})}).addTo(awLblL)})}});
