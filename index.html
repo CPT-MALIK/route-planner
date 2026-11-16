@@ -1010,8 +1010,8 @@ map.on("zoomanim",e=>osmXf(e.center,e.zoom));map.on("zoom",()=>osmXf(map.getCent
 map.on("moveend zoomend resize",osmDraw);
 L.control.attribution({prefix:false,position:"bottomleft"}).addAttribution('Roads, wadis, towns © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors').addTo(map);
 const CITIES=[[1,"Riyadh",24.7136,46.6753],[1,"Jeddah",21.4858,39.1925],[1,"Makkah",21.3891,39.8579],[1,"Madinah",24.5247,39.5692],[1,"Dammam",26.4207,50.0888],[2,"Taif",21.2703,40.4158],[2,"Tabuk",28.3835,36.5662],[2,"Buraydah",26.326,43.975],[2,"Khamis Mushait",18.3,42.7333],[2,"Abha",18.2164,42.5053],[2,"Hail",27.5114,41.7208],[2,"Najran",17.4917,44.1322],[2,"Jazan",16.8892,42.5511],[2,"Al Hofuf",25.3647,49.5856],[2,"Al Jubail",27.0046,49.646],[2,"Al Khobar",26.2172,50.1971],[2,"Yanbu",24.0895,38.0618],[2,"Al Kharj",24.1556,47.3346],[2,"Hafar Al-Batin",28.4328,45.9708],[2,"Arar",30.9753,41.0381],[2,"Sakaka",29.9697,40.2064],[2,"Al Bahah",20.0129,41.4677],[3,"Al Qurayyat",31.3318,37.3428],[3,"Turaif",31.6725,38.6637],[3,"Rafha",29.6202,43.4948],[3,"AlUla",26.6085,37.9232],[3,"Unaizah",26.0843,43.9935],[3,"Al Majmaah",25.9036,45.3456],[3,"Wadi ad-Dawasir",20.4607,44.7802],[3,"Bisha",20.0006,42.6052],[3,"Sharurah",17.4667,47.1167],[3,"Al Wajh",26.2455,36.4525],[3,"Duba",27.3513,35.6901],[3,"Umluj",25.0213,37.2685],[3,"Rabigh",22.7986,39.0349],[3,"Al Lith",20.15,40.2667],[3,"Al Qunfudhah",19.1264,41.0789],[3,"Ras Tanura",26.6439,50.1597],[3,"Al Khafji",28.4391,48.4913],[3,"Al Zulfi",26.2996,44.8155],[3,"Dawadmi",24.5077,44.3924],[3,"Afif",23.9065,42.9172],[3,"Al Aflaj",22.2833,46.7167],[3,"Haql",29.2833,34.9333],[3,"Tayma",27.6333,38.55],[3,"Khaybar",25.697,39.292],[3,"Salwa",24.7167,50.7667],[3,"Al Qaisumah",28.3167,46.1333]];
-{const near=(la,lo)=>CITIES.some(c=>Math.abs(c[2]-la)<0.06&&Math.abs(c[3]-lo)<0.06);
-  OSM_TOWNS.forEach(([t,n,la,lo])=>{if(n&&!near(la,lo))CITIES.push([4,n,la,lo])})}
+{const near=(n,la,lo)=>CITIES.some(c=>{const d=Math.max(Math.abs(c[2]-la),Math.abs(c[3]-lo));return d<0.06||(d<0.4&&c[1].toLowerCase()===n.toLowerCase())});
+  OSM_TOWNS.forEach(([t,n,la,lo])=>{if(n&&!near(n,la,lo))CITIES.push([4,n,la,lo])})}
 map.createPane("cities").style.zIndex=176;map.getPane("cities").style.pointerEvents="none";
 const cityL=L.layerGroup();
 function drawCities(){cityL.clearLayers();const z=map.getZoom();const maxT=z<5?0:z<6?1:z<7?2:z<OSM_MINZ?3:4;const vb=map.getBounds().pad(0.1);
@@ -1146,7 +1146,15 @@ function showIls(ad,E,p,q){suppress=Date.now();pinL.clearLayers();
     ["Morse Code",E.ils[0].split("").map(c=>MORSE[c]||"").join("   ")+"  ("+E.ils[0]+")"],["RWY "+E.id+" THR",E.thr],["THR elevation",E.elev+" ft"]];
   openSheet({title:E.ils[0],sub:ad.name,p:p.concat([E.ils[0]]),rows,
     note:"Source: "+ad.src+" (AD 2.12 / 2.19). Magnetic course is the published true bearing minus the "+(nv?nv.ident+" ":"")+"declination ("+dec+"°), so it may differ slightly from the chart."});selIls=ad.icao+"/"+E.id;drawAD()}
-function drawAD(){
+// ILS tags: start just beyond the feather tip; a tag that would overlap one already placed is moved further out along its own
+// approach line (parallel or same-end ILS end up staggered), up to 8 steps of 24 px
+function placeIlsTags(tags){const placed=[],mpx=t=>mPerPx(t.p[0])/1852;
+  tags.forEach(t=>{const w=t.txt.length*10+30,h=32;let ll,bx;
+    for(let k=0;k<=8;k++){ll=dest(t.p,t.d0+mpx(t)*(26+k*24),t.out);const c=map.latLngToContainerPoint(ll);bx=[c.x-w/2-3,c.y-h/2-3,c.x+w/2+3,c.y+h/2+3];
+      if(!placed.some(q=>bx[0]<q[2]&&q[0]<bx[2]&&bx[1]<q[3]&&q[1]<bx[3]))break}
+    placed.push(bx);
+    L.marker(ll,{pane:"rwylbl",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ilsbox'+(t.sel?' on':'')+'" style="left:0;transform:translate(-50%,-50%)">'+escH(t.txt)+'</div>'})}).on("click",t.open).addTo(adLblL)})}
+function drawAD(){const ilsTags=[];
   adL.clearLayers();adLblL.clearLayers();const z=map.getZoom();
   if(z<11||st.showApt===false){map.removeLayer(adL);map.removeLayer(adLblL);return}
   adL.addTo(map);if(z>=11)adLblL.addTo(map);else map.removeLayer(adLblL);
@@ -1168,14 +1176,14 @@ function drawAD(){
         if(E.ils){const sel=selIls===ad.icao+"/"+E.id,G=sel?"#3fae6a":"#55606e",tip=dest(p,L4*0.86,out),l=dest(p,L4,out-3.2),r=dest(p,L4,out+3.2),open=()=>showIls(ad,E,p,q);
           L.polygon([p,l,tip,r],{pane:"rwy",color:G,weight:2,fill:true,fillColor:"#fff",fillOpacity:0.01,interactive:true,bubblingMouseEvents:false}).on("click",open).addTo(adL);
           for(let k=1;k<=14;k++){const t=k/15;if(t>0.86)break;L.polyline([dest(p,L4*t,out),dest(p,L4*t,out+3.2)],{pane:"rwy",color:G,weight:1.2,interactive:false}).addTo(adL)}
-          // tag just beyond the feather's tip, on the approach side: each ILS points its own way, so tags at crossing runways stay apart
-          const lp=dest(p,L4+mPerPx(p[0])*26/1852,out);
-          L.marker(lp,{pane:"rwylbl",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ilsbox'+(sel?' on':'')+'" style="left:0;transform:translate(-50%,-50%)">'+escH(E.ils[0])+(sel?' ILS':'')+'</div>'})}).on("click",open).addTo(adLblL)}
+          // tag just beyond the feather's tip, on the approach side; placed after all runways are drawn so overlapping tags can be pushed apart
+          ilsTags.push({p,out,d0:L4,txt:E.ils[0]+(sel?' ILS':''),sel,open})}
         const lp=dest(p,Math.min(dist(p,q)*0.3,mPerPx(p[0])*(Math.min(40,(wpx-Math.max(4,Math.round(wpx*0.2)))/2)+16)/1852),brg(p,q));
         L.marker(lp,{pane:"rwylbl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rwyid" style="transform:translate(-50%,-50%) rotate('+(((brg(p,q)+180)%360)-180)+'deg)">'+escH(E.id).replace(/^(\d+)([LRC])$/,'$1<br>$2')+'</div>'})}).addTo(adLblL);
       });
     });
   });
+  placeIlsTags(ilsTags);
   // other aerodromes: OurAirports runway ends
   RWYS.forEach((r,k)=>{const [icao,le,he,la1,lo1,la2,lo2,lft,wft]=r,a=[la1,lo1],b=[la2,lo2];
     const wm=(wft||148)*0.3048,wpx=Math.max(6,wm/mPerPx(la1));
