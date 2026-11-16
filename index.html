@@ -812,7 +812,7 @@ function defaultActs(o,p){
   if(o.wpIndex!=null)a.push({label:"Remove",small:"waypoint "+(o.wpIndex+1),cls:"danger",fn:()=>{st.wps.splice(o.wpIndex,1);update();closeSheet();toast("Waypoint removed")}});
   else a.push({label:"Add To Route",small:"as waypoint "+(st.wps.length+1),cls:"go",fn:()=>{st.wps.push(p);update();closeSheet();toast("Added as waypoint "+st.wps.length)}});
   a.push({label:"Set HOLD Fix",small:"send to HOLD tab",fn:()=>{$("hf").value=fmt(p);$("t-hold").click();closeSheet();toast("Holding fix set. Complete the details and tap Draw HOLD")}});
-  a.push({label:"Copy Coordinates",small:fmt(p),fn:()=>copyTxt(fmt(p))});
+  // coordinates are copied with the Copy button beside them at the top of the card
   return a;
 }
 // ---- airways
@@ -1206,8 +1206,8 @@ function showAsp(cat,it,ll,back){
   openSheet({title:it.id,sub:kind,back:back||null,p:[ll.lat,ll.lng],rows,note:"Source: "+ASP_SRC[cat]+". Check NOTAMs for activation.",
     custom:[{label:"Zoom to area",small:it.id,fn:()=>{const b=L.latLngBounds([]);it.g.forEach(s=>decodeSeg(s).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.15));closeSheet()}},
             {label:"Copy limits",small:it.u+" / "+it.l,fn:()=>copyTxt(it.id+" "+it.u+" / "+it.l)},
-            {label:"Add To Route",small:"tapped point",cls:"go",fn:()=>{st.wps.push([ll.lat,ll.lng]);update();closeSheet();toast("Added as waypoint "+st.wps.length)}},
-            {label:"Copy Coordinates",small:fmt([ll.lat,ll.lng]),fn:()=>copyTxt(fmt([ll.lat,ll.lng]))}]});
+            {label:"Add To Route",small:"tapped point",cls:"go",fn:()=>{st.wps.push([ll.lat,ll.lng]);update();closeSheet();toast("Added as waypoint "+st.wps.length)}}
+            ]});
   highlightAsp(cat,it);
 }
 const ASP_ITEMS=[];
@@ -1241,7 +1241,9 @@ function inspectAt(ll,fromPoint){
   const near=(la,lo)=>{const q=map.latLngToContainerPoint([la,lo]);return Math.hypot(q.x-P.x,q.y-P.y)<=R};
   if(map.hasLayer(aptL))APTS.forEach((a,k)=>{if(near(a[3],a[4]))items.push({g:"Points",t:a[0],s:"Airport · "+a[1],open:b=>showApt(k,b)})});
   if(map.hasLayer(navL))NAV.forEach((n,k)=>{if(n.kind==="nav"&&near(n.p[0],n.p[1]))items.push({g:"Points",t:n.ident+" · "+n.id,s:n.navType+" · "+(n.freq||""),open:b=>showNav(k,b)})});
-  st.wps.forEach((p,k)=>{if(near(p[0],p[1]))items.push({g:"Points",t:wpName(p,k),s:"Route waypoint "+(k+1),open:b=>showWp(k,b)})});
+  st.wps.forEach((p,k)=>{if(near(p[0],p[1]))items.push({g:"Points",t:"Waypoint "+(k+1),s:(p[2]?p[2]+" · ":"")+fmt(p),open:b=>showWp(k,b)})});
+  if(typeof awPtL!=="undefined"&&map.hasLayer(awPtL)&&map.getZoom()>=7.5)Object.keys(AIP_PT).forEach(id=>{const q=AIP_PT[id];if(NAVID.has(id)||!near(q[0],q[1]))return;
+    items.push({g:"Points",t:id,s:"Airway point · "+Object.keys(AIP_AWY).filter(k=>AWYS[k].includes(id)).join(", "),open:b=>awPtCard(id,b)})});
   const kindOf=o=>o.fir?"FIR":o.cat==="P"?"Prohibited":o.cat==="R"?"Restricted":o.cat==="D"?"Danger":/SECTOR/.test(o.it.id)?"ACC sector":/CTA/.test(o.it.id)?"CTA":/TMA/.test(o.it.id)?"TMA":"Airspace";
   if(!fromPoint||items.length)inspectAsp(ll).forEach(o=>items.push({g:"Airspace",t:o.fir?"JEDDAH FIR (OEJD)":o.it.id,s:kindOf(o)+" · "+o.it.u+" / "+o.it.l,hl:()=>highlightAsp(o.cat,o.it),open:b=>o.fir?showFir(o.it,b,ll):showAsp(o.cat,o.it,ll,b)}));
   if(!items.length)return;
@@ -1584,7 +1586,7 @@ const AW_LEGS=(()=>{const m=new Map();Object.keys(AIP_AWY).forEach(k=>{AIP_AWY[k
       L_.r.push({n:k,ow,trk,u:f.u,lo:f.lo,mfa:f.mfa,moca:f.moca,d:f.d})}})});return [...m.values()]})();
 // several ATS routes share this leg: list them first, each row opens that route's segment card
 function awLegList(Lg){suppress=Date.now();pinL.clearLayers();hlL.clearLayers();
-  L.polyline(gc([Lg.a[0],Lg.a[1]],[Lg.b[0],Lg.b[1]]),{color:"#1f2fe0",weight:6,opacity:.75,interactive:false}).addTo(pinL);
+  L.polyline(gc([Lg.a[0],Lg.a[1]],[Lg.b[0],Lg.b[1]]),{color:"#a528b9",weight:6,opacity:.75,interactive:false}).addTo(pinL);
   const sh=$("sheet");let html='<div class="sh-h"><div class="sh-t" style="text-align:left"><h2>Airway Segment</h2><div class="mono-s">'+Lg.r.length+' routes on this leg</div></div><button class="sh-x" id="shX" aria-label="Close">✕</button></div><div class="insp">';
   html+=Lg.r.map((r,k)=>{const rv=r.ow<0,a=rv?Lg.b[2]:Lg.a[2],b=rv?Lg.a[2]:Lg.b[2];
     return '<button class="insp-row" data-k="'+k+'"><span><b>'+escH(r.n)+' Airway Segment</b><small>'+escH(a+" – "+b)+(r.ow?" · one-way":"")+'</small></span><i>›</i></button>'}).join("")+'</div>';
@@ -1595,7 +1597,7 @@ function awLegCard(Lg,k,back){suppress=Date.now();pinL.clearLayers();
   const one=Lg.r[k||0];
   // start = the end the traffic flies from (for a one-way leg), otherwise the first point in the AIP listing
   const r0=one,rev=r0.ow<0,A=rev?Lg.b:Lg.a,B=rev?Lg.a:Lg.b,pA=[A[0],A[1]],pB=[B[0],B[1]],nm=dist(pA,pB),dA=decAt(pA),dB=decAt(pB);
-  L.polyline(gc(pA,pB),{color:"#1f2fe0",weight:6,opacity:.75,interactive:false}).addTo(pinL);
+  L.polyline(gc(pA,pB),{color:"#a528b9",weight:6,opacity:.75,interactive:false}).addTo(pinL);
   const kind=id=>{const n=NAV.find(x=>x.ident===id);return n?id+" ("+(n.navType==="VORTAC"?"VORTAC":"VOR")+")":id+" (Enroute fix)"};
   const t0=r0.trk!=null?(rev?(r0.trk+180)%360:r0.trk):null;
   const out=t0!=null?t0:Math.round(norm(brg(pA,pB)-dA)),inb=t0!=null?t0:Math.round(norm(brg(pB,pA)+180-dB));
@@ -1612,14 +1614,14 @@ function awLegCard(Lg,k,back){suppress=Date.now();pinL.clearLayers();
     note:"Saudi eAIP ENR 3.1 / 3.2, AIRAC AMDT 11/26. Published magnetic track where given, otherwise true minus the nearest VOR declination.",
     custom:[{label:"Show "+r0.n,small:"whole route",fn:()=>{closeSheet();awShowRoute(r0.n)}},{label:"Add "+A[2]+" → "+B[2],small:"to the route",cls:"go",fn:()=>{const n=appendFixes([{id:A[2],p:pA},{id:B[2],p:pB}]);closeSheet();toast("Added "+n+" points")}}]})}
 function awShowRoute(k){const R_=AIP_AWY[k];if(!R_)return;if(!st.showAip){st.showAip=true;$("aws").setAttribute("aria-pressed","true");save();awVis()}
-  pinL.clearLayers();const b=L.latLngBounds([]);R_.forEach(seg=>{L.polyline(seg.map(q=>[q[1],q[2]]),{color:"#1f2fe0",weight:6,opacity:.7,interactive:false}).addTo(pinL);seg.forEach(q=>b.extend([q[1],q[2]]))});
+  pinL.clearLayers();const b=L.latLngBounds([]);R_.forEach(seg=>{L.polyline(seg.map(q=>[q[1],q[2]]),{color:"#a528b9",weight:6,opacity:.7,interactive:false}).addTo(pinL);seg.forEach(q=>b.extend([q[1],q[2]]))});
   if(b.isValid())map.fitBounds(b.pad(0.12));
   const pts=R_[0];openSheet({title:k,sub:"ATS route · "+pts.length+" points",p:[pts[0][1],pts[0][2]],noDct:true,
     rows:[["Points",pts.map(q=>q[0]).join(" · ")],["Length",pts.slice(1).reduce((t,q,i)=>t+dist([pts[i][1],pts[i][2]],[q[1],q[2]]),0).toFixed(0)+" NM"]].concat(pts.some(q=>q[3]&&q[3].ow)?[["One-way legs",pts.filter(q=>q[3]&&q[3].ow).length+" of "+(pts.length-1)]]:[]),
     note:"Saudi eAIP ENR 3.1 / 3.2, AIRAC AMDT 11/26.",
     custom:[{label:"Add whole route",small:pts[0][0]+" → "+pts[pts.length-1][0],cls:"go",fn:()=>{const n=appendFixes(pts.map(q=>({id:q[0],p:[q[1],q[2]]})));closeSheet();toast("Added "+n+" points")}},
             {label:"Add reversed",small:pts[pts.length-1][0]+" → "+pts[0][0],fn:()=>{const n=appendFixes(pts.slice().reverse().map(q=>({id:q[0],p:[q[1],q[2]]})));closeSheet();toast("Added "+n+" points")}}]})}
-function awPtCard(id){const q=AIP_PT[id];if(!q)return;suppress=Date.now();pinL.clearLayers();const p=[q[0],q[1],id],dv=decAt(p);
+function awPtCard(id,back){const q=AIP_PT[id];if(!q)return;suppress=Date.now();pinL.clearLayers();const p=[q[0],q[1],id],dv=decAt(p);
   const on=Object.keys(AIP_AWY).filter(k=>AWYS[k].includes(id)),rows=[["Variation",Math.abs(dv).toFixed(1)+"° "+(dv<0?"W":"E")]];
   // each airway through this point: the next point either way, with magnetic course and distance (published values when the AIP has them)
   on.forEach(k=>AIP_AWY[k].forEach(seg=>seg.forEach((r,i)=>{if(r[0]!==id)return;
@@ -1627,7 +1629,7 @@ function awPtCard(id){const q=AIP_PT[id];if(!q)return;suppress=Date.now();pinL.c
       if(ow<0)return; // one-way the other way: no flying out of this point towards it
       const t=Math.round(norm(brg(p,[o[1],o[2]])-dv))%360||360,d=inf.d!=null?inf.d:dist(p,[o[1],o[2]]).toFixed(1);
       rows.push([k+" → "+o[0],String(t).padStart(3,"0")+"°M · "+d+" NM"+(ow>0?" · one-way":"")])})})));
-  openSheet({title:id,sub:"Significant point"+(on.length?" · "+on.join(", "):""),p,rows:rows.concat(relRows(p)),note:"Saudi eAIP ENR 3 / ENR 4.4, AIRAC AMDT 11/26."});
+  openSheet({title:id,sub:"Significant point"+(on.length?" · "+on.join(", "):""),back:back||null,p,rows:rows.concat(relRows(p)),note:"Saudi eAIP ENR 3 / ENR 4.4, AIRAC AMDT 11/26."});
   // highlight the tapped point (ring + coloured name tag); hlL is cleared when the card closes or another card opens
   L.marker([q[0],q[1]],{pane:"awsel",interactive:false,keyboard:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="aw-sel"><i></i><b>'+escH(id)+'</b></div>'})}).addTo(hlL)}
 AW_LEGS.forEach(Lg=>L.polyline([[Lg.a[0],Lg.a[1]],[Lg.b[0],Lg.b[1]]],{renderer:awR,color:"#000",weight:1.3,opacity:.9,bubblingMouseEvents:false}).on("click",()=>awLegCard(Lg)).addTo(awLL));
