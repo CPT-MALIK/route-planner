@@ -1326,12 +1326,12 @@ function inspectAt(ll,fromPoint){
 }));
 function aspVis(){const z=map.getZoom();
   if(st.showAsp!==false)firL.addTo(map);else map.removeLayer(firL);
-  [[aspL,aspLbl,st.showAsp!==false,6.5,8],[suaL,suaLbl,st.showSua!==false,7,8.5]].forEach(([g,lb,on,zmin,zl])=>{
+  /* airspace and P/R/D from zoom 8, like the airways */[[aspL,aspLbl,st.showAsp!==false,8,8],[suaL,suaLbl,st.showSua!==false,8,8]].forEach(([g,lb,on,zmin,zl])=>{
     if(on&&z>=zmin)g.addTo(map);else map.removeLayer(g);
     if(on&&z>=zl)lb.addTo(map);else map.removeLayer(lb)})}
 map.on("zoomend",aspVis);
 [["asp","showAsp"],["sua","showSua"]].forEach(([id,k])=>{$(id).setAttribute("aria-pressed",String(st[k]!==false));
-  $(id).onclick=()=>{st[k]=st[k]===false;$(id).setAttribute("aria-pressed",String(st[k]));save();aspVis();if(st[k]&&map.getZoom()<(id==="asp"?6.5:7))toast("Zoom in to see this layer")}});
+  $(id).onclick=()=>{st[k]=st[k]===false;$(id).setAttribute("aria-pressed",String(st[k]));save();aspVis();if(st[k]&&map.getZoom()<8)toast("Zoom in to see this layer")}});
 aspVis();
 
 // ---- aerodromes: list, names and traffic from Saudi eAIP AD 1.3 (AMDT 11/26); ARP from AD 2.2 (AMDT 11/26) where marked AIP
