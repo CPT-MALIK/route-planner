@@ -1168,8 +1168,9 @@ function drawAD(){
         if(E.ils){const sel=selIls===ad.icao+"/"+E.id,G=sel?"#3fae6a":"#55606e",tip=dest(p,L4*0.86,out),l=dest(p,L4,out-3.2),r=dest(p,L4,out+3.2),open=()=>showIls(ad,E,p,q);
           L.polygon([p,l,tip,r],{pane:"rwy",color:G,weight:2,fill:true,fillColor:"#fff",fillOpacity:0.01,interactive:true,bubblingMouseEvents:false}).on("click",open).addTo(adL);
           for(let k=1;k<=14;k++){const t=k/15;if(t>0.86)break;L.polyline([dest(p,L4*t,out),dest(p,L4*t,out+3.2)],{pane:"rwy",color:G,weight:1.2,interactive:false}).addTo(adL)}
-          const side=((out+270)%360),lp=dest(p,mPerPx(p[0])*(wpx/2+14)/1852,side),sx=Math.sin(side*D2R)>=0;
-          L.marker(lp,{pane:"rwylbl",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ilsbox'+(sel?' on':'')+'" style="'+(sx?'left:0':'right:0')+'">'+escH(E.ils[0])+(sel?' ILS':'')+'</div>'})}).on("click",open).addTo(adLblL)}
+          // tag just beyond the feather's tip, on the approach side: each ILS points its own way, so tags at crossing runways stay apart
+          const lp=dest(p,L4+mPerPx(p[0])*26/1852,out);
+          L.marker(lp,{pane:"rwylbl",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ilsbox'+(sel?' on':'')+'" style="left:0;transform:translate(-50%,-50%)">'+escH(E.ils[0])+(sel?' ILS':'')+'</div>'})}).on("click",open).addTo(adLblL)}
         const lp=dest(p,Math.min(dist(p,q)*0.3,mPerPx(p[0])*(Math.min(40,(wpx-Math.max(4,Math.round(wpx*0.2)))/2)+16)/1852),brg(p,q));
         L.marker(lp,{pane:"rwylbl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rwyid" style="transform:translate(-50%,-50%) rotate('+(((brg(p,q)+180)%360)-180)+'deg)">'+escH(E.id).replace(/^(\d+)([LRC])$/,'$1<br>$2')+'</div>'})}).addTo(adLblL);
       });
