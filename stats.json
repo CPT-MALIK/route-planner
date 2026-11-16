@@ -1,0 +1,18 @@
+{
+ "place_city": 78,
+ "place_village": 4135,
+ "place_town": 326,
+ "road_motorway": 7711,
+ "v_road": 582517,
+ "road_secondary": 39694,
+ "road_trunk": 11559,
+ "road_primary": 20792,
+ "road_tertiary": 74912,
+ "wadi_river": 39010,
+ "v_wadi": 1518466,
+ "wadi_stream": 103981,
+ "urban": 12369,
+ "v_urban": 125654,
+ "urban_small": 12818,
+ "wadi_wadi": 8
+}
