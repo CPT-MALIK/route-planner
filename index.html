@@ -585,15 +585,15 @@ const NAV_FULL_Z=10,NAV_MID_Z=9; // <9 small dot-in-circle; 9-10 boxed symbol + 
 const navMidSym=t=>{const c=11,r=7,f=x=>x.toFixed(2),hv=[...Array(6)].map((_,k)=>{const a=k*60*D2R;return[c+r*Math.cos(a),c+r*Math.sin(a)]}),hex=hv.map(p=>f(p[0])+","+f(p[1])).join(" ");
   const tabs=t==="VORTAC"?[1,3,5].map(k=>{const a=hv[k],b=hv[(k+1)%6],mx=(a[0]+b[0])/2-c,my=(a[1]+b[1])/2-c,l=Math.hypot(mx,my),nx=mx/l*3,ny=my/l*3;return '<polygon points="'+[a,b,[b[0]+nx,b[1]+ny],[a[0]+nx,a[1]+ny]].map(p=>f(p[0])+","+f(p[1])).join(" ")+'" fill="#000"/>'}).join(""):"";
   return '<svg viewBox="0 0 22 22" width="24" height="24" style="display:block;overflow:visible" stroke="#000" stroke-width="1.3">'+(t==="VORTAC"?"":'<rect x="2" y="2" width="18" height="18" fill="none"/>')+'<polygon points="'+hex+'" fill="#4a4a4a"/>'+tabs+'</svg>'};
-const navM=L.layerGroup();
+const navM=L.layerGroup(),NAVFULL=[]; // NAVFULL: [station, marker of its frequency box] for decluttering
 const navDot='<svg viewBox="0 0 22 22" width="22" height="22" style="display:block"><circle cx="11" cy="11" r="5.6" fill="none" stroke="#000" stroke-width="1.6"/><circle cx="11" cy="11" r="2.6" fill="#000"/></svg>';
 NAV.forEach((n,i)=>{
   const big=n.kind==="nav";
   if(!big){
     L.marker(n.p,{icon:L.divIcon({className:"hit",html:aptSVG,iconSize:[22,22],iconAnchor:[11,11]})}).on("click",()=>inspectAt(L.latLng(n.p[0],n.p[1]),true)).addTo(refL);
     L.marker(n.p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="ref" style="transform:translate(12px,-8px)">'+n.id+'</div>',iconSize:[0,0]})}).addTo(refL);return}
-  L.marker(n.p,{icon:L.divIcon({className:"hit",html:navSVG[n.navType](n.decl),iconSize:[44,44],iconAnchor:[22,22]})}).on("click",()=>inspectAt(L.latLng(n.p[0],n.p[1]),true)).addTo(navB);
-  L.marker(n.p,{interactive:false,icon:L.divIcon({className:"",html:'<fieldset class="navbox navfull" style="left:32px"><legend>'+escH(n.id)+'</legend><span class="navcls">D</span>'+fmtF(n.freq)+'&ensp;'+n.ident+'</fieldset>',iconSize:[0,0]})}).addTo(navB);
+  L.marker(n.p,{icon:L.divIcon({className:"hit navrose",html:navSVG[n.navType](n.decl),iconSize:[44,44],iconAnchor:[22,22]})}).on("click",()=>inspectAt(L.latLng(n.p[0],n.p[1]),true)).addTo(navB);
+  NAVFULL.push([n,L.marker(n.p,{interactive:false,icon:L.divIcon({className:"",html:'<fieldset class="navbox navfull" style="left:32px"><legend>'+escH(n.id)+'</legend><span class="navcls">D</span>'+fmtF(n.freq)+'&ensp;'+n.ident+'</fieldset>',iconSize:[0,0]})}).addTo(navB)]);
   L.marker(n.p,{icon:L.divIcon({className:"hit",html:'<div style="padding:5px">'+navMidSym(n.navType)+'</div>',iconSize:[34,34],iconAnchor:[17,17]})}).on("click",()=>inspectAt(L.latLng(n.p[0],n.p[1]),true)).addTo(navM);
   L.marker(n.p,{interactive:false,icon:L.divIcon({className:"",html:'<fieldset class="navbox"><legend>'+escH(n.id)+'</legend>'+n.ident+'</fieldset>',iconSize:[0,0]})}).addTo(navM);
   L.marker(n.p,{icon:L.divIcon({className:"hit",html:'<div style="padding:6px">'+navDot+'</div>',iconSize:[34,34],iconAnchor:[17,17]})}).on("click",()=>inspectAt(L.latLng(n.p[0],n.p[1]),true)).addTo(navS);
@@ -1150,7 +1150,7 @@ function showIls(ad,E,p,q){suppress=Date.now();pinL.clearLayers();
 // at the threshold or a little inside), keeping a fixed size on screen. The first free spot is used: not over another tag,
 // an airport ident, a VOR box or a runway. Only if none is free does the tag move out along its approach line.
 function placeIlsTags(tags,segs){if(map.getZoom()<12)return; /* tags from zoom 12; runway and feathers stay from 11 */const mc=map.getContainer(),mr=mc.getBoundingClientRect(),placed=[];
-  const obs=[...mc.querySelectorAll(".aptid,.navbox")].map(e=>{const r=e.getBoundingClientRect();return[r.left-mr.left,r.top-mr.top,r.right-mr.left,r.bottom-mr.top]}).filter(b=>b[2]>b[0]);
+  const obs=[...mc.querySelectorAll(".aptid,.navrose")].map(e=>{const r=e.getBoundingClientRect();return[r.left-mr.left,r.top-mr.top,r.right-mr.left,r.bottom-mr.top]}).filter(b=>b[2]>b[0]);
   const S=segs.map(([a,b,w])=>[map.latLngToContainerPoint(a),map.latLngToContainerPoint(b),w/2+3]);
   const ov=(a,b)=>a[0]<b[2]&&b[0]<a[2]&&a[1]<b[3]&&b[1]<a[3];
   const onRwy=bx=>S.some(([A,B,hw])=>{const n=Math.max(2,Math.ceil(A.distanceTo(B)/8));
@@ -1163,7 +1163,8 @@ function placeIlsTags(tags,segs){if(map.getZoom()<12)return; /* tags from zoom 1
     const pick=cand.find(q=>{const b=box(q);return!placed.some(o=>ov(b,o))&&!obs.some(o=>ov(b,o))&&!onRwy(b)})||cand[0];
     placed.push(box(pick));
     L.marker(map.containerPointToLatLng(pick),{pane:"rwylbl",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ilsbox'+(t.sel?' on':'')+'" style="left:0;transform:translate(-50%,-50%)">'+escH(t.txt)+'</div>'})}).on("click",t.open).addTo(adLblL)})}
-function drawAD(){const ilsTags=[],rwySegs=[];
+let lastRwySegs=[];
+function drawAD(){const ilsTags=[],rwySegs=[];lastRwySegs=rwySegs;
   adL.clearLayers();adLblL.clearLayers();const z=map.getZoom();
   if(z<11||st.showApt===false){map.removeLayer(adL);map.removeLayer(adLblL);return}
   adL.addTo(map);if(z>=11)adLblL.addTo(map);else map.removeLayer(adLblL);
@@ -1223,6 +1224,31 @@ function showRwy(ad,A,B,dim){
             {label:"Copy THR "+A.id,small:A.thr,fn:()=>copyTxt(A.thr)},{label:"Copy THR "+B.id,small:B.thr,fn:()=>copyTxt(B.thr)}]});
 }
 map.on("moveend",drawAD);
+// ---- VOR frequency boxes (zoom 10+): like the charting app the user showed, a box that would cover a runway, an airport ident,
+// an ILS tag, another station or another box moves to the first free spot around its station (right, left, above, below,
+// the corners, then further out) and a small arrow points back to the station. Runs after drawAD on every move.
+function navDeclutter(){if(map.getZoom()<NAV_FULL_Z||!map.hasLayer(navL))return;
+  const mc=map.getContainer(),mr=mc.getBoundingClientRect(),sz=map.getSize(),placed=[];
+  const rect=e=>{const r=e.getBoundingClientRect();return[r.left-mr.left,r.top-mr.top,r.right-mr.left,r.bottom-mr.top]};
+  const obs=[...mc.querySelectorAll(".aptid,.ilsbox,.navrose,.wpi")].map(e=>{const b=rect(e);b.rose=e.classList.contains("navrose");return b}).filter(b=>b[2]>b[0]);
+  const S=lastRwySegs.map(([a,b,w])=>[map.latLngToContainerPoint(a),map.latLngToContainerPoint(b),w/2+3]);
+  const ov=(a,b)=>a[0]<b[2]&&b[0]<a[2]&&a[1]<b[3]&&b[1]<a[3];
+  const onRwy=bx=>S.some(([A,B,hw])=>{const n=Math.max(2,Math.ceil(A.distanceTo(B)/8));
+    for(let k=0;k<=n;k++){const x=A.x+(B.x-A.x)*k/n,y=A.y+(B.y-A.y)*k/n;if(x>bx[0]-hw&&x<bx[2]+hw&&y>bx[1]-hw&&y<bx[3]+hw)return true}return false});
+  NAVFULL.forEach(([n,mk])=>{const el=mk.getElement(),fs=el&&el.querySelector("fieldset");if(!fs)return;
+    const c=map.latLngToContainerPoint(n.p);if(c.x<-300||c.y<-200||c.x>sz.x+300||c.y>sz.y+200)return;
+    const w=fs.offsetWidth,h=fs.offsetHeight,y0=-h*0.58;
+    const C=[[32,y0],[-32-w,y0],[-w/2,-36-h],[-w/2,36],[26,-30-h],[-26-w,-30-h],[26,30],[-26-w,30],[64,y0],[-64-w,y0],[-w/2,-70-h],[-w/2,70],[60,-60-h],[-60-w,-60-h],[60,60],[-60-w,60]];
+    const own=o=>o.rose&&o[0]<=c.x&&c.x<=o[2]&&o[1]<=c.y&&c.y<=o[3]; // only the station's own symbol is ignored
+    const free=([dx,dy])=>{const b=[c.x+dx-2,c.y+dy-2,c.x+dx+w+2,c.y+dy+h+2];return!placed.some(o=>ov(b,o))&&!obs.some(o=>!own(o)&&ov(b,o))&&!onRwy(b)};
+    let k=C.findIndex(free);if(k<0)k=0;const[dx,dy]=C[k];placed.push([c.x+dx,c.y+dy,c.x+dx+w,c.y+dy+h]);
+    fs.style.left=dx+"px";fs.style.top=dy+"px";fs.style.transform="none";
+    let ld=el.querySelector(".navlead");if(ld)ld.remove();
+    if(k>0){const px=Math.max(dx,Math.min(0,dx+w)),py=Math.max(dy,Math.min(0,dy+h)),d=Math.hypot(px,py)||1,r=26,ex=px/d*r,ey=py/d*r,ux=-px/d,uy=-py/d;
+      const hx=ex-ux*7,hy=ey-uy*7,ax=hx-uy*3.5,ay=hy+ux*3.5,bx=hx+uy*3.5,by=hy-ux*3.5;
+      el.insertAdjacentHTML("beforeend",'<svg class="navlead" width="1" height="1" style="position:absolute;left:0;top:0;overflow:visible;pointer-events:none"><line x1="'+px.toFixed(1)+'" y1="'+py.toFixed(1)+'" x2="'+hx.toFixed(1)+'" y2="'+hy.toFixed(1)+'" stroke="#000" stroke-width="1.3"/><polygon points="'+ex.toFixed(1)+','+ey.toFixed(1)+' '+ax.toFixed(1)+','+ay.toFixed(1)+' '+bx.toFixed(1)+','+by.toFixed(1)+'" fill="#000"/></svg>')}})}
+map.on("moveend",navDeclutter);map.on("zoomend",()=>setTimeout(navDeclutter,0));
+
 
 // Saudi FIR boundary over the sea (Red Sea / Arabian Gulf): drawn like the national border; legs that run along land borders are skipped
 function drawSeaBoundary(it){
