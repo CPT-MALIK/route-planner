@@ -978,12 +978,13 @@ async function osmDecode(b64){const bin=Uint8Array.from(atob(b64),c=>c.charCodeA
   for(const k of Object.keys(OSMB))OSM.L[k]=await osmDecode(OSMB[k]);OSM.ready=true;osmDraw()}catch(e){console.warn("OSM layer",e)}})();
 const osmCv=L.DomUtil.create("canvas","leaflet-zoom-animated",map.getPane("osm"));let osmBounds=null;
 // style per zoom: [layer, min zoom, colour, width at z9, fill]
-const OSM_STY=[["u",9,"rgba(250,236,140,.85)",0,1],["w",9,"#6e96d7",1.3],["t",11,"#eba078",1.2],["s",9,"#e6783c",1.5],["p",9,"#e1502a",2],["m",7,"#c82828",2.4]];
+const OSM_MINZ=11; // the whole offline OSM layer (and its town names) shows from this zoom
+const OSM_STY=[["u",11,"rgba(250,236,140,.85)",0,1],["w",11,"#6e96d7",1.3],["t",11,"#eba078",1.2],["s",11,"#e6783c",1.5],["p",11,"#e1502a",2],["m",11,"#c82828",2.4]];
 function osmDraw(){if(!OSM.ready||G.on)return;const z=map.getZoom(),sz=map.getSize(),dpr=window.devicePixelRatio||1;
   const tl=map.containerPointToLayerPoint([0,0]);L.DomUtil.setPosition(osmCv,tl);
   osmCv.width=sz.x*dpr;osmCv.height=sz.y*dpr;osmCv.style.width=sz.x+"px";osmCv.style.height=sz.y+"px";
   const c=osmCv.getContext("2d");c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,sz.x,sz.y);osmBounds=map.getBounds();osmC0=map.getCenter();osmZ0=z;
-  if(z<7)return;const vb=osmBounds.pad(0.05),W=vb.getWest(),S=vb.getSouth(),E=vb.getEast(),N=vb.getNorth();
+  if(z<OSM_MINZ)return;const vb=osmBounds.pad(0.05),W=vb.getWest(),S=vb.getSouth(),E=vb.getEast(),N=vb.getNorth();
   const sc=256*2**z,o=map.project(map.containerPointToLatLng([0,0]),z),X=lo=>(lo/1e5+180)/360*sc-o.x,
     Y=la=>{const s=Math.sin(la/1e5*Math.PI/180);return(0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*sc-o.y},wf=z<9?0.8:z<11?1:z<13?1.5:2;
   c.lineJoin="round";c.lineCap="round";
@@ -1000,10 +1001,10 @@ map.on("moveend zoomend resize",osmDraw);
 L.control.attribution({prefix:false,position:"bottomleft"}).addAttribution('Roads, wadis, towns © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors').addTo(map);
 const CITIES=[[1,"Riyadh",24.7136,46.6753],[1,"Jeddah",21.4858,39.1925],[1,"Makkah",21.3891,39.8579],[1,"Madinah",24.5247,39.5692],[1,"Dammam",26.4207,50.0888],[2,"Taif",21.2703,40.4158],[2,"Tabuk",28.3835,36.5662],[2,"Buraydah",26.326,43.975],[2,"Khamis Mushait",18.3,42.7333],[2,"Abha",18.2164,42.5053],[2,"Hail",27.5114,41.7208],[2,"Najran",17.4917,44.1322],[2,"Jazan",16.8892,42.5511],[2,"Al Hofuf",25.3647,49.5856],[2,"Al Jubail",27.0046,49.646],[2,"Al Khobar",26.2172,50.1971],[2,"Yanbu",24.0895,38.0618],[2,"Al Kharj",24.1556,47.3346],[2,"Hafar Al-Batin",28.4328,45.9708],[2,"Arar",30.9753,41.0381],[2,"Sakaka",29.9697,40.2064],[2,"Al Bahah",20.0129,41.4677],[3,"Al Qurayyat",31.3318,37.3428],[3,"Turaif",31.6725,38.6637],[3,"Rafha",29.6202,43.4948],[3,"AlUla",26.6085,37.9232],[3,"Unaizah",26.0843,43.9935],[3,"Al Majmaah",25.9036,45.3456],[3,"Wadi ad-Dawasir",20.4607,44.7802],[3,"Bisha",20.0006,42.6052],[3,"Sharurah",17.4667,47.1167],[3,"Al Wajh",26.2455,36.4525],[3,"Duba",27.3513,35.6901],[3,"Umluj",25.0213,37.2685],[3,"Rabigh",22.7986,39.0349],[3,"Al Lith",20.15,40.2667],[3,"Al Qunfudhah",19.1264,41.0789],[3,"Ras Tanura",26.6439,50.1597],[3,"Al Khafji",28.4391,48.4913],[3,"Al Zulfi",26.2996,44.8155],[3,"Dawadmi",24.5077,44.3924],[3,"Afif",23.9065,42.9172],[3,"Al Aflaj",22.2833,46.7167],[3,"Haql",29.2833,34.9333],[3,"Tayma",27.6333,38.55],[3,"Khaybar",25.697,39.292],[3,"Salwa",24.7167,50.7667],[3,"Al Qaisumah",28.3167,46.1333]];
 {const near=(la,lo)=>CITIES.some(c=>Math.abs(c[2]-la)<0.06&&Math.abs(c[3]-lo)<0.06);
-  OSM_TOWNS.forEach(([t,n,la,lo])=>{if(n&&!near(la,lo))CITIES.push([t?4:3,n,la,lo])})}
+  OSM_TOWNS.forEach(([t,n,la,lo])=>{if(n&&!near(la,lo))CITIES.push([4,n,la,lo])})}
 map.createPane("cities").style.zIndex=176;map.getPane("cities").style.pointerEvents="none";
 const cityL=L.layerGroup();
-function drawCities(){cityL.clearLayers();const z=map.getZoom();const maxT=z<5?0:z<6?1:z<7?2:z<9?3:4;const vb=map.getBounds().pad(0.1);
+function drawCities(){cityL.clearLayers();const z=map.getZoom();const maxT=z<5?0:z<6?1:z<7?2:z<OSM_MINZ?3:4;const vb=map.getBounds().pad(0.1);
   CITIES.forEach(([t,n,la,lo])=>{if(t>maxT||(t>=3&&!vb.contains([la,lo])))return;
     L.marker([la,lo],{pane:"cities",keyboard:false,interactive:false,icon:L.divIcon({className:"",iconSize:[28,28],iconAnchor:[14,14],html:'<div class="cdot t'+t+'"></div><div class="cnm t'+t+'">'+escH(n)+'</div>'})}).addTo(cityL)})}
 function showCity(n,la,lo,back){suppress=Date.now();pinL.clearLayers();openSheet({title:n,sub:"City · Saudi Arabia",back:back||null,p:[la,lo,n.toUpperCase().replace(/[^A-Z]/g,"").slice(0,8)],note:"City-centre position, approximate.",rows:relRows([la,lo])})}
