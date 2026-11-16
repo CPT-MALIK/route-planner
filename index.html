@@ -789,7 +789,6 @@ function relRows(p,skipNav){
   const rows=[],v=variation();
   const near=nearestNav(p,skipNav||null);
   if(near&&dist(near.p,p)>0.05)rows.push(["Nearest · "+near.ident+(near.declApprox?"*":""),"R-"+deg3(brg(near.p,p)-near.decl)+" / "+dist(near.p,p).toFixed(1)+" NM"]);
-  if(REFNAV&&REFNAV!==near&&REFNAV!==skipNav){rows.push(["From "+REFNAV.ident,"R-"+deg3(brg(REFNAV.p,p)-REFNAV.decl)+" / "+dist(REFNAV.p,p).toFixed(1)+" NM"])}
   if(ownPos&&dist(ownPos,p)>0.05){const b=brg(ownPos,p),d=dist(ownPos,p);rows.push(["From present position",deg3(b)+"T / "+deg3(b-v)+"M · "+d.toFixed(1)+" NM"])}
   return rows;
 }
