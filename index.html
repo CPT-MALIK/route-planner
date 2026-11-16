@@ -544,7 +544,7 @@ const SYM=(function(){const c=32,r=7.5,f=n=>n.toFixed(2),K="#000";
 const navSVG=SYM;
 const aptSVG='<svg viewBox="0 0 22 22" width="22" height="22"><circle cx="11" cy="11" r="7" fill="var(--chart)" stroke="var(--ref)" stroke-width="2.6"/><circle cx="11" cy="11" r="2.4" fill="var(--ref)"/></svg>';
 const navL=L.layerGroup(),navB=L.layerGroup(),navS=L.layerGroup();
-const NAV_FULL_Z=9,NAV_MID_Z=7.5; // <7.5 small dot-in-circle; 7.5-9 boxed symbol + name box; >=9 full compass rose
+const NAV_FULL_Z=10,NAV_MID_Z=9; // <9 small dot-in-circle; 9-10 boxed symbol + name box; >=10 full compass rose with frequency
 const navMidSym=t=>{const c=11,r=7,f=x=>x.toFixed(2),hv=[...Array(6)].map((_,k)=>{const a=k*60*D2R;return[c+r*Math.cos(a),c+r*Math.sin(a)]}),hex=hv.map(p=>f(p[0])+","+f(p[1])).join(" ");
   const tabs=t==="VORTAC"?[1,3,5].map(k=>{const a=hv[k],b=hv[(k+1)%6],mx=(a[0]+b[0])/2-c,my=(a[1]+b[1])/2-c,l=Math.hypot(mx,my),nx=mx/l*3,ny=my/l*3;return '<polygon points="'+[a,b,[b[0]+nx,b[1]+ny],[a[0]+nx,a[1]+ny]].map(p=>f(p[0])+","+f(p[1])).join(" ")+'" fill="#000"/>'}).join(""):"";
   return '<svg viewBox="0 0 22 22" width="24" height="24" style="display:block;overflow:visible" stroke="#000" stroke-width="1.3">'+(t==="VORTAC"?"":'<rect x="2" y="2" width="18" height="18" fill="none"/>')+'<polygon points="'+hex+'" fill="#4a4a4a"/>'+tabs+'</svg>'};
