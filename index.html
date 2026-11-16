@@ -1203,16 +1203,15 @@ function showAsp(cat,it,ll,back){
   const rows=[["Upper limit",it.u],["Lower limit",it.l]];if(it.c)rows.push(["Class",it.c]);if(it.n)rows.push(["Related",it.n]);
   const lp=aspLabelPt(it);
   if(/SECTOR/.test(it.id))kind="ACC sector";
-  openSheet({title:it.id,sub:kind,back:back||null,p:[ll.lat,ll.lng],rows,note:"Source: "+ASP_SRC[cat]+". Check NOTAMs for activation.",
-    custom:[{label:"Zoom to area",small:it.id,fn:()=>{const b=L.latLngBounds([]);it.g.forEach(s=>decodeSeg(s).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.15))}}, // keep the card and the area shading until the card is closed
-            {label:"Add To Route",small:"tapped point",cls:"go",fn:()=>{st.wps.push([ll.lat,ll.lng]);update();closeSheet();toast("Added as waypoint "+st.wps.length)}}
+  openSheet({title:it.id,sub:kind,back:back||null,p:[ll.lat,ll.lng],noDct:true,rows,note:"Source: "+ASP_SRC[cat]+". Check NOTAMs for activation.",
+    custom:[{label:"Zoom to area",small:it.id,fn:()=>{const b=L.latLngBounds([]);it.g.forEach(s=>decodeSeg(s).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.15))}} // keep the card and the area shading until the card is closed; an area gets no Direct To / Add To Route
             ]});
   highlightAsp(cat,it);
 }
 const ASP_ITEMS=[];
 const firL=L.layerGroup();
 function showFir(it,back,ll){suppress=Date.now();pinL.clearLayers();
-  openSheet({title:"OEJD",sub:"JEDDAH (FIR)",back:back||null,p:ll?[ll.lat,ll.lng]:[24.2,44.6],
+  openSheet({title:"OEJD",sub:"JEDDAH (FIR)",back:back||null,noDct:true,p:ll?[ll.lat,ll.lng]:[24.2,44.6],
     rows:[["Type","FIR"],["Upper limit",it.u==="UNL"?"Unlimited":it.u],["Lower limit",it.l==="SFC"?"GND":it.l],["ICAO","OEJD"]],
     note:"Source: "+ASP_SRC.A+". Over the sea the line shown is the FIR boundary; over land it follows the national border.",
     custom:[{label:"Zoom to FIR",small:"whole FIR",fn:()=>{const b=L.latLngBounds([]);it.g.forEach(sg=>decodeSeg(sg).forEach(p=>b.extend(p)));map.fitBounds(b.pad(0.05))}}]});
