@@ -1149,7 +1149,7 @@ function showIls(ad,E,p,q){suppress=Date.now();pinL.clearLayers();
 // ILS tags, like the charting app the user showed: a small tag beside the runway end it serves (right or left of the runway,
 // at the threshold or a little inside), keeping a fixed size on screen. The first free spot is used: not over another tag,
 // an airport ident, a VOR box or a runway. Only if none is free does the tag move out along its approach line.
-function placeIlsTags(tags,segs){const mc=map.getContainer(),mr=mc.getBoundingClientRect(),placed=[];
+function placeIlsTags(tags,segs){if(map.getZoom()<12)return; /* tags from zoom 12; runway and feathers stay from 11 */const mc=map.getContainer(),mr=mc.getBoundingClientRect(),placed=[];
   const obs=[...mc.querySelectorAll(".aptid,.navbox")].map(e=>{const r=e.getBoundingClientRect();return[r.left-mr.left,r.top-mr.top,r.right-mr.left,r.bottom-mr.top]}).filter(b=>b[2]>b[0]);
   const S=segs.map(([a,b,w])=>[map.latLngToContainerPoint(a),map.latLngToContainerPoint(b),w/2+3]);
   const ov=(a,b)=>a[0]<b[2]&&b[0]<a[2]&&a[1]<b[3]&&b[1]<a[3];
