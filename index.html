@@ -2363,8 +2363,8 @@ window.__procSet=procSet;
   function aptsList(){const p=chEl("chpop");p.scrollTop=0;
     p.innerHTML='<div class="ph"><input id="chQ" type="search" placeholder="Search airport" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="cancel" id="chQX">Cancel</button></div><div id="chR"></div>';p.hidden=false;
     const run=()=>{const q=chEl("chQ").value.trim().toUpperCase(),cur=chApt();
-      const R=APTS.filter(a=>!q||a[0].includes(q)||a[1].toUpperCase().includes(q)).sort((a,b)=>a[0].localeCompare(b[0]));
-      chEl("chR").innerHTML=R.length?R.map(a=>'<button class="it'+(a[0]===cur?' on':'')+'" data-k="'+a[0]+'"><b>'+a[0]+'</b><span>'+escH(a[1])+'</span></button>').join(""):'<div class="empty">No airport found</div>';
+      const R=q?APTS.filter(a=>a[0].includes(q)||a[1].toUpperCase().includes(q)).sort((a,b)=>a[0].localeCompare(b[0])):[];
+      chEl("chR").innerHTML=!q?"":R.length?R.map(a=>'<button class="it'+(a[0]===cur?' on':'')+'" data-k="'+a[0]+'"><b>'+a[0]+'</b><span>'+escH(a[1])+'</span></button>').join(""):'<div class="empty">No airport found</div>';
       chEl("chR").querySelectorAll(".it").forEach(b=>b.onclick=()=>{st.chApt=b.dataset.k;save();chClosePop();toast(b.dataset.k+" selected")})};
     chEl("chQ").oninput=run;chEl("chQ").addEventListener("search",run);chEl("chQX").onclick=chClosePop;run();requestAnimationFrame(run);setTimeout(run,150)}
 
