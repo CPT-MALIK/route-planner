@@ -161,6 +161,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #chvBox{flex:1;position:relative;overflow:hidden;background:#fff;touch-action:none}
 #chvImg{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 #chvOwn{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;color:var(--own,#e0218a)}
+#chvZ{position:absolute;left:10px;bottom:max(10px,env(safe-area-inset-bottom,0px));padding:4px 9px;border-radius:9px;background:rgba(0,0,0,.6);color:#fff;font:600 14px var(--mono,monospace);pointer-events:none}
+:root[data-map="dark"] #chvZ{background:rgba(255,255,255,.18)}
 #chvOwn .plane{width:56px;height:56px;display:block;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff)}
 #chvOwn>div{animation:ownBlink 1s ease-in-out infinite}
 @keyframes ownBlink{0%,100%{opacity:1}50%{opacity:.2}}
@@ -490,7 +492,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
     <div class="chpop" id="chpop" hidden></div>
     <div class="chv" id="chv" hidden>
       <div class="chv-h"><div class="chv-t"><b id="chvT"></b><span id="chvS"></span></div><button class="sh-x" id="chvX" aria-label="Close chart">✕</button></div>
-      <div id="chvBox"><img id="chvImg" alt="" draggable="false"><div id="chvMsg"></div><div id="chvOwn" hidden></div></div>
+      <div id="chvBox"><img id="chvImg" alt="" draggable="false"><div id="chvMsg"></div><div id="chvOwn" hidden></div><div id="chvZ"></div></div>
     </div>
     <div class="srch" id="srch"><label class="srch-f"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><input id="srchIn" type="search" placeholder="Search" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="search"></label><button id="srchX" type="button" hidden>Cancel</button><div class="srch-r" id="srchR" hidden></div></div>
     <div class="tbar" id="tbar">
@@ -1711,7 +1713,8 @@ function chOwnDraw(){const el=chEl("chvOwn");if(!el)return;const g=chCur&&chCur.
   if(px<c[0]||px>c[2]||py<c[1]||py>c[3]){el.hidden=true;return}
   el.hidden=false;el.innerHTML='<div style="transform:translate(-28px,-28px) rotate('+(isFinite(chOwnH)&&chOwnH!==null?chOwnH:0)+'deg)">'+planeSVG+'</div>';
   el.style.transform="translate("+(CV.x+px*CV.s)+"px,"+(CV.y+py*CV.s)+"px)"}
-function cvApply(){chEl("chvImg").style.transform="translate("+CV.x+"px,"+CV.y+"px) scale("+CV.s+")";chOwnDraw()}
+function cvApply(){chEl("chvImg").style.transform="translate("+CV.x+"px,"+CV.y+"px) scale("+CV.s+")";chOwnDraw();
+  const z=chEl("chvZ");if(z)z.textContent="\u00d7"+(CV.min>0?CV.s/CV.min:1).toFixed(1)}
 function cvClamp(){const b=chEl("chvBox"),W=b.clientWidth,H=b.clientHeight,iw=CV.w*CV.s,ih=CV.h*CV.s;
   CV.x=iw<=W?(W-iw)/2:Math.min(0,Math.max(W-iw,CV.x));CV.y=ih<=H?(H-ih)/2:Math.min(0,Math.max(H-ih,CV.y))}
 function cvFit(){const b=chEl("chvBox"),W=b.clientWidth,H=b.clientHeight;CV.s=Math.min(W/CV.w,H/CV.h);CV.min=CV.s;CV.x=0;CV.y=0;cvClamp();cvApply()}
