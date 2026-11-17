@@ -1842,9 +1842,10 @@ awVis();
   function draw(){
     if(!st.showRng){box.hidden=true;return}box.hidden=false;
     const sz=map.getSize(),cx=sz.x/2,cy=sz.y/2,c=map.getCenter();
-    const pa=map.latLngToContainerPoint(L.latLng(dest([c.lat,c.lng],1,0))),pb=map.latLngToContainerPoint(L.latLng(dest([c.lat,c.lng],1,180)));
-    const ppn=Math.abs(pb.y-pa.y)/2;if(!(ppn>0)){box.innerHTML="";return}
-    const R=62,maxR=0.46*Math.min(sz.x,sz.y);let u=UN[0];UN.forEach(x=>{if(4*x*ppn<=maxR)u=x});
+    const z=map.getZoom(),pp=(la,lo)=>{const a=map.project(L.latLng(dest([la,lo],50,0)),z),b=map.project(L.latLng(dest([la,lo],50,180)),z);return Math.abs(b.y-a.y)/100};
+    /* exact (unrounded) pixels per NM here; ring values are chosen from a fixed reference latitude so they only change when you zoom, not when you pan */
+    const ppn=pp(c.lat,c.lng),pr=pp(24,c.lng);if(!(ppn>0)){box.innerHTML="";return}
+    const R=62,maxR=0.46*Math.min(sz.x,sz.y);let u=UN[0];UN.forEach(x=>{if(4*x*pr<=maxR)u=x});
     let h='<svg width="'+sz.x+'" height="'+sz.y+'" viewBox="0 0 '+sz.x+' '+sz.y+'">';
     const tag=(x,y,t,rot,cls)=>'<g transform="translate('+x.toFixed(1)+','+y.toFixed(1)+')'+(rot?' rotate('+rot+')':'')+'"><rect class="'+(cls||"rb")+'" x="'+(-(t.length*3.4+6)).toFixed(1)+'" y="-8" width="'+(t.length*6.8+12).toFixed(1)+'" height="16" rx="2"/><text y="4" text-anchor="middle">'+t+'</text></g>';
     [2,3,4].forEach(k=>{const r=k*u*ppn;if(r<R+16)return;
