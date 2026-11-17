@@ -46,13 +46,15 @@
 :root[data-map="dark"] .aw-pn{color:#e9edf2;text-shadow:0 0 2px #000,0 0 2px #000,0 0 3px #000}
 #rngov{position:absolute;inset:0;z-index:500;pointer-events:none;color:#15181c}
 #rngov svg{position:absolute;left:0;top:0;overflow:visible}
-#rngov .rr{fill:none;stroke:#8d9196;stroke-width:3;opacity:.8}
+#rngov .rr{fill:none;stroke:#fff;stroke-width:3;opacity:.9}
+:root[data-map="light"] #rngov .rr{stroke:#000;opacity:.85}
+:root[data-map="dark"] #rngov .rr{stroke:#9a9fa6;opacity:.9}
 #rngov .rose line,#rngov .rose circle{stroke:currentColor}
 #rngov .rb{fill:#5b5f66;opacity:.92}#rngov .rt{fill:#a0179a}
 #rngov text{font:700 10px var(--sans);fill:#fff}
 #rngov .rc1{fill:rgba(150,140,245,.38);stroke:#8379dc;stroke-width:1.2}#rngov .rc2{fill:rgba(255,255,255,.4);stroke:#8379dc;stroke-width:1.2}
 #rngov .rx{stroke:#6c63c4;stroke-width:1}#rngov .ra{fill:#a0179a}
-:root[data-map="dark"] #rngov{color:#e3e7ec}:root[data-map="sat"] #rngov .rose{filter:drop-shadow(0 0 1.5px #fff)}
+:root[data-map="dark"] #rngov{color:#e3e7ec}:root[data-map="sat"] #rngov{color:#fff}:root[data-map="sat"] #rngov .rose,:root[data-map="sat"] #rngov .rr{filter:drop-shadow(0 0 1.5px rgba(0,0,0,.7))}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;margin:0}
 *{box-sizing:border-box}
