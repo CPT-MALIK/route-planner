@@ -434,6 +434,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button id="aws" aria-label="Show or hide ATS routes" title="ATS routes (ENR 3)" aria-pressed="true" style="font-size:11px">AWY</button>
       <button id="cht" aria-label="Airport charts" title="Charts" aria-pressed="false" style="font-size:11px">CHT</button>
       <button id="rul" aria-label="Measuring ruler" title="Ruler" aria-pressed="false" style="font-size:11px">RUL</button>
+      <button id="grd" aria-label="Show or hide the latitude/longitude grid" title="Grid" aria-pressed="true" style="font-size:11px">GRD</button>
     </div>
     <div class="chrail" id="chrail" hidden>
       <button id="chApt" class="chr-apt">—<span>▾</span></button>
@@ -557,7 +558,7 @@ const gridL=L.layerGroup().addTo(map), awyL=L.layerGroup().addTo(map), refL=L.la
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 map.createPane("grid").style.zIndex=160;map.getPane("grid").style.pointerEvents="none"; // under borders (170) so borders on a whole degree are not hidden
 function drawGrid(){
-  gridL.clearLayers();const b=map.getBounds(),z=map.getZoom();
+  gridL.clearLayers();if(st.showGrid===false)return;const b=map.getBounds(),z=map.getZoom();
   const step=z>=10?1/6:z>=8.5?0.5:z>=6?1:5;const col=css("--grid");
   const s=Math.max(-85,b.getSouth()),n=Math.min(85,b.getNorth()),w=b.getWest(),e=b.getEast();
   for(let la=Math.floor(s/step)*step;la<=n;la+=step){const strong=Math.abs(la-Math.round(la))<1e-6;L.polyline([[la,w],[la,e]],{pane:"grid",color:col,weight:strong?1.4:0.7,interactive:false}).addTo(gridL);
@@ -1628,6 +1629,8 @@ function rulOn(){const c=map.getSize(),y=c.y*0.5;rulA=map.containerPointToLatLng
   rulL.addTo(map);rulDraw()}
 function rulOff(){map.removeLayer(rulL);rulL.removeLayer(rulHA);rulL.removeLayer(rulHB);rulL.removeLayer(rulHM);rulHA=rulHB=rulHM=rulA=rulB=null;rulMv=null;rulG.clearLayers()}
 map.on("zoomend viewreset",()=>{if(rulA)rulDraw()});
+$("grd").setAttribute("aria-pressed",String(st.showGrid!==false));
+$("grd").onclick=()=>{st.showGrid=st.showGrid===false;$("grd").setAttribute("aria-pressed",String(st.showGrid));save();drawGrid()};
 $("rul").onclick=()=>{const on=$("rul").getAttribute("aria-pressed")!=="true";$("rul").setAttribute("aria-pressed",String(on));on?rulOn():rulOff()};
 // ---- airport charts (official Saudi eAIP AD 2 charts, converted to images and published with the page)
 const CHARTS={"OEPS":[{"k":"APP","t":"ILS or LOC RWY 17L","rwy":"17L","pg":"21","amdt":"10/26","date":"17 SEP 2026","f":"charts/OEPS/AD2-OEPS-21.webp","w":2480,"h":3509,"geo":{"lon":[2270.4,-107236.33],"lat":[-2464.2,60707.07],"clip":[289,455,2247,2299]}}]};
