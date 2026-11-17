@@ -399,6 +399,81 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .lkcard{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1300;width:min(400px,80vw);box-sizing:border-box;padding:30px 20px 34px;background:#3a3d47;border-radius:8px;color:#fff;text-align:center;font:700 28px var(--sans);pointer-events:none;transition:opacity .4s;direction:ltr}
 .lkcard svg{width:52px;height:52px;display:block;margin:0 auto 18px}
 .lkcard.hide{opacity:0}
+/* ---- left rail + dark flyouts (session 4) */
+.panelbtn{display:none!important}
+.chrail{display:none!important}
+.zctl #cht{display:none}
+.lrail{flex:none;width:96px;background:#2b2e36;border-right:2px solid #0d0e11;display:flex;flex-direction:column;align-items:center;gap:9px;padding:12px 0 14px;padding-left:env(safe-area-inset-left,0px);box-sizing:border-box;z-index:1150;overflow-y:auto}
+.lrail .lb{width:84px;height:50px;flex:none;border:2px solid #0d0e11;border-radius:11px;background:#3a3d47;color:#fff;font:700 20px/1 "Times New Roman",Times,serif;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.4);padding:0}
+.lrail .lb.on{background:#4f8ac9}
+.lrail .lgap{height:20px;flex:none}
+.lrail .lgap.big{flex:1;min-height:20px;max-height:70px}
+.lrail .lic{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:12px}
+.lrail .lic button{width:46px;height:46px;flex:none;border:0;background:none;color:#fff;padding:0;opacity:.85;cursor:pointer}
+.lrail .lic svg{width:44px;height:44px;display:block}
+.panel{--panel:#2f323b;--bg:#23262d;--fg:#fff;--line:#0d0e11;--soft:#3a3d47;--muted:#a9adb8;--btn:#4f8ac9;--btnfg:#fff;width:400px;background:#2f323b;color:#fff;border-right:2px solid #0d0e11}
+.panel .head,.panel .tabs,.panel .foot{display:none}
+.fpage,.hpage{flex:1;overflow-y:auto;padding:12px 14px 18px;display:flex;flex-direction:column;gap:12px}
+.fpage[hidden],.hpage[hidden]{display:none}
+.ftop{display:flex;align-items:center;gap:8px}
+.ftop .fb{flex:1;height:50px;border:2px solid #0d0e11;border-radius:11px;background:#3a3d47;color:#fff;font:700 15px/1.1 "Times New Roman",Times,serif;cursor:pointer;padding:0 4px}
+.ftop .fb.ic{flex:none;width:40px;border:0;background:none}
+.ftop .fb.ic svg{width:28px;height:28px}
+.fdist{font:600 14px var(--sans);color:#a9adb8;text-align:center}.fdist b{color:#fff;font-family:var(--mono)}
+.panel input,.panel select,.panel textarea{background:#262931;border:2px solid #0d0e11;border-radius:11px;color:#fff;font:600 15px var(--sans)}
+.panel input::placeholder,.panel textarea::placeholder{color:#8e94a0;font:700 14px "Times New Roman",Times,serif;letter-spacing:.03em;text-transform:uppercase}
+.fin.c{text-align:center;height:46px;box-sizing:border-box}
+.frow{display:flex;align-items:center;gap:10px}
+.flab{flex:none;border:2px solid #0d0e11;border-radius:11px;background:#3a3d47;padding:10px 16px;font:700 18px "Times New Roman",Times,serif}
+.frow .btn{flex:1;height:48px;border:2px solid #0d0e11;border-radius:11px;background:#3a3d47;color:#fff;font:700 17px "Times New Roman",Times,serif;text-transform:uppercase}
+.frow .btn[aria-pressed="true"]{background:#4f8ac9}
+.fbox{border:2px solid #0d0e11;border-radius:13px;background:#262931;padding:10px;display:flex;flex-direction:column;gap:9px}
+.fbox .wps{border-color:#0d0e11}
+.fbox details summary{font:700 13px var(--sans)!important;color:#a9adb8;text-transform:uppercase;letter-spacing:.03em}
+.fph{align-items:center;justify-content:center;min-height:80px;color:#8e94a0;font:700 14px "Times New Roman",Times,serif;letter-spacing:.03em;text-align:center}
+.fph small{display:block;font:500 11px var(--sans);margin-top:4px;color:#6f7581}
+.fpair{display:flex;gap:10px}.fpair>div{flex:1;display:flex;flex-direction:column;gap:4px}
+.fcap{font:700 12px "Times New Roman",Times,serif;color:#8e94a0;text-align:center;letter-spacing:.03em}
+.fbot{display:flex;gap:12px;margin-top:6px}
+.fbot .btn{flex:1;height:48px;border:2px solid #0d0e11;border-radius:11px;background:#3a3d47;color:#fff;font:700 18px "Times New Roman",Times,serif;text-transform:uppercase}
+.fpage .btn{text-transform:uppercase}
+.fpage #pGo,.fpage #wpAdd{background:#4f8ac9;border:0}
+.hpage h2,.fpage h2{margin:0;font:700 22px "Times New Roman",Times,serif;text-align:center}
+.panel .hint,.panel .check{color:#c7cbd3}
+/* dark lists next to the rail */
+.chpop{left:10px!important;top:10px!important;width:min(420px,calc(100% - 120px))!important;max-height:calc(100% - 20px)!important;z-index:1250!important;background:#22252c!important;color:#fff!important}
+.chpop .ph{background:#22252c!important;border-bottom:1px solid #353944!important;color:#fff}
+.chpop .ph h3{color:#fff}
+.chpop .ph input{background:#3a3d47!important;border-color:#4a4e5a!important;color:#fff!important}
+.chpop .grp{background:#1b1d23!important;color:#aab0bb!important;display:flex!important;flex-direction:row!important;justify-content:space-between!important;align-items:center!important;border:0!important;border-radius:0!important;margin:0!important;padding:18px 16px 8px!important;text-align:left;font:700 16px var(--sans)!important}
+.chpop .grp .selr{color:#4cc27a;font:700 13px var(--sans);letter-spacing:.05em}
+.chpop .it{background:#2c2f37!important;color:#fff!important;border-bottom:1px solid #3a3e48!important}
+.chpop .it span,.chpop .empty{color:#a9adb8!important}
+.chpop .it.on{background:#36557a!important}
+.chpop .itw{display:flex;align-items:stretch;border-bottom:1px solid #3a3e48;background:#2c2f37}
+.chpop .itw .it{flex:1;border-bottom:0!important}
+.chpop .itw.cur .it{background:#36557a!important}
+.chpop .rd{flex:none;width:64px;border:0;border-left:1px solid #3a3e48;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.chpop .rd i{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-sizing:border-box;display:block}
+.chpop .rd.on i{background:#4f8ac9 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px no-repeat;border-color:#4f8ac9}
+.chpop .rr{display:flex;align-items:center;border-bottom:1px solid #3a3e48;background:#2c2f37}
+.chpop .rr>button{border:0;background:none;color:#fff;cursor:pointer}
+.chpop .rr .rn{flex:1;text-align:left;padding:16px;font:700 19px var(--sans);display:flex;justify-content:space-between;align-items:center}
+.chpop .rr .rn span{color:#aab0bb;font-size:24px;font-weight:400}
+.chpop .rr .rk{width:64px;align-self:stretch;border-left:1px solid #3a3e48;color:#4f8ac9;font:700 22px var(--sans)}
+.chpop .rback{border:0;background:none;color:#4ea1ff;font:600 17px var(--sans);cursor:pointer;padding:4px 6px 4px 0;white-space:nowrap}
+.chpop .rsum{display:flex;align-items:center;gap:12px;padding:14px 16px;background:#2c2f37;border-bottom:1px solid #3a3e48}
+.chpop .rsum .ri{width:30px;height:30px;border-radius:50%;background:#5b606c;position:relative;flex:none}
+.chpop .rsum .ri:after{content:"";position:absolute;left:13px;top:6px;width:4px;height:18px;background:#fff;transform:rotate(var(--r,0deg));border-radius:1px}
+.chpop .rsum b{display:block;font:700 18px var(--sans)}.chpop .rsum span{color:#aab0bb;font:500 15px var(--sans)}
+.chpop .rsum .rdim{margin-left:auto;text-align:right;font:700 16px var(--sans)}.chpop .rsum .rdim span{display:block;font-weight:700}
+.chpop table.rt{width:100%;border-collapse:collapse;margin-top:14px;font:600 15px var(--sans)}
+.chpop table.rt th{color:#cfd3da;font:700 18px var(--sans);padding:10px 6px}
+.chpop table.rt td{border:1px solid #3a3e48;padding:12px 6px;text-align:center;color:#cfd3da;background:#2c2f37}
+.chpop table.rt td:first-child{font-weight:700;color:#fff;background:#262931}
+.chpop .rbtns{display:flex;gap:10px;padding:16px}
+.chpop .rbtns button{flex:1;border:1px solid #4a4e5a;background:#2c2f37;color:#4ea1ff;border-radius:8px;padding:14px 6px;font:700 15px var(--sans);cursor:pointer}
+.chpop .rnote{padding:10px 16px;color:#8e94a0;font:500 12px var(--sans)}
 </style>
 
 <div class="app">
@@ -2148,6 +2223,130 @@ window.__procSet=procSet;
   $("rTog").onclick=()=>{st.rpanHidden=!st.rpanHidden;save();$("cPop").hidden=true;sync()};
   document.addEventListener("click",e=>{if(!$("cPop").hidden&&!e.target.closest(".rcalc"))$("cPop").hidden=true},true);
   sync();
+})();
+/* ---- left rail (FLIGHT, APTS, RWY, STAR, APP, TAXI, SID, HOLD) with dark flyouts (session 4) */
+(function(){
+  const appEl=document.querySelector(".app"),panel=document.querySelector(".panel");
+  const IC={
+    pen:'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#fff"/><path d="M14 34l2-7 13-13 5 5-13 13z" fill="#2b2e36"/><path d="M14 34l2-7 5 5z" fill="#2b2e36"/></svg>',
+    clk:'<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#fff"/><circle cx="24" cy="24" r="18" fill="none" stroke="#2b2e36" stroke-width="1.5"/><path d="M24 12v12l8 4" fill="none" stroke="#2b2e36" stroke-width="2.4" stroke-linecap="round"/></svg>',
+    calc:'<svg viewBox="0 0 48 48"><rect x="9" y="3" width="30" height="42" rx="3" fill="#fff"/><rect x="13" y="7" width="22" height="9" fill="#2b2e36"/><g fill="#2b2e36">'+[0,1,2,3].map(r=>[0,1,2,3].map(c=>'<rect x="'+(13+c*6)+'" y="'+(20+r*6)+'" width="4" height="4"/>').join("")).join("")+'</g></svg>',
+    note:'<svg viewBox="0 0 48 48"><path d="M8 4h22l8 8v32H8z" fill="#fff"/><path d="M30 4v8h8" fill="#ddd"/><path d="M18 34l2-6 17-17 4 4-17 17z" fill="#2b2e36"/></svg>',
+    share:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M8 11H5v10h14V11h-3"/></svg>'};
+  const rail=document.createElement("nav");rail.className="lrail";rail.id="lrail";
+  const RB=[["FLIGHT","fl"],"g",["APTS","apts"],["RWY","rwy"],["STAR","star"],["APP","app"],["TAXI","taxi"],["SID","sid"],"G",["HOLD","hold"]];
+  rail.innerHTML=RB.map(x=>x==="g"?'<div class="lgap"></div>':x==="G"?'<div class="lgap big"></div>':'<button class="lb" data-m="'+x[1]+'">'+x[0]+'</button>').join("")+
+    '<div class="lic">'+["pen","clk","calc","note"].map(k=>'<button data-ic="'+k+'" aria-label="'+k+'">'+IC[k]+'</button>').join("")+'</div>';
+  appEl.insertBefore(rail,panel);
+  rail.querySelectorAll("[data-ic]").forEach(b=>b.onclick=()=>toast("Coming later"));
+
+  /* ---- FLIGHT page built from the existing route / ORBIT / airway controls */
+  const fp=document.createElement("div");fp.className="fpage";fp.id="fPage";
+  fp.innerHTML='<div class="ftop"><button class="fb ic" id="fShare" aria-label="Copy route">'+IC.share+'</button><button class="fb" id="fNew">New<br>Flight</button><button class="fb" id="fSave">SAVE</button><button class="fb" id="fSaved">SAVED<br>Flight</button></div>'+
+    '<div class="fdist" id="fDist"></div>'+
+    '<input id="fName" class="fin c" placeholder="Enter flight name" autocomplete="off" autocapitalize="characters" spellcheck="false">'+
+    '<div class="frow"><span class="flab">ROUTE :</span><span id="fSlotAdd" style="flex:1;display:flex"></span></div>'+
+    '<div class="fbox" id="fRoute"><div class="frow" id="fInRow"></div></div>'+
+    '<div class="frow"><span class="flab">AREA :</span></div>'+
+    '<div class="fbox fph">ENTER AREAS BOUNDARIES<small>coming later</small></div>'+
+    '<div class="frow"><span class="flab">ORBIT :</span></div>'+
+    '<div id="fOrbC"></div>'+
+    '<div class="fpair"><div><div class="fcap">NUMBER OF POINTS</div><span id="fPn"></span></div><div><div class="fcap">RADIUS (NM)</div><span id="fPr"></span></div></div>'+
+    '<div class="fbox" id="fOrb"></div>'+
+    '<div class="fbot" id="fBot"></div>';
+  panel.insertBefore(fp,panel.querySelector(".foot"));
+  const mv=(id,to)=>{const e=$(id);if(e&&to)to.appendChild(e);return e};
+  mv("total",$("fDist"));$("fDist").insertAdjacentText("afterbegin","Distance ");$("fDist").insertAdjacentText("beforeend"," NM");
+  mv("addMode",$("fSlotAdd")).textContent="Tap map to add";
+  $("wpIn").placeholder="Enter navaids, waypoints, airways";$("wpIn").style.flex="1";
+  mv("wpIn",$("fInRow"));mv("wpAdd",$("fInRow"));
+  const fr=$("fRoute");["wpErr","wpList"].forEach(i=>mv(i,fr));
+  fr.appendChild($("closed").closest("label"));fr.appendChild($("p-route").querySelector("details"));
+  const ad=document.createElement("details");ad.innerHTML='<summary style="cursor:pointer">Airway segments</summary><div id="fAwy" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>';fr.appendChild(ad);
+  [...$("p-awy").children].forEach(c=>{if(!c.querySelector("#awyShow")&&!c.classList.contains("hint"))$("fAwy").appendChild(c)});
+  $("pc").placeholder="Center of the orbit";$("pc").classList.add("fin","c");mv("pc",$("fOrbC"));$("pc").style.width="100%";
+  mv("pn",$("fPn"));mv("pr",$("fPr"));["pn","pr"].forEach(i=>{$(i).classList.add("fin","c");$(i).style.width="100%"});
+  const fo=$("fOrb");fo.appendChild($("pb").closest("label"));fo.appendChild($("pccw").closest("label"));fo.appendChild($("pclosed").closest("label"));mv("pErr",fo);mv("pGo",fo);
+  mv("undo2",$("fBot"));mv("clr",$("fBot"));
+  ["p-route","p-poly","p-awy"].forEach(i=>$(i).hidden=true);
+  $("fName").value=st.fname||"";$("fName").oninput=e=>{st.fname=e.target.value;save()};
+  $("fShare").onclick=()=>$("cpy").click();
+  $("fNew").onclick=()=>{$("clr").click();if(!$("clr").dataset.c){st.fname="";$("fName").value="";save()}};
+  $("fSave").onclick=$("fSaved").onclick=()=>toast("Saving flights comes later");
+  /* HOLD page */
+  const hp=document.createElement("div");hp.className="hpage";hp.id="hPage";hp.innerHTML='<h2>HOLD</h2>';panel.insertBefore(hp,fp);
+  const ph=$("p-hold");ph.hidden=false;hp.appendChild(ph);
+
+  /* ---- modes */
+  let mode=null;
+  const showPanel=on=>{appEl.classList.toggle("collapsed",!on);setTimeout(()=>map.invalidateSize(),60)};
+  const mark=()=>rail.querySelectorAll(".lb").forEach(b=>b.classList.toggle("on",b.dataset.m===mode));
+  const _close=chClosePop;
+  chClosePop=function(){_close();if(mode&&mode!=="fl"&&mode!=="hold"){mode=null;mark()}};
+  const KIND={app:"APP",taxi:"TAXI",sid:"SID",star:"STAR"};
+  function setMode(m){
+    if(m===mode){mode=null;mark();showPanel(false);_close();return}
+    mode=m;mark();_close();
+    if(m==="fl"||m==="hold"){fp.hidden=m!=="fl";hp.hidden=m!=="hold";showPanel(true);return}
+    showPanel(false);
+    if(m==="apts")aptsList();else if(m==="rwy")rwyList();
+    else{const kind=KIND[m],k=chApt(),d=(st.chDef||{})[k+"|"+kind],c=d&&(CHARTS[k]||[]).find(x=>x.k===kind&&x.pg===d);
+      if(c&&chEl("chv").hidden){chOpen(k,c);mode=null;mark()}else chList(kind)}}
+  rail.querySelectorAll(".lb").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
+  showPanel(false);
+
+  /* ---- APTS: airport search */
+  function aptsList(){const p=chEl("chpop");
+    p.innerHTML='<div class="ph"><input id="chQ" type="search" placeholder="Search airport" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="cancel" id="chQX">Cancel</button></div><div id="chR"></div>';p.hidden=false;
+    const run=()=>{const q=chEl("chQ").value.trim().toUpperCase(),cur=chApt();
+      const R=APTS.filter(a=>!q||a[0].includes(q)||a[1].toUpperCase().includes(q)).sort((a,b)=>a[0].localeCompare(b[0]));
+      chEl("chR").innerHTML=R.length?R.map(a=>'<button class="it'+(a[0]===cur?' on':'')+'" data-k="'+a[0]+'"><b>'+a[0]+'</b><span>'+escH(a[1])+'</span></button>').join(""):'<div class="empty">No airport found</div>';
+      chEl("chR").querySelectorAll(".it").forEach(b=>b.onclick=()=>{st.chApt=b.dataset.k;save();chClosePop();toast(b.dataset.k+" selected")})};
+    chEl("chQ").oninput=run;chEl("chQX").onclick=chClosePop;run()}
+
+  /* ---- RWY: runway list, details, select */
+  const sel=k=>(st.selRwy||{})[k]||null;
+  const setSel=(k,id)=>{st.selRwy=st.selRwy||{};if(id)st.selRwy[k]=id;else delete st.selRwy[k];save()};
+  const adOf=k=>(typeof AD!=="undefined"?AD:[]).find(a=>a.icao===k);
+  function rwyList(){const k=chApt(),a=adOf(k),p=chEl("chpop"),s=sel(k);
+    let h='<div class="ph"><h3>'+escH(k)+' Runways</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>';
+    if(!a)h+='<div class="empty">No runway data for '+escH(k)+' yet.</div>';
+    else{const ends=[];a.rwys.forEach((r,ri)=>[r[0],r[1]].forEach(e=>ends.push([e.id,ri])));ends.sort((x,y)=>x[0].localeCompare(y[0],undefined,{numeric:true}));
+      h+='<div class="rr"><button class="rn" data-none="1">None</button><button class="rk" data-none="1">'+(s?'':'✓')+'</button></div>'+
+        ends.map(([id,ri])=>'<div class="rr"><button class="rn" data-ri="'+ri+'">'+escH(id)+'<span>›</span></button><button class="rk" data-id="'+escH(id)+'">'+(s===id?'✓':'')+'</button></div>').join("")}
+    p.innerHTML=h;p.hidden=false;chEl("chPX").onclick=chClosePop;
+    p.querySelectorAll("[data-none]").forEach(b=>b.onclick=()=>{setSel(k,null);rwyList()});
+    p.querySelectorAll(".rk[data-id]").forEach(b=>b.onclick=()=>{setSel(k,b.dataset.id);rwyList()});
+    p.querySelectorAll(".rn[data-ri]").forEach(b=>b.onclick=()=>rwyInfo(k,+b.dataset.ri))}
+  function rwyInfo(k,ri){const a=adOf(k),r=a.rwys[ri],e=[r[0],r[1]],p=chEl("chpop"),s=sel(k);
+    const ap=APTS.find(x=>x[0]===k),v=ap?decAt([ap[3],ap[4]]):0,mag=b=>String(Math.round(((+b-v)%360+360)%360)||360).padStart(3,"0")+"°M";
+    const m=String(r[2]||"").match(/([\d.]+)\s*x\s*([\d.]+)/),L=m?+m[1]:0,W=m?+m[2]:0;
+    const row=(t,f)=>'<tr><td>'+t+'</td><td>'+f(e[0])+'</td><td>'+f(e[1])+'</td></tr>';
+    p.innerHTML='<div class="ph"><button class="rback" id="rBk">‹ Back</button><h3 style="text-align:center">Runway '+escH(e[0].id)+' - '+escH(e[1].id)+'</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>'+
+      '<div class="rsum"><div class="ri" style="--r:'+(+e[0].brg||0)+'deg"></div><div><b>'+escH(e[0].id)+' - '+escH(e[1].id)+'</b></div>'+
+      (m?'<div class="rdim"><span>'+Math.round(L*3.28084)+' ft x '+Math.round(W*3.28084)+' ft</span><span style="color:#aab0bb">'+L+' m x '+W+' m</span></div>':'')+'</div>'+
+      '<table class="rt"><tr><th></th><th>Rwy '+escH(e[0].id)+'</th><th>Rwy '+escH(e[1].id)+'</th></tr>'+
+      row("Heading",x=>x.brg?mag(x.brg):"—")+row("THR Elevation",x=>x.elev?Math.round(+x.elev)+" ft":"—")+row("ILS",x=>x.ils?escH(x.ils[0])+"<br>"+escH(x.ils[1]):"—")+'</table>'+
+      '<div class="rnote">Source: '+escH(a.src||"")+'</div>'+
+      '<div class="rbtns">'+e.map(x=>'<button data-s="'+escH(x.id)+'">'+(s===x.id?'Deselect':'Select')+' Rwy '+escH(x.id)+'</button>').join("")+'</div>';
+    p.hidden=false;chEl("chPX").onclick=chClosePop;chEl("rBk").onclick=rwyList;
+    p.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{setSel(k,s===b.dataset.s?null:b.dataset.s);rwyInfo(k,ri)})}
+
+  /* ---- chart lists: APP / TAXI / SID / STAR with a default chart (circle) and the selected runway first */
+  const TT={APP:"Approach Charts",TAXI:"Taxi / Aerodrome Charts",SID:"SID Charts",STAR:"STAR Charts"};
+  chList=function(kind){const k=chApt(),L=(CHARTS[k]||[]).filter(c=>c.k===kind),p=chEl("chpop"),sr=sel(k),dk=k+"|"+kind,def=(st.chDef||{})[dk];chKind=kind;
+    let h='<div class="ph"><h3>'+TT[kind]+' · '+escH(k)+'</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>';
+    if(kind==="APP"&&typeof PROCS!=="undefined"&&PROCS[k]){h+='<div class="grp">Draw on map</div>'+PROCS[k].list.map((q,i)=>'<button class="it'+(procCur&&procCur.k===k&&procCur.i===i?' on':'')+'" data-pr="'+i+'"><b>'+escH(q.n)+'</b><span>'+(procCur&&procCur.k===k&&procCur.i===i?'Shown on map · tap to hide':'Approach path, fixes and altitudes')+'</span></button>').join("")}
+    if(!L.length)h+='<div class="empty">No '+TT[kind].replace(" Charts","").toLowerCase()+' charts added for '+escH(k)+' yet.</div>';
+    const groups={};L.forEach(c=>{const g=c.rwy||"";(groups[g]=groups[g]||[]).push(c)});
+    const order=Object.keys(groups).sort((a,b)=>(b===sr)-(a===sr)||(a==="")-(b==="")||a.localeCompare(b,undefined,{numeric:true}));
+    order.forEach(g=>{h+='<div class="grp"><span>'+(g?"Runway "+escH(g):"General")+'</span>'+(g&&g===sr?'<span class="selr">SELECTED RWY</span>':'')+'</div>'+
+      groups[g].map(c=>'<div class="itw'+(chCur&&chCur===c&&!chEl("chv").hidden?' cur':'')+'"><button class="it" data-pg="'+escH(c.pg)+'"><b>'+escH(c.t)+'</b><span>AD 2 '+escH(k)+'-'+escH(c.pg)+'</span></button><button class="rd'+(def===c.pg?' on':'')+'" data-def="'+escH(c.pg)+'" aria-label="Open this chart first"><i></i></button></div>').join("")});
+    p.innerHTML=h;p.hidden=false;chEl("chPX").onclick=chClosePop;
+    p.querySelectorAll(".it[data-pg]").forEach(b=>b.onclick=()=>{chOpen(k,(CHARTS[k]||[]).find(c=>c.pg===b.dataset.pg));chClosePop()});
+    p.querySelectorAll(".rd[data-def]").forEach(b=>b.onclick=()=>{st.chDef=st.chDef||{};if(st.chDef[dk]===b.dataset.def)delete st.chDef[dk];else st.chDef[dk]=b.dataset.def;save();chList(kind)});
+    p.querySelectorAll(".it[data-pr]").forEach(b=>b.onclick=()=>{const i=+b.dataset.pr;if(procCur&&procCur.k===k&&procCur.i===i)procSet(null);else{procSet(k,i,true);chClosePop()}chEl("chv").hidden=true})};
+  chGo=function(icao,kind){closeSheet();st.chApt=icao;save();setMode(kind==="TAXI"?"taxi":"app")};
 })();
 })();
 </script>
