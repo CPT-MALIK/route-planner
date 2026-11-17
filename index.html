@@ -1097,10 +1097,11 @@ $("zin").onclick=()=>{if(G.on)G.zoomBy(0.7);else map.zoomIn()};$("zout").onclick
 let watchId=null,ownMarker=null,first=true;
 let ownHdg=0;{const p=map.createPane("own");p.style.zIndex=650;p.style.pointerEvents="none"} // own-ship above labels, airports, marks and ruler
 const planeSVG='<svg viewBox="0 0 24 24" class="plane"><defs><linearGradient id="ownG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2489f"/><stop offset="1" stop-color="#6a1a70"/></linearGradient></defs><path fill="url(#ownG)" stroke="#fff" stroke-width=".9" d="M12 2c.8 0 1.3 1 1.3 2.2V9l7.7 4.4v2l-7.7-2.3v4.6l2.2 1.7V21L12 20l-3.5 1v-1.6l2.2-1.7v-4.6L3 15.4v-2L10.7 9V4.2C10.7 3 11.2 2 12 2z"/></svg>';
+let gpsQuiet=false;
 $("gps").onclick=()=>{
-  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;ownL.clearLayers();ownMarker=null;ownPos=null;chOwnP=null;chOwnDraw();drawDirect();$("posbox").hidden=true;$("gps").setAttribute("aria-pressed","false");return}
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;ownL.clearLayers();ownMarker=null;ownPos=null;chOwnP=null;chOwnDraw();drawDirect();$("posbox").hidden=true;$("gps").setAttribute("aria-pressed","false");st.gpsOn=false;save();return}
   if(!("geolocation" in navigator)){toast("This browser does not support location");return}
-  toast("Requesting position…");first=true;
+  if(!gpsQuiet)toast("Requesting position…");first=!gpsQuiet;gpsQuiet=false;st.gpsOn=true;save();
   try{watchId=navigator.geolocation.watchPosition(pos=>{
     const p=[pos.coords.latitude,pos.coords.longitude],hd=pos.coords.heading,sp=pos.coords.speed;ownPos=p;ownFix={p,acc:pos.coords.accuracy,alt:pos.coords.altitude,gs:sp,t:pos.timestamp||Date.now(),err:null};if(typeof tbRefresh==="function")tbRefresh();chOwnP=p;chOwnH=(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)?hd:ownHdg;chOwnDraw();if(typeof drawDirect==="function")drawDirect();ownGS=(sp!==null&&isFinite(sp))?sp*1.94384:null;
     $("gps").setAttribute("aria-pressed","true");
@@ -1112,10 +1113,15 @@ $("gps").onclick=()=>{
     let t=fmt(p);if(sp!==null&&isFinite(sp))t+="  GS "+Math.round(sp*1.94384)+"kt";if(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)t+="  TRK "+deg3(hd);
     if(pos.coords.altitude!==null)t+="  ALT "+Math.round(pos.coords.altitude*3.28084)+"ft";
     $("posbox").textContent=t;$("posbox").hidden=false;
-  },err=>{ownFix=Object.assign({},ownFix||{},{err:err&&err.message||"Position unavailable"});if(typeof tbRefresh==="function")tbRefresh();if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}$("gps").setAttribute("aria-pressed","false");
+  },err=>{if(err&&err.code===1){st.gpsOn=false;save()}ownFix=Object.assign({},ownFix||{},{err:err&&err.message||"Position unavailable"});if(typeof tbRefresh==="function")tbRefresh();if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}$("gps").setAttribute("aria-pressed","false");
     toast("Position unavailable on this page. Open it from a hosted link in Safari and allow location.")},{enableHighAccuracy:true,maximumAge:2000,timeout:15000})}
   catch(e){toast("Position unavailable on this page.")}
 };
+/* GPS stays on: restart after reload and when the app comes back to the front */
+if(st.gpsOn)setTimeout(()=>{if(watchId===null)$("gps").click()},600);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState!=="visible"||!st.gpsOn)return;
+  if(watchId!==null&&ownFix&&ownFix.t&&Date.now()-ownFix.t<20000)return;
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}gpsQuiet=true;$("gps").click()});
 let tt;function toast(m){const t=$("toast");t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3500)}
 
 // ---- globe view (zoomed out): three.js sphere using the Mercator world texture with remapped UVs
