@@ -2353,20 +2353,26 @@ window.__procSet=procSet;
   rail.querySelectorAll(".lb").forEach(b=>b.onclick=()=>setMode(b.dataset.m));
   showPanel(false);
 
+  /* airport for RWY / APP / TAXI: the one picked in APTS since the app opened, otherwise the nearest airport with charts
+     to the GPS position (or to the map centre) */
+  st.chApt=null;
+  chApt=function(){if(st.chApt&&APTS.some(a=>a[0]===st.chApt))return st.chApt;
+    const c=map.getCenter(),q=ownPos||[c.lat,c.lng];let best="OERK",bd=1e9;
+    APTS.forEach(a=>{if(!(CHARTS[a[0]]||[]).length)return;const d=dist(q,[a[3],a[4]]);if(d<bd){bd=d;best=a[0]}});return best};
   /* ---- APTS: airport search */
-  function aptsList(){const p=chEl("chpop");
+  function aptsList(){const p=chEl("chpop");p.scrollTop=0;
     p.innerHTML='<div class="ph"><input id="chQ" type="search" placeholder="Search airport" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="cancel" id="chQX">Cancel</button></div><div id="chR"></div>';p.hidden=false;
     const run=()=>{const q=chEl("chQ").value.trim().toUpperCase(),cur=chApt();
       const R=APTS.filter(a=>!q||a[0].includes(q)||a[1].toUpperCase().includes(q)).sort((a,b)=>a[0].localeCompare(b[0]));
       chEl("chR").innerHTML=R.length?R.map(a=>'<button class="it'+(a[0]===cur?' on':'')+'" data-k="'+a[0]+'"><b>'+a[0]+'</b><span>'+escH(a[1])+'</span></button>').join(""):'<div class="empty">No airport found</div>';
       chEl("chR").querySelectorAll(".it").forEach(b=>b.onclick=()=>{st.chApt=b.dataset.k;save();chClosePop();toast(b.dataset.k+" selected")})};
-    chEl("chQ").oninput=run;chEl("chQX").onclick=chClosePop;run()}
+    chEl("chQ").oninput=run;chEl("chQ").addEventListener("search",run);chEl("chQX").onclick=chClosePop;run();requestAnimationFrame(run);setTimeout(run,150)}
 
   /* ---- RWY: runway list, details, select */
   const sel=k=>(st.selRwy||{})[k]||null;
   const setSel=(k,id)=>{st.selRwy=st.selRwy||{};if(id)st.selRwy[k]=id;else delete st.selRwy[k];save()};
   const adOf=k=>(typeof AD!=="undefined"?AD:[]).find(a=>a.icao===k);
-  function rwyList(){const k=chApt(),a=adOf(k),p=chEl("chpop"),s=sel(k);
+  function rwyList(){const k=chApt(),a=adOf(k),p=chEl("chpop"),s=sel(k);p.scrollTop=0;
     let h='<div class="ph"><h3>'+escH(k)+' Runways</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>';
     if(!a)h+='<div class="empty">No runway data for '+escH(k)+' yet.</div>';
     else{const ends=[];a.rwys.forEach((r,ri)=>[r[0],r[1]].forEach(e=>ends.push([e.id,ri])));ends.sort((x,y)=>x[0].localeCompare(y[0],undefined,{numeric:true}));
@@ -2392,7 +2398,7 @@ window.__procSet=procSet;
 
   /* ---- chart lists: APP / TAXI / SID / STAR with a default chart (circle) and the selected runway first */
   const TT={APP:"Approach Charts",TAXI:"Taxi / Aerodrome Charts",SID:"SID Charts",STAR:"STAR Charts"};
-  chList=function(kind){const k=chApt(),L=(CHARTS[k]||[]).filter(c=>c.k===kind),p=chEl("chpop"),sr=sel(k),dk=k+"|"+kind,def=(st.chDef||{})[dk];chKind=kind;
+  chList=function(kind){const k=chApt(),L=(CHARTS[k]||[]).filter(c=>c.k===kind),p=chEl("chpop"),sr=sel(k),dk=k+"|"+kind,def=(st.chDef||{})[dk];chKind=kind;p.scrollTop=0;
     let h='<div class="ph"><h3>'+TT[kind]+' · '+escH(k)+'</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>';
     if(kind==="APP"&&typeof PROCS!=="undefined"&&PROCS[k]){h+='<div class="grp">Draw on map</div>'+PROCS[k].list.map((q,i)=>'<button class="it'+(procCur&&procCur.k===k&&procCur.i===i?' on':'')+'" data-pr="'+i+'"><b>'+escH(q.n)+'</b><span>'+(procCur&&procCur.k===k&&procCur.i===i?'Shown on map · tap to hide':'Approach path, fixes and altitudes')+'</span></button>').join("")}
     if(!L.length)h+='<div class="empty">No '+TT[kind].replace(" Charts","").toLowerCase()+' charts added for '+escH(k)+' yet.</div>';
