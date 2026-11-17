@@ -391,6 +391,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .rmsg{position:absolute;z-index:1300;transform:translate(-100%,-50%);background:#444955;color:#fff;font:700 17px var(--sans);padding:9px 14px;margin-left:-14px;border-radius:7px;pointer-events:none;direction:ltr;white-space:nowrap;transition:opacity .35s;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .rmsg::after{content:"";position:absolute;right:-11px;top:50%;margin-top:-12px;border:12px solid transparent;border-right:0;border-left:11px solid #444955}
 .rmsg.hide{opacity:0}
+
+/* lock: blocks every button except the padlock, card in the middle of the screen */
+.maplock{position:fixed!important;inset:0;z-index:1260!important}
+:root.locked .tbar{z-index:1270}
+:root.locked #tbGps,:root.locked #tbSet{opacity:.35;pointer-events:none}
+.lkcard{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1300;width:min(400px,80vw);box-sizing:border-box;padding:30px 20px 34px;background:#3a3d47;border-radius:8px;color:#fff;text-align:center;font:700 28px var(--sans);pointer-events:none;transition:opacity .4s;direction:ltr}
+.lkcard svg{width:52px;height:52px;display:block;margin:0 auto 18px}
+.lkcard.hide{opacity:0}
 </style>
 
 <div class="app">
@@ -1625,10 +1633,12 @@ function drawCorridor(){corrL.clearLayers();const w=st.corr||0,P=st.wps.map(x=>[
   P.forEach(p=>L.circle(p,Object.assign({radius:w*1852},sty)).addTo(corrL))}
 const _updC=update;update=function(){_updC();drawCorridor()};
 // map lock
-function applyLock(){const on=!!st.locked;$("tbLock").innerHTML=on?LOCK_SHUT:LOCK_OPEN;$("tbLock").classList.toggle("on",on);$("tbLock").setAttribute("aria-pressed",String(on));$("mapLock").hidden=!on;
+function applyLock(){const on=!!st.locked;$("tbLock").innerHTML=on?LOCK_SHUT:LOCK_OPEN;$("tbLock").classList.toggle("on",on);$("tbLock").setAttribute("aria-pressed",String(on));$("mapLock").hidden=!on;document.documentElement.classList.toggle("locked",on);
   ["dragging","touchZoom","doubleClickZoom","scrollWheelZoom","boxZoom","keyboard"].forEach(h=>{if(map[h])on?map[h].disable():map[h].enable()});
   ["zin","zout","fit","glb"].forEach(i=>{if($(i))$(i).disabled=on})}
-$("tbLock").onclick=()=>{st.locked=!st.locked;save();applyLock();toast(st.locked?"Map locked":"Map unlocked")};
+let lkT=0;const lkC=document.createElement("div");lkC.className="lkcard hide";document.body.appendChild(lkC);
+$("tbLock").onclick=()=>{st.locked=!st.locked;save();applyLock();tbClose();
+  lkC.innerHTML=(st.locked?LOCK_SHUT:LOCK_OPEN).replace(/#2f7bd2|#20232a/g,"#3a3d47")+(st.locked?"Device Locked":"Device Unlocked");lkC.classList.remove("hide");clearTimeout(lkT);lkT=setTimeout(()=>lkC.classList.add("hide"),1400)};
 $("mapLock").addEventListener("click",()=>toast("Map is locked · tap the padlock to unlock"));
 $("tbGps").onclick=e=>{e.stopPropagation();tbShow("gps")};$("tbSet").onclick=e=>{e.stopPropagation();tbShow("set")};
 document.addEventListener("pointerdown",e=>{if(tbOpen&&e.target.isConnected&&!$("tbPop").contains(e.target)&&!$("tbar").contains(e.target))tbClose()},true);
