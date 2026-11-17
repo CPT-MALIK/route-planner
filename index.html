@@ -162,6 +162,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .ownW.still .ownP.p2{animation-delay:1s}
 @keyframes ownPulse{0%{transform:scale(.5);opacity:.9}100%{transform:scale(2.8);opacity:0}}
 #chvMsg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 15px var(--sans);color:#6b7584;pointer-events:none}
+:root[data-map="dark"] .chv,:root[data-map="dark"] #chvBox{background:#000}
+:root[data-map="dark"] .chv-h{background:#111;border-bottom-color:#333;color:#e8e8e8}
+:root[data-map="dark"] .chv-t span,:root[data-map="dark"] #chvMsg{color:#9a9a9a}
+:root[data-map="dark"] #chvImg{filter:invert(1) hue-rotate(180deg)}
 .rulh{width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:rgba(255,255,255,.3);border:3px solid #111;box-sizing:border-box;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .rulm{position:absolute;height:44px;cursor:move;background:rgba(0,0,0,0.001)}
 .rull{position:absolute;white-space:nowrap;font:700 15px/1 ui-monospace,Menlo,monospace;color:#fff;background:#7a7a7a;padding:6px 12px;pointer-events:none}
