@@ -155,9 +155,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 #chvImg{position:absolute;left:0;top:0;transform-origin:0 0;max-width:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none}
 #chvOwn{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;color:var(--own,#e0218a)}
 #chvOwn .plane{width:34px;height:34px;display:block}
-.ownW{position:absolute;left:-17px;top:-17px;width:34px;height:34px;pointer-events:none}
-.ownR{position:relative;width:34px;height:34px;transform-origin:17px 17px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
-.ownP{position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;background:rgba(165,40,185,.8);opacity:0}
+.ownW{position:absolute;left:-22px;top:-22px;width:44px;height:44px;pointer-events:none}
+.ownR{position:relative;width:44px;height:44px;transform-origin:22px 22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
+.ownP{position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;background:rgba(165,40,185,.8);opacity:0}
 .ownW.still .ownP{animation:ownPulse 2s ease-out infinite}
 .ownW.still .ownP.p2{animation-delay:1s}
 @keyframes ownPulse{0%{transform:scale(.5);opacity:.9}100%{transform:scale(2.8);opacity:0}}
@@ -314,6 +314,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .navsm{position:absolute;transform:translate(11px,-50%);font:500 calc(15px*var(--mts,1))/1 var(--sans);color:#000;white-space:nowrap}
 .ref{font:600 calc(11px*var(--mts,1)) var(--sans);color:var(--ref);white-space:nowrap;text-shadow:0 0 3px var(--chart),0 0 3px var(--chart)}
 .plane{width:34px;height:34px;color:var(--own)}
+.ownR .plane{width:44px;height:44px}
 .aw-l{position:absolute;white-space:nowrap;transform:translate(-50%,-50%) rotate(var(--r));display:flex;flex-direction:column;align-items:center;gap:1px;pointer-events:none}
 .aw-s{display:block;overflow:visible;pointer-events:auto;cursor:pointer}
 .aw-l i,.aw-l u{pointer-events:auto;cursor:pointer}
