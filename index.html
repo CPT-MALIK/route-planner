@@ -44,6 +44,15 @@
 :root[data-map="dark"] .navbox{color:#e3e7ec;border-color:#aab2bd}
 :root[data-map="dark"] .aw-l i,:root[data-map="dark"] .aw-l u,:root[data-map="dark"] .aw-c{color:#e3e7ec}
 :root[data-map="dark"] .aw-pn{color:#e9edf2;text-shadow:0 0 2px #000,0 0 2px #000,0 0 3px #000}
+#rngov{position:absolute;inset:0;z-index:500;pointer-events:none;color:#15181c}
+#rngov svg{position:absolute;left:0;top:0;overflow:visible}
+#rngov .rr{fill:none;stroke:#8d9196;stroke-width:3;opacity:.8}
+#rngov .rose line,#rngov .rose circle{stroke:currentColor}
+#rngov .rb{fill:#5b5f66;opacity:.92}#rngov .rt{fill:#a0179a}
+#rngov text{font:700 10px var(--sans);fill:#fff}
+#rngov .rc1{fill:rgba(150,140,245,.38);stroke:#8379dc;stroke-width:1.2}#rngov .rc2{fill:rgba(255,255,255,.4);stroke:#8379dc;stroke-width:1.2}
+#rngov .rx{stroke:#6c63c4;stroke-width:1}#rngov .ra{fill:#a0179a}
+:root[data-map="dark"] #rngov{color:#e3e7ec}:root[data-map="sat"] #rngov .rose{filter:drop-shadow(0 0 1.5px #fff)}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;margin:0}
 *{box-sizing:border-box}
@@ -435,6 +444,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button id="cht" aria-label="Airport charts" title="Charts" aria-pressed="false" style="font-size:11px">CHT</button>
       <button id="rul" aria-label="Measuring ruler" title="Ruler" aria-pressed="false" style="font-size:11px">RUL</button>
       <button id="grd" aria-label="Show or hide the latitude/longitude grid" title="Grid" aria-pressed="true" style="font-size:11px">GRD</button>
+      <button id="rng" aria-label="Range rings around the map centre" title="Range rings" aria-pressed="false" style="font-size:11px">RNG</button>
     </div>
     <div class="chrail" id="chrail" hidden>
       <button id="chApt" class="chr-apt">—<span>▾</span></button>
@@ -1822,6 +1832,47 @@ awVis();
   cx.onclick=done;
   ["pointerdown","touchstart","wheel","dblclick","click"].forEach(ev=>$("srch").addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
   map.on("movestart",()=>{if(document.activeElement!==inp)box.hidden=true})})();
+
+/* ---- range rings (RNG): fixed at the screen centre, rings re-scale with zoom, distance tag to present position (or last known) */
+(function(){
+  const box=document.createElement("div");box.id="rngov";box.hidden=true;map.getContainer().appendChild(box);
+  const UN=[];[0.01,0.1,1,10,100,1000].forEach(k=>[1,2,5].forEach(m=>UN.push(+(k*m).toFixed(3))));
+  const fmt=v=>(v<1||v%1)?(+v.toFixed(2)).toString():String(Math.round(v));
+  let lastSave=0;
+  function draw(){
+    if(!st.showRng){box.hidden=true;return}box.hidden=false;
+    const sz=map.getSize(),cx=sz.x/2,cy=sz.y/2,c=map.getCenter();
+    const pa=map.latLngToContainerPoint(L.latLng(dest([c.lat,c.lng],1,0))),pb=map.latLngToContainerPoint(L.latLng(dest([c.lat,c.lng],1,180)));
+    const ppn=Math.abs(pb.y-pa.y)/2;if(!(ppn>0)){box.innerHTML="";return}
+    const R=62,maxR=0.46*Math.min(sz.x,sz.y);let u=UN[0];UN.forEach(x=>{if(4*x*ppn<=maxR)u=x});
+    let h='<svg width="'+sz.x+'" height="'+sz.y+'" viewBox="0 0 '+sz.x+' '+sz.y+'">';
+    const tag=(x,y,t,rot,cls)=>'<g transform="translate('+x.toFixed(1)+','+y.toFixed(1)+')'+(rot?' rotate('+rot+')':'')+'"><rect class="'+(cls||"rb")+'" x="'+(-(t.length*3.4+6)).toFixed(1)+'" y="-8" width="'+(t.length*6.8+12).toFixed(1)+'" height="16" rx="2"/><text y="4" text-anchor="middle">'+t+'</text></g>';
+    [2,3,4].forEach(k=>{const r=k*u*ppn;if(r<R+16)return;
+      h+='<circle class="rr" cx="'+cx+'" cy="'+cy+'" r="'+r.toFixed(1)+'"/>';
+      const t=fmt(k*u)+" NM";h+=tag(cx,cy-r,t)+tag(cx,cy+r,t)});
+    h+='<g class="rose">';
+    for(let a=0;a<360;a+=10){const L_=a%90===0?13:a%30===0?9:6,ra=a*Math.PI/180,sx=Math.sin(ra),sy=-Math.cos(ra);
+      h+='<line x1="'+(cx+sx*R).toFixed(1)+'" y1="'+(cy+sy*R).toFixed(1)+'" x2="'+(cx+sx*(R-L_)).toFixed(1)+'" y2="'+(cy+sy*(R-L_)).toFixed(1)+'" stroke-width="'+(a%90===0?2.2:1.4)+'"/>'}
+    h+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke-width="1" opacity=".35"/></g>';
+    h+=tag(cx,cy-R-12,"0° T")+tag(cx+R+12,cy,"90° T",90)+tag(cx,cy+R+12,"180° T")+tag(cx-R-12,cy,"270° T",-90);
+    h+='<circle class="rc1" cx="'+cx+'" cy="'+cy+'" r="30"/><circle class="rc2" cx="'+cx+'" cy="'+cy+'" r="22"/>';
+    h+='<line class="rx" x1="'+(cx-22)+'" y1="'+cy+'" x2="'+(cx+22)+'" y2="'+cy+'"/><line class="rx" x1="'+cx+'" y1="'+(cy-22)+'" x2="'+cx+'" y2="'+(cy+22)+'"/>';
+    const own=ownPos||st.lastPos;
+    if(own){const d=dist([c.lat,c.lng],own),t=(d<100?d.toFixed(1):String(Math.round(d)))+" NM";
+      if(d>0.05){const p=map.latLngToContainerPoint(L.latLng(own[0],own[1]));let a=Math.atan2(p.x-cx,-(p.y-cy));
+        const sx=Math.sin(a),sy=-Math.cos(a),ax=cx+sx*(R-17),ay=cy+sy*(R-17),deg=a*180/Math.PI;
+        h+='<path class="ra" transform="translate('+ax.toFixed(1)+','+ay.toFixed(1)+') rotate('+deg.toFixed(1)+')" d="M0 -7 5 4 0 1.5 -5 4Z"/>';
+        const dc=Math.abs(((deg%90)+135)%90-45),tr=R+30+(dc<22?20:0);h+=tag(cx+sx*tr,cy+sy*tr,t,0,"rt")}
+      else h+=tag(cx,cy+46,t,0,"rt")}
+    box.innerHTML=h+'</svg>';
+    if(ownPos){const now=Date.now();if(!st.lastPos||now-lastSave>30000){st.lastPos=[+ownPos[0].toFixed(5),+ownPos[1].toFixed(5)];lastSave=now;save()}}
+  }
+  window.__rngDraw=draw;
+  map.on("move zoom resize viewreset",draw);setInterval(()=>{if(st.showRng)draw()},2000);
+  $("rng").setAttribute("aria-pressed",String(!!st.showRng));
+  $("rng").onclick=()=>{st.showRng=!st.showRng;$("rng").setAttribute("aria-pressed",String(st.showRng));save();draw()};
+  draw();
+})();
 
 })();
 </script>
