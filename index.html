@@ -1711,7 +1711,9 @@ function chOwnDraw(){const el=chEl("chvOwn");if(!el)return;const g=chCur&&chCur.
   if(!g||!chOwnP||chEl("chv").hidden){el.hidden=true;return}
   const px=g.m?g.m[0]*chOwnP[1]+g.m[1]*chOwnP[0]+g.m[2]:g.lon[0]*chOwnP[1]+g.lon[1],py=g.m?g.m[3]*chOwnP[1]+g.m[4]*chOwnP[0]+g.m[5]:g.lat[0]*chOwnP[0]+g.lat[1],c=g.clip;
   if(px<c[0]||px>c[2]||py<c[1]||py>c[3]){el.hidden=true;return}
-  el.hidden=false;el.innerHTML='<div style="transform:translate(-28px,-28px) rotate('+(isFinite(chOwnH)&&chOwnH!==null?chOwnH:0)+'deg)">'+planeSVG+'</div>';
+  el.hidden=false;const zz=CV.min>0?CV.s/CV.min:1,sz=Math.round(Math.max(20,56*Math.min(1,1.6/zz))),hf=sz/2;
+  el.innerHTML='<div style="transform:translate(-'+hf+'px,-'+hf+'px) rotate('+(isFinite(chOwnH)&&chOwnH!==null?chOwnH:0)+'deg);transform-origin:'+hf+'px '+hf+'px">'+planeSVG+'</div>';
+  const pl=el.querySelector(".plane");if(pl){pl.style.width=sz+"px";pl.style.height=sz+"px"}
   el.style.transform="translate("+(CV.x+px*CV.s)+"px,"+(CV.y+py*CV.s)+"px)"}
 function cvApply(){chEl("chvImg").style.transform="translate("+CV.x+"px,"+CV.y+"px) scale("+CV.s+")";chOwnDraw();
   const z=chEl("chvZ");if(z)z.textContent="\u00d7"+(CV.min>0?CV.s/CV.min:1).toFixed(1)}
