@@ -369,6 +369,27 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .grp-h{font-weight:700;font-size:14px}
 .tabs button{padding-inline:4px}
 @media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
+/* ---- new right-side layout (session 4): top-right group, zoom row, collapsible icon panel */
+.mctl{display:none!important}
+.tbar{right:max(12px,env(safe-area-inset-right,0px))}
+.tbpop{right:max(12px,env(safe-area-inset-right,0px))}
+.zctl{position:absolute;top:62px;right:max(12px,env(safe-area-inset-right,0px));display:flex;gap:4px;background:#20232a;border-radius:12px;padding:4px;z-index:1100;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.zctl button{width:42px;height:38px;border:0;border-radius:9px;background:none;color:#fff;font:600 22px var(--sans);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.zctl button:disabled{opacity:.35;cursor:default}
+.zctl button[aria-pressed="true"]{background:#2f7bd2}
+.zctl #cht{font:700 12px var(--sans)}
+.rcol{position:absolute;top:116px;right:max(12px,env(safe-area-inset-right,0px));z-index:1100;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.rcol .rb{width:58px;height:58px;box-sizing:border-box;border:2px solid #0d0e11;border-radius:12px;background:#3a3d47;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.rcol .rb svg{width:34px;height:34px;display:block}
+.rcol .rb.on{background:#4f8ac9}
+.rcol .rtog{height:46px}
+.rpan{display:flex;flex-direction:column;gap:7px;background:#20232a;border-radius:14px;padding:6px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.rpan[hidden]{display:none!important}
+.rcalc{position:relative}
+.cpop{position:absolute;right:66px;top:0;display:flex;gap:7px;background:#20232a;border-radius:14px;padding:6px;margin:-6px 0;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.cpop[hidden]{display:none!important}
+.rmsg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:1300;background:rgba(20,22,27,.88);color:#fff;font:800 26px var(--sans);letter-spacing:.04em;padding:14px 26px;border-radius:14px;pointer-events:none;direction:ltr;white-space:nowrap;transition:opacity .35s}
+.rmsg.hide{opacity:0}
 </style>
 
 <div class="app">
@@ -1568,6 +1589,8 @@ function tbRefresh(){if(!tbOpen)return;const P=$("tbPop");
   P.innerHTML='<h3>Settings</h3>'+
     '<div class="r col">Brightness<input type="range" id="tbBr" min="35" max="100" value="'+Math.round((st.bright||1)*100)+'"></div>'+
     '<div class="r">App Theme<div class="seg">'+[["sat","Satellite"],["light","Light"],["dark","Dark"]].map(([t,n])=>'<button data-th="'+t+'" class="'+(th===t?"on":"")+'">'+n+'</button>').join("")+'</div></div>'+
+    '<div class="r">GPS<label class="tgl"><input type="checkbox" id="tbSGps"'+(watchId!==null?" checked":"")+'><i></i></label></div>'+
+    '<div class="r">Lat / Long Grid<label class="tgl"><input type="checkbox" id="tbSGrd"'+(st.showGrid!==false?" checked":"")+'><i></i></label></div>'+
     '<div class="gap"></div>'+
     '<div class="r">Route Corridor<div class="seg">'+[0,5,10,20].map(n=>'<button data-cw="'+n+'" class="'+((st.corr||0)===n?"on":"")+'">'+(n?"±"+n:"Off")+'</button>').join("")+'</div></div>'+
     '<div class="note">Shades a band of that many NM either side of the route.</div>'+
@@ -1579,6 +1602,7 @@ function tbRefresh(){if(!tbOpen)return;const P=$("tbPop");
   P.querySelectorAll("[data-th]").forEach(b=>b.onclick=()=>{st.theme=b.dataset.th;applyTheme();save();tbRefresh()});
   P.querySelectorAll("[data-cw]").forEach(b=>b.onclick=()=>{st.corr=+b.dataset.cw;save();drawCorridor();tbRefresh()});
   $("tbSleep").onchange=e=>{st.sleep=e.target.checked;save();applySleep()};
+  $("tbSGps").onchange=()=>{$("gps").click();setTimeout(tbRefresh,300)};$("tbSGrd").onchange=()=>{$("grd").click()};
   $("tbMts").oninput=e=>{st.mts=mtsL[+e.target.value];applyMts();save()}}
 function applyBright(){$("dimmer").style.opacity=String((1-(st.bright||1))*0.85)}
 function applyTheme(){let t=st.theme;if(t!=="light"&&t!=="dark")t="sat";st.theme=t;const de=document.documentElement;de.dataset.map=t;if(t==="sat")delete de.dataset.theme;else de.dataset.theme=t;
@@ -2065,5 +2089,53 @@ window.__procSet=procSet;
     await Promise.all([next(),next(),next()])}
   navigator.serviceWorker.ready.then(()=>setTimeout(run,4000)).catch(()=>{})})();
 
+/* ---- new right-side layout (session 4): zoom row under the top-right group, collapsible icon panel.
+   The old buttons stay in the page (hidden) and keep their own logic; the new icons click them. */
+(function(){
+  const app=$("tbar").parentNode;
+  const zc=document.createElement("div");zc.className="zctl";zc.id="zctl";app.appendChild(zc);
+  ["zin","zout","fit","cht"].forEach(i=>{if($(i))zc.appendChild($(i))});
+  const I={
+    apt:'<svg viewBox="0 0 24 24" fill="currentColor"><path transform="rotate(45 12 12)" d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>',
+    vor:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.5 21.5 20.5h-19z"/></svg>',
+    awy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="M12 1.5v6M12 16.5v6M3.5 4.5l4.2 4.2M20.5 4.5l-4.2 4.2M3.5 19.5l4.2-4.2M20.5 19.5l-4.2-4.2"/><path d="M12 9.6l2.4 4.2H9.6z" fill="currentColor" stroke="none"/></svg>',
+    asp:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="7.2"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 12 6 4.2" stroke-width="2.2"/><circle cx="12" cy="22" r="1.6" fill="currentColor" stroke="none"/></svg>',
+    osm:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.5 21.5v-4h1.5v-4h2v-3h1.5v3H8v-5h2V3.5h1.5v2h2V1.5h2v6h1.5v4h1.5v3h1.5v3h1.5v4z"/></svg>',
+    calc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M1.5 21h15a7.5 7.5 0 0 0-15 0z"/><path d="M4.5 21a4.5 4.5 0 0 1 9 0" /><circle cx="9" cy="20.3" r=".8" fill="currentColor"/><path d="M3 18.4l.8.5M5.2 15.8l.6.8M9 14.5v1M12.8 15.8l-.6.8M15 18.4l-.8.5"/><rect x="19" y="2" width="3.2" height="19.5" fill="currentColor" stroke="none"/><path d="M19 4h1.5M19 6h1M19 8h1.5M19 10h1M19 12h1.5M19 14h1M19 16h1.5M19 18h1" stroke="#20232a" stroke-width=".9"/></svg>',
+    rul:'<svg viewBox="0 0 24 24" fill="none"><rect x="10" y="1.5" width="4.2" height="21" fill="currentColor"/><path d="M10 4h2M10 6.5h1.3M10 9h2M10 11.5h1.3M10 14h2M10 16.5h1.3M10 19h2" stroke="#20232a" stroke-width="1"/></svg>',
+    rng:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 19h21a10.5 10.5 0 0 0-21 0z"/><path d="M6 19a6 6 0 0 1 12 0"/><circle cx="12" cy="18.3" r="1" fill="currentColor"/><path d="M3.6 13.6l1 .7M7 10.1l.6 1M12 8.5v1.3M17 10.1l-.6 1M20.4 13.6l-1 .7"/></svg>',
+    up:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5 19 11h-4.6v10.5H9.6V11H5z"/></svg>'};
+  const col=document.createElement("div");col.className="rcol";col.id="rcol";
+  col.innerHTML='<button class="rb rtog" id="rTog" aria-label="Hide or show the layer buttons">'+I.up+'</button>'+
+    '<div class="rpan" id="rPan">'+
+    '<button class="rb" id="rApt" aria-label="Airports">'+I.apt+'</button>'+
+    '<button class="rb" id="rVor" aria-label="VOR">'+I.vor+'</button>'+
+    '<button class="rb" id="rAwy" aria-label="Airways">'+I.awy+'</button>'+
+    '<button class="rb" id="rAsp" aria-label="Airspace">'+I.asp+'</button>'+
+    '<button class="rb" id="rOsm" aria-label="Cultural">'+I.osm+'</button>'+
+    '<div class="rcalc"><button class="rb" id="rCalc" aria-label="Ruler and range rings">'+I.calc+'</button>'+
+      '<div class="cpop" id="cPop" hidden><button class="rb" id="cRng" aria-label="Range rings">'+I.rng+'</button><button class="rb" id="cRul" aria-label="Ruler">'+I.rul+'</button></div></div>'+
+    '</div>';
+  app.appendChild(col);
+  ["pointerdown","touchstart","wheel","dblclick","click","contextmenu"].forEach(ev=>{col.addEventListener(ev,e=>e.stopPropagation(),{passive:true});zc.addEventListener(ev,e=>e.stopPropagation(),{passive:true})});
+  const msg=document.createElement("div");msg.className="rmsg hide";app.appendChild(msg);let mt=0;
+  const say=t=>{msg.textContent=t;msg.classList.remove("hide");clearTimeout(mt);mt=setTimeout(()=>msg.classList.add("hide"),1300)};
+  const P=i=>$(i)&&$(i).getAttribute("aria-pressed")==="true";
+  const sync=()=>{$("rApt").classList.toggle("on",P("apt"));$("rVor").classList.toggle("on",P("vor"));$("rAwy").classList.toggle("on",P("aws"));
+    $("rAsp").classList.toggle("on",P("asp")||P("sua"));$("rOsm").classList.toggle("on",P("osmb"));
+    const ru=P("rul"),rn=P("rng");$("rCalc").innerHTML=ru?I.rul:rn?I.rng:I.calc;$("rCalc").classList.toggle("on",ru||rn);
+    $("cRul").classList.toggle("on",ru);$("cRng").classList.toggle("on",rn);
+    const hid=!!st.rpanHidden;$("rPan").hidden=hid;$("rTog").style.transform="";$("rTog").firstChild.style.transform=hid?"rotate(180deg)":""};
+  const mo=new MutationObserver(sync);["apt","vor","aws","asp","sua","osmb","rul","rng"].forEach(i=>{if($(i))mo.observe($(i),{attributes:true,attributeFilter:["aria-pressed"]})});
+  const tg=(id,name)=>()=>{$(id).click();say(name+(P(id)?" ON":" OFF"))};
+  $("rApt").onclick=tg("apt","AIRPORTS");$("rVor").onclick=tg("vor","VOR");$("rAwy").onclick=tg("aws","AIRWAYS");$("rOsm").onclick=tg("osmb","CULTURAL");
+  $("rAsp").onclick=()=>{const on=!(P("asp")||P("sua"));if(P("asp")!==on)$("asp").click();if(P("sua")!==on)$("sua").click();say("AIRSPACE"+(on?" ON":" OFF"))};
+  $("rCalc").onclick=()=>{$("cPop").hidden=!$("cPop").hidden};
+  const tool=(id,other,name)=>()=>{const on=!P(id);if(on&&P(other))$(other).click();$(id).click();$("cPop").hidden=true;say(name+(on?" ON":" OFF"))};
+  $("cRul").onclick=tool("rul","rng","RULER");$("cRng").onclick=tool("rng","rul","RANGE RINGS");
+  $("rTog").onclick=()=>{st.rpanHidden=!st.rpanHidden;save();$("cPop").hidden=true;sync()};
+  document.addEventListener("click",e=>{if(!$("cPop").hidden&&!e.target.closest(".rcalc"))$("cPop").hidden=true},true);
+  sync();
+})();
 })();
 </script>
