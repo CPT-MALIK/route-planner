@@ -55,6 +55,25 @@
 #rngov .rc1{fill:rgba(150,140,245,.38);stroke:#8379dc;stroke-width:1.2}#rngov .rc2{fill:rgba(255,255,255,.4);stroke:#8379dc;stroke-width:1.2}
 #rngov .rx{stroke:#6c63c4;stroke-width:1}#rngov .ra{fill:#a0179a}
 :root[data-map="dark"] #rngov{color:#e3e7ec}:root[data-map="sat"] #rngov{color:#fff}:root[data-map="sat"] #rngov .rose,:root[data-map="sat"] #rngov .rr{filter:drop-shadow(0 0 1.5px rgba(0,0,0,.7))}
+/* approach procedures drawn on the map */
+:root{--proc:#0b6e4f}:root[data-map="dark"]{--proc:#52d6a6}
+.pc-lbl{position:absolute;left:10px;top:-8px;white-space:nowrap;font:700 calc(12px*var(--mts,1))/1.15 var(--mono);color:var(--proc);background:rgba(255,255,255,.9);border:1.4px solid var(--proc);border-radius:4px;padding:2px 5px;pointer-events:none;display:flex;flex-direction:column}
+.pc-lbl small{font:600 calc(9.5px*var(--mts,1)) var(--sans);color:#333}.pc-lbl u{font-weight:700;color:#111}
+:root[data-map="dark"] .pc-lbl{background:rgba(16,20,24,.88)}:root[data-map="dark"] .pc-lbl small,:root[data-map="dark"] .pc-lbl u{color:#e3e7ec}
+.pc-crs{position:absolute;white-space:nowrap;transform:translate(-50%,-50%) rotate(var(--r)) translateY(-11px);font:700 calc(12px*var(--mts,1)) var(--mono);color:var(--proc);text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff;pointer-events:none}
+.pc-crs i{font-style:normal;font-weight:600;color:#333}.pc-crs u{color:#111}
+:root[data-map="dark"] .pc-crs{text-shadow:0 0 2px #000,0 0 3px #000}:root[data-map="dark"] .pc-crs i,:root[data-map="dark"] .pc-crs u{color:#e3e7ec}
+.pc-hold{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 calc(11px*var(--mts,1)) var(--mono);color:var(--proc);text-shadow:0 0 2px #fff,0 0 3px #fff;pointer-events:none}.pc-hold u{color:#111}
+:root[data-map="dark"] .pc-hold{text-shadow:0 0 2px #000,0 0 3px #000}:root[data-map="dark"] .pc-hold u{color:#e3e7ec}
+.pc-arw{position:absolute;width:0;height:0;transform:rotate(var(--r));pointer-events:none}.pc-arw::after{content:"";position:absolute;left:-6px;top:-4px;border:6px solid transparent;border-bottom:11px solid var(--proc);border-top:0}
+.pc-fx{display:grid;place-items:center;cursor:pointer}
+.chpop .it.on{background:#e3f4ec}.chpop .it.on b{color:#0b6e4f}
+.procbox{position:absolute;left:50%;transform:translateX(-50%);bottom:30px;z-index:1050;width:min(560px,calc(100% - 150px));background:#fff;color:#1d232c;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,.25);border-left:5px solid #0b6e4f}
+.procbox .pb-h{display:flex;align-items:center;gap:6px;padding:8px 8px 8px 12px}.procbox .pb-h>div{flex:1;min-width:0}
+.procbox .pb-h b{display:block;font:700 15px var(--sans)}.procbox .pb-h span{display:block;font:500 12px var(--sans);color:#5f6a76;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.procbox button{border:0;background:#eef1f5;border-radius:8px;width:36px;height:36px;font:600 17px var(--sans);cursor:pointer;color:#1d232c}
+.procbox .pb-d{padding:0 12px 10px;max-height:40vh;overflow:auto;font:500 13px var(--sans)}.procbox table{width:100%;border-collapse:collapse;font:500 12.5px var(--mono)}
+.procbox td{padding:4px 6px;border-top:1px solid #e3e7ec}.procbox p{margin:8px 0 0}.procbox .pb-s{color:#6b7584;font-size:11.5px}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;margin:0}
 *{box-sizing:border-box}
@@ -1649,16 +1668,18 @@ const CHARTS={"OEPS":[{"k":"APP","t":"ILS or LOC RWY 17L","rwy":"17L","pg":"21",
 const chEl=id=>$(id);let chKind="APP";
 function chApt(){return st.chApt&&APTS.some(a=>a[0]===st.chApt)?st.chApt:(Object.keys(CHARTS)[0]||"OERK")}
 function chRail(){const k=chApt(),L=CHARTS[k]||[];chEl("chApt").innerHTML=escH(k)+"<span>▾</span>";
-  ["APP","TAXI"].forEach(t=>{const n=L.filter(c=>c.k===t).length;chEl("ch"+t).querySelector("small").textContent=n?String(n):"";chEl("ch"+t).disabled=false})}
+  ["APP","TAXI"].forEach(t=>{const n=L.filter(c=>c.k===t).length+(t==="APP"&&typeof PROCS!=="undefined"&&PROCS[k]?PROCS[k].list.length:0);chEl("ch"+t).querySelector("small").textContent=n?String(n):"";chEl("ch"+t).disabled=false})}
 function chClosePop(){chEl("chpop").hidden=true;["chAPP","chTAXI"].forEach(i=>chEl(i).classList.remove("on"))}
 function chList(kind){const k=chApt(),L=(CHARTS[k]||[]).filter(c=>c.k===kind),p=chEl("chpop");chKind=kind;
   ["chAPP","chTAXI"].forEach(i=>chEl(i).classList.toggle("on",i==="ch"+kind));
   let h='<div class="ph"><h3>'+(kind==="APP"?"Approach Charts":"Taxi / Aerodrome Charts")+'</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>';
-  if(!L.length)h+='<div class="empty">No '+(kind==="APP"?"approach":"taxi")+' charts added for '+escH(k)+' yet.</div>';
+  if(kind==="APP"&&typeof PROCS!=="undefined"&&PROCS[k]){h+='<div class="grp">Draw on map</div>'+PROCS[k].list.map((p,i)=>'<button class="it'+(procCur&&procCur.k===k&&procCur.i===i?' on':'')+'" data-pr="'+i+'"><b>'+escH(p.n)+'</b><span>'+(procCur&&procCur.k===k&&procCur.i===i?'Shown on map · tap to hide':'Approach path, fixes and altitudes')+'</span></button>').join("")+(L.length?'<div class="grp">Chart images</div>':'')}
+  else if(!L.length)h+='<div class="empty">No '+(kind==="APP"?"approach":"taxi")+' charts added for '+escH(k)+' yet.</div>';
   const groups={};L.forEach((c,i)=>{const g=c.rwy?"Runway "+c.rwy:"General";(groups[g]=groups[g]||[]).push([c,i])});
   Object.keys(groups).forEach(g=>{h+='<div class="grp">'+escH(g)+'</div>'+groups[g].map(([c])=>'<button class="it" data-pg="'+escH(c.pg)+'"><b>'+escH(c.t)+'</b><span>AD 2 '+escH(k)+'-'+escH(c.pg)+'</span></button>').join("")});
   p.innerHTML=h;p.hidden=false;chEl("chPX").onclick=chClosePop;
-  p.querySelectorAll(".it").forEach(b=>b.onclick=()=>chOpen(k,(CHARTS[k]||[]).find(c=>c.pg===b.dataset.pg)))}
+  p.querySelectorAll(".it[data-pg]").forEach(b=>b.onclick=()=>chOpen(k,(CHARTS[k]||[]).find(c=>c.pg===b.dataset.pg)));
+  p.querySelectorAll(".it[data-pr]").forEach(b=>b.onclick=()=>{const i=+b.dataset.pr;if(procCur&&procCur.k===k&&procCur.i===i)procSet(null);else{procSet(k,i,true);chClosePop()}chEl("chv").hidden=true})}
 function chSearch(){const p=chEl("chpop");["chAPP","chTAXI"].forEach(i=>chEl(i).classList.remove("on"));
   p.innerHTML='<div class="ph"><input id="chQ" type="search" placeholder="Search airport" autocomplete="off" autocapitalize="characters"><button class="cancel" id="chQX">Cancel</button></div><div id="chR"></div>';p.hidden=false;
   const run=()=>{const q=chEl("chQ").value.trim().toUpperCase();
@@ -1876,6 +1897,124 @@ awVis();
   $("rng").onclick=()=>{st.showRng=!st.showRng;$("rng").setAttribute("aria-pressed",String(st.showRng));save();draw()};
   draw();
 })();
+
+/* ---- instrument approach procedures drawn on the map (Saudi eAIP AD 2.24 charts + aeronautical data tabulations).
+   Fix row: [name, "DDMMSS.SN DDDMMSS.SE"]. Leg: {t:"tf"|"arc"|"hold"|"ma", ...}. Courses are magnetic as published; VAR from the chart. */
+const PROC_SRC="Saudi eAIP AD 2 OEPS (AIRAC AMDT 11/26, charts 17 SEP 2026)";
+const PROCS={OEPS:(function(){
+  const F={PSA:"240427.4N 0473501.0E",HIMMA:"240332.5N 0480218.8E",ORKOT:"240355.0N 0475123.7E",DAVIT:"234933.3N 0473717.6E",XAMPU:"241923.6N 0473701.0E",ORKIB:"241941.3N 0473535.9E",
+    ODKOM:"241926.3N 0473327.4E",SARUK:"240942.2N 0473419.0E",MAP17L:"240518.0N 0473442.3E",RW17L:"240451.84N 0473444.64E",
+    IMRIB:"241408.7N 0474432.0E",ITUSI:"241706.0N 0473131.4E",KUPOD:"241352.6N 0473148.5E",GIBOK:"241034.6N 0473206.1E",VAXOL:"240604.3N 0473230.0E",RW17R:"240544.96N 0473231.74E",
+    EGLEV:"234926.3N 0473358.1E",MIREB:"235849.9N 0473308.4E",NOSVO:"240309.8N 0473245.4E",RW35L:"240335.38N 0473243.19E",
+    TUGEG:"234926.5N 0473606.1E",DIRAH:"235803.4N 0473520.7E",ODKIV:"240217.9N 0473458.2E",RW35R:"240242.09N 0473456.08E",
+    VELIB:"235141.4N 0472620.7E",PAVEV:"235647.9N 0472948.6E",ORLAG:"240103.2N 0473242.0E",
+    RABLU:"240944.1N 0473418.6E",KUTGO:"240533.2N 0473452.2E",
+    D15R178:"234924.5N 0473501.0E",JUNDI:"235802.2N 0473501.0E",EGRIS:"240215.0N 0473501.0E"};
+  const VAR=2,P=n=>F[n];
+  const hH={t:"hold",f:"HIMMA",inb:270,r:true,len:7,alt:"5000"},
+        tHO={t:"tf",a:"HIMMA",b:"ORKOT",crs:"270°",dst:"10.0",alt:"5000"},
+        hD={t:"hold",f:"DAVIT",inb:350,r:true,len:7,alt:"5000",ma:1},
+        hX={t:"hold",f:"XAMPU",inb:185,r:false,len:7,alt:"5000",ma:1},
+        arc=(a,b,ccw,R,alt)=>({t:"arc",a,b,ctr:"PSA",R,ccw,alt,lbl:R.toFixed(1)+" DME ARC PSA"});
+  const fx=(n,role,alt,note)=>({n,role,alt,note});
+  return {F,VAR,list:[
+    {n:"ILS or LOC RWY 17L",rwy:"17L",pg:"21",fin:173,
+      fixes:[fx("HIMMA","IAF","5000","R090/25.0 PSA"),fx("ORKOT","IAF","5000","R090/15.0 PSA"),fx("ODKOM","IF","4500","15.0 PSA / 14.7 ISAB"),fx("SARUK","FAF","3200","5.3 PSA / 5.0 ISAB"),fx("MAP17L","MAP","","0.9 PSA / 0.6 ISAB","MAP"),fx("DAVIT","MAHF","5000","R170/15.0 PSA")],
+      legs:[hH,tHO,arc("ORKOT","ODKOM",true,15,"4500"),{t:"tf",a:"ODKOM",b:"SARUK",crs:"173°",fin:1},{t:"tf",a:"SARUK",b:"RW17L",fin:1},{t:"ma",pts:["MAP17L",["ahead",2],"DAVIT"]},hD],
+      ma:"Climb to 2000 FT then climbing left turn to 5000 FT on R170 PSA to DAVIT (R170/15.0 DME PSA) and hold.",info:"GS 3.0° · TCH 56 FT · LOC 110.7 ISAB · MSA 25 NM PSA 3200"},
+    {n:"ILS or LOC RWY 17R",rwy:"17R",pg:"23",fin:173,
+      fixes:[fx("IMRIB","IAF","5000","R040/13.0 PSA"),fx("ITUSI","IF","4500","13.0 PSA / 11.5 ISAA"),fx("KUPOD","","3500","9.8 PSA / 8.3 ISAA"),fx("GIBOK","FAF","3200","6.7 PSA / 5.0 ISAA"),fx("VAXOL","MAP","","0.5 ISAA"),fx("DAVIT","MAHF","5000","R170/15.0 PSA")],
+      legs:[{t:"hold",f:"IMRIB",inb:220,r:false,len:7,alt:"5000"},arc("IMRIB","ITUSI",true,13,"4500"),{t:"tf",a:"ITUSI",b:"KUPOD",crs:"173°",fin:1},{t:"tf",a:"KUPOD",b:"GIBOK",fin:1},{t:"tf",a:"GIBOK",b:"RW17R",fin:1},{t:"ma",pts:["VAXOL",["ahead",2],"DAVIT"]},hD],
+      ma:"Climb to 2000 FT then climbing left turn to 5000 FT on R170 PSA to DAVIT (R170/15.0 DME PSA) and hold.",info:"GS 3.0° · TCH 55 FT · LOC 109.7 ISAA · MSA 25 NM PSA 3200"},
+    {n:"ILS or LOC RWY 35L",rwy:"35L",pg:"25",fin:353,
+      fixes:[fx("HIMMA","IAF","5000","R090/25.0 PSA"),fx("ORKOT","IAF","5000","R090/15.0 PSA"),fx("EGLEV","IF","4500","15.0 PSA / 14.3 IPSB"),fx("MIREB","FAF","3200","5.9 PSA / 4.9 IPSB"),fx("NOSVO","MAP","","0.6 IPSB"),fx("XAMPU","MAHF","5000","R005/15.0 PSA")],
+      legs:[hH,tHO,arc("ORKOT","EGLEV",false,15,"4500"),{t:"tf",a:"EGLEV",b:"MIREB",crs:"353°",fin:1},{t:"tf",a:"MIREB",b:"RW35L",fin:1},{t:"ma",pts:["NOSVO",["ahead",2],"XAMPU"]},hX],
+      ma:"Climb to 2200 FT then climbing right turn to 5000 FT on R005 PSA to XAMPU (R005/15.0 DME PSA) and hold.",info:"GS 3.0° · TCH 53 FT · LOC 108.5 IPSB · MSA 25 NM PSA 3200"},
+    {n:"ILS or LOC RWY 35R",rwy:"35R",pg:"27",fin:353,
+      fixes:[fx("HIMMA","IAF","5000","R090/25.0 PSA"),fx("ORKOT","IAF","5000","R090/15.0 PSA"),fx("TUGEG","IF","4500","15.0 PSA / 13.5 IPSA"),fx("DIRAH","FAF","3200","6.4 PSA / 4.8 IPSA"),fx("ODKIV","MAP","","2.2 PSA / 0.6 IPSA"),fx("XAMPU","MAHF","5000","R005/15.0 PSA")],
+      legs:[hH,tHO,arc("ORKOT","TUGEG",false,15,"4500"),{t:"tf",a:"TUGEG",b:"DIRAH",crs:"353°",fin:1},{t:"tf",a:"DIRAH",b:"RW35R",fin:1},{t:"ma",pts:["ODKIV",["ahead",2],"XAMPU"]},hX],
+      ma:"Climb to 2500 FT then climbing right turn to 5000 FT on R005 PSA to XAMPU (R005/15.0 DME PSA) and hold.",info:"GS 3.0° · TCH 55 FT · LOC 111.3 IPSA · MSA 25 NM PSA 3200"},
+    {n:"RNP RWY 17L",rwy:"17L",pg:"13",fin:173,
+      fixes:[fx("ODKOM","IAF/IF","4500",""),fx("SARUK","FAF","3200",""),fx("RW17L","MAP","1634",""),fx("DAVIT","MAHF","5000","")],
+      legs:[{t:"tf",a:"ODKOM",b:"SARUK",crs:"173°",dst:"9.7",fin:1},{t:"tf",a:"SARUK",b:"RW17L",dst:"4.8",fin:1},{t:"ma",pts:["RW17L",["ahead",1.54],"DAVIT"]},hD],
+      ma:"Climb on 173° to 2000 FT, then direct DAVIT at 5000 FT and hold (right turns, inbound 350°).",info:"LNAV/VNAV · LNAV · MSA 25 NM PSA 3200"},
+    {n:"RNP RWY 17R",rwy:"17R",pg:"15",fin:173,
+      fixes:[fx("ITUSI","IAF/IF","4500",""),fx("GIBOK","FAF","3200",""),fx("RW17R","MAP","1645",""),fx("DAVIT","MAHF","5000","")],
+      legs:[{t:"tf",a:"ITUSI",b:"GIBOK",crs:"173°",dst:"6.5",fin:1},{t:"tf",a:"GIBOK",b:"RW17R",dst:"4.8",fin:1},{t:"ma",pts:["RW17R",["ahead",1.47],"DAVIT"]},hD],
+      ma:"Climb on 173° to 2000 FT, then direct DAVIT at 5000 FT and hold (right turns, inbound 350°).",info:"LNAV/VNAV · LNAV · MSA 25 NM PSA 3200"},
+    {n:"RNP RWY 35L",rwy:"35L",pg:"17",fin:353,
+      fixes:[fx("EGLEV","IAF/IF","4500",""),fx("MIREB","FAF","3200",""),fx("RW35L","MAP","1664",""),fx("XAMPU","MAHF","5000","")],
+      legs:[{t:"hold",f:"EGLEV",inb:353,r:true,len:7,alt:"4500"},{t:"tf",a:"EGLEV",b:"MIREB",crs:"353°",dst:"9.4",fin:1},{t:"tf",a:"MIREB",b:"RW35L",dst:"4.8",fin:1},{t:"ma",pts:["RW35L",["ahead",6.02],"XAMPU"]},hX],
+      ma:"Climb on 353° to 2800 FT, then direct XAMPU at 5000 FT and hold (left turns, inbound 185°).",info:"LNAV/VNAV · LNAV · MSA 25 NM PSA 3200"},
+    {n:"RNP RWY 35R",rwy:"35R",pg:"19",fin:353,
+      fixes:[fx("TUGEG","IAF/IF","4500",""),fx("DIRAH","FAF","3200",""),fx("RW35R","MAP","1699",""),fx("ORKIB","MAHF","5000","")],
+      legs:[{t:"hold",f:"TUGEG",inb:353,r:true,len:7,alt:"4500"},{t:"tf",a:"TUGEG",b:"DIRAH",crs:"353°",dst:"8.6",fin:1},{t:"tf",a:"DIRAH",b:"RW35R",dst:"4.7",fin:1},{t:"ma",pts:["RW35R",["ahead",5.09],"ORKIB"]},{t:"hold",f:"ORKIB",inb:185,r:false,len:7,alt:"5000",ma:1}],
+      ma:"Climb on 353° to 2800 FT, then direct ORKIB at 5000 FT and hold (left turns, inbound 185°).",info:"LNAV/VNAV · LNAV · MSA 25 NM PSA 3200"},
+    {n:"VOR-DME or TACAN A",rwy:"",pg:"29",fin:30,
+      fixes:[fx("HIMMA","IAF","5000","R090/25.0 PSA"),fx("ORKOT","IAF","5000","R090/15.0 PSA"),fx("VELIB","IF","4500","R210/15.0 PSA"),fx("PAVEV","FAF","4500","R210/9.0 PSA"),fx("ORLAG","MAP","","R210/4.0 PSA"),fx("XAMPU","MAHF","5000","R005/15.0 PSA")],
+      legs:[hH,tHO,arc("ORKOT","VELIB",false,15,"4500"),{t:"tf",a:"VELIB",b:"PAVEV",crs:"030°",dst:"6.0",fin:1},{t:"tf",a:"PAVEV",b:"ORLAG",fin:1},{t:"ma",pts:["ORLAG",["ahead",1.5],"XAMPU"]},hX],
+      ma:"Climb to 2200 FT then climbing left turn to 5000 FT on R005 PSA to XAMPU (R005/15.0 DME PSA) and hold. Circling only.",info:"Circling approach · MSA 25 NM PSA 3200"},
+    {n:"VOR-DME or TACAN RWY 17L",rwy:"17L",pg:"31",fin:171,
+      fixes:[fx("HIMMA","IAF","5000","R090/25.0 PSA"),fx("ORKOT","IAF","5000","R090/15.0 PSA"),fx("OTOPO","IF","4500","R351/15.0 PSA"),fx("RABLU","FAF","3200","R351/5.3 PSA"),fx("KUTGO","MAP","","R351/1.1 PSA"),fx("DAVIT","MAHF","5000","R170/15.0 PSA")],
+      legs:[hH,tHO,arc("ORKOT","OTOPO",true,15,"4500"),{t:"tf",a:"OTOPO",b:"RABLU",crs:"171°",dst:"9.7",fin:1},{t:"tf",a:"RABLU",b:"KUTGO",fin:1},{t:"ma",pts:["KUTGO","PSA","DAVIT"]},hD],
+      ma:"Climb to 5000 FT on R170 PSA to DAVIT (R170/15.0 DME PSA) and hold.",info:"VGSI 3.00° / TCH 72 · MSA 25 NM PSA 3200"},
+    {n:"VOR-DME or TACAN RWY 35R",rwy:"35R",pg:"33",fin:358,
+      fixes:[fx("HIMMA","IAF","5000","R090/25.0 PSA"),fx("ORKOT","IAF","5000","R090/15.0 PSA"),fx("D15R178","IF","4500","R178/15.0 PSA"),fx("JUNDI","FAF","3200","R178/6.4 PSA"),fx("EGRIS","MAP","","R178/2.2 PSA"),fx("XAMPU","MAHF","5000","R005/15.0 PSA")],
+      legs:[hH,tHO,arc("ORKOT","D15R178",false,15,"4500"),{t:"tf",a:"D15R178",b:"JUNDI",crs:"358°",dst:"8.6",fin:1},{t:"tf",a:"JUNDI",b:"EGRIS",fin:1},{t:"ma",pts:["EGRIS",["ahead",2],"XAMPU"]},hX],
+      ma:"Climb to 2800 FT then climbing right turn to 5000 FT on R005 PSA to XAMPU (R005/15.0 DME PSA) and hold.",info:"VGSI 3.00° / TCH 75.8 · MSA 25 NM PSA 3200"}
+  ]}})()};
+/* OTOPO is not in the data tabulation: R351/15.0 DME PSA, computed */
+(function(){const o=PROCS.OEPS,ps=dmsP(o.F.PSA);o.F.OTOPO=dest(ps,15,351+o.VAR)})();
+const procP=n=>{const o=PROCS[procCur&&procCur.k]||PROCS.OEPS,v=o.F[n];return Array.isArray(v)?v:dmsP(v)};
+let procCur=null;
+map.createPane("proc").style.zIndex=611;
+const procL=L.layerGroup().addTo(map);
+const PROC_NAME=n=>n==="MAP17L"?"MAP":n==="D15R178"?"D15 PSA":/^RW\d/.test(n)?n:n;
+function procOff(n){const t=(n.length*7.6+12);return t}
+function procDraw(){procL.clearLayers();if(!procCur)return;
+  const o=PROCS[procCur.k],pr=o.list[procCur.i],col=css("--proc")||"#0b7a55",V=o.VAR;
+  const ln=(pts,ma,w)=>L.polyline(pts,{pane:"proc",color:col,weight:w||2.6,opacity:.95,dashArray:ma?"9 7":null,interactive:false}).addTo(procL);
+  const tag=(p,html,cls)=>L.marker(p,{pane:"proc",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="'+cls+'">'+html+'</div>'})}).addTo(procL);
+  const z=map.getZoom();
+  pr.legs.forEach(g=>{
+    if(g.t==="tf"){const a=procP(g.a),b=procP(g.b);ln([a,b],false,g.fin?3.2:2.6);
+      if(g.crs&&z>=8.5){const m=dest(a,dist(a,b)/2,brg(a,b)),ang=brg(a,b);let r=ang-90;if(r>90)r-=180;if(r<-90)r+=180;
+        tag(m,g.crs+(g.dst?' <i>'+g.dst+'</i>':'')+(g.alt?' <u>'+g.alt+'</u>':''),'pc-crs" style="--r:'+r.toFixed(1)+'deg')}}
+    else if(g.t==="arc"){const c=procP(g.ctr),a=procP(g.a),b=procP(g.b);let b0=brg(c,a),b1=brg(c,b),sw=g.ccw?-norm(b0-b1):norm(b1-b0);
+      const pts=[];const n=Math.max(12,Math.ceil(Math.abs(sw)/2));for(let k=0;k<=n;k++)pts.push(dest(c,g.R,b0+sw*k/n));pts.push(b);ln(pts);
+      if(z>=8.5){const m=dest(c,g.R,b0+sw/2),ang=b0+sw/2;let r=ang;if(r>90&&r<270)r-=180;tag(m,g.lbl+(g.alt?' <u>'+g.alt+'</u>':''),'pc-crs pc-arc" style="--r:'+norm(r).toFixed(1)+'deg')}}
+    else if(g.t==="ma"){const pts=[];let last=null,fin=pr.fin+V;g.pts.forEach(q=>{let p;if(Array.isArray(q))p=dest(last,q[1],fin);else p=procP(q);pts.push(p);last=p});
+      /* smooth the turn after the climb-out point */
+      const sm=[pts[0]];for(let k=1;k<pts.length-1;k++){const A=pts[k-1],B=pts[k],C=pts[k+1],r=Math.min(1.2,dist(A,B)/2,dist(B,C)/2),b1=brg(B,A),b2=brg(B,C);const P1=dest(B,r,b1),P2=dest(B,r,b2);for(let t=0;t<=8;t++){const u=t/8,x=(1-u)*(1-u),y=2*(1-u)*u,w=u*u;sm.push([x*P1[0]+y*B[0]+w*P2[0],x*P1[1]+y*B[1]+w*P2[1]])}}sm.push(pts[pts.length-1]);
+      ln(sm,true);const e=sm[sm.length-1],s=sm[sm.length-2];tag(e,'','pc-arw" style="--r:'+brg(s,e).toFixed(1)+'deg')}
+    else if(g.t==="hold"){const f=procP(g.f),h=(g.inb+V)*D2R,r=1.5,Lg=g.len,lat=f[0]*D2R;
+      const u=[Math.sin(h),Math.cos(h)],p=g.r?[Math.cos(h),-Math.sin(h)]:[-Math.cos(h),Math.sin(h)],cw=g.r?-1:1;
+      const xy=[];const arcXY=(cx,cy,a0)=>{for(let k=0;k<=12;k++){const t=a0+cw*Math.PI*k/12;xy.push([cx+r*Math.cos(t),cy+r*Math.sin(t)])}};
+      const c1=[r*p[0],r*p[1]];arcXY(c1[0],c1[1],Math.atan2(-p[1],-p[0]));
+      const c2=[r*p[0]-Lg*u[0],r*p[1]-Lg*u[1]];arcXY(c2[0],c2[1],Math.atan2(p[1],p[0]));xy.push([0,0]);
+      ln(xy.map(([x,y])=>[f[0]+y/60,f[1]+x/(60*Math.cos(lat))]),!!g.ma,2.2);
+      if(z>=9){const m=[-Lg/2*u[0]+2*r*p[0]*1.35,-Lg/2*u[1]+2*r*p[1]*1.35],q=[f[0]+m[1]/60,f[1]+m[0]/(60*Math.cos(lat))];tag(q,String(g.inb).padStart(3,"0")+'°'+(g.alt?' <u>'+g.alt+'</u>':''),'pc-hold')}}
+  });
+  /* fixes */
+  const seen={};pr.fixes.forEach(fx=>{if(seen[fx.n])return;seen[fx.n]=1;const p=procP(fx.n);
+    const sym=fx.role==="FAF"?'<svg width="16" height="16" viewBox="-8 -8 16 16"><path d="M0 0 L-3 -7 3 -7Z M0 0 L7 -3 7 3Z M0 0 L3 7 -3 7Z M0 0 L-7 3 -7 -3Z" fill="'+col+'" stroke="#fff" stroke-width=".8"/></svg>':
+      fx.role==="MAP"&&/^RW/.test(fx.n)?'':'<svg width="16" height="15" viewBox="0 0 16 15"><path d="M8 1.5 14.5 13.5H1.5Z" fill="#fff" stroke="'+col+'" stroke-width="2.2"/></svg>';
+    L.marker(p,{pane:"proc",interactive:true,bubblingMouseEvents:false,icon:L.divIcon({className:"pc-fx",iconSize:[16,16],iconAnchor:[8,8],html:sym})}).on("click",()=>procFixCard(fx,p)).addTo(procL);
+    if(z>=8.5&&!(fx.role==="MAP"&&/^RW/.test(fx.n)))tag(p,'<b>'+escH(PROC_NAME(fx.n))+'</b>'+(fx.role&&fx.role!==PROC_NAME(fx.n)?'<small>'+fx.role+'</small>':'')+(fx.alt?'<u>'+fx.alt+'</u>':''),'pc-lbl')});
+}
+function procFixCard(fx,p){if(typeof inspectAt==="function"){inspectAt(L.latLng(p[0],p[1]),true)}}
+function procBox(){const b=$("procbox");if(!procCur){b.hidden=true;return}const o=PROCS[procCur.k],pr=o.list[procCur.i];b.hidden=false;
+  b.innerHTML='<div class="pb-h"><div><b>'+escH(procCur.k)+' · '+escH(pr.n)+'</b><span>'+escH(pr.info||"")+'</span></div><button id="pbI" aria-label="Details">ⓘ</button><button id="pbX" aria-label="Hide approach">✕</button></div>'+
+    '<div class="pb-d" id="pbD" hidden><table>'+pr.fixes.map(f=>'<tr><td><b>'+escH(PROC_NAME(f.n))+'</b></td><td>'+escH(f.role||"")+'</td><td>'+escH(f.alt||"")+'</td><td>'+escH(f.note||"")+'</td></tr>').join("")+'</table>'+
+    '<p><b>Missed approach:</b> '+escH(pr.ma)+'</p><p class="pb-s">'+escH(PROC_SRC)+' · AD 2.24. Check the chart before use.</p></div>';
+  $("pbX").onclick=()=>procSet(null);$("pbI").onclick=()=>{$("pbD").hidden=!$("pbD").hidden}}
+function procSet(k,i,fit){procCur=k?{k,i}:null;st.proc=k?k+"|"+i:null;save();procDraw();procBox();
+  if(procCur&&fit){const bb=L.latLngBounds([]);procL.eachLayer(l=>{if(l.getBounds)bb.extend(l.getBounds())});map.fitBounds(bb,{animate:false,paddingTopLeft:[40,80],paddingBottomRight:[90,120]})}}
+{const pb=document.createElement("div");pb.id="procbox";pb.className="procbox";pb.hidden=true;map.getContainer().parentNode.appendChild(pb);
+  ["pointerdown","touchstart","wheel","dblclick","click"].forEach(ev=>pb.addEventListener(ev,e=>e.stopPropagation(),{passive:true}))}
+map.on("zoomend",procDraw);
+if(st.proc){const [k,i]=String(st.proc).split("|");if(PROCS[k]&&PROCS[k].list[+i])procSet(k,+i)}
+window.__procSet=procSet;
 
 })();
 </script>
