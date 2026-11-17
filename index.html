@@ -378,17 +378,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .zctl button:disabled{opacity:.35;cursor:default}
 .zctl button[aria-pressed="true"]{background:#2f7bd2}
 .zctl #cht{font:700 12px var(--sans)}
-.rcol{position:absolute;top:116px;right:max(12px,env(safe-area-inset-right,0px));z-index:1100;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.rcol{position:absolute;top:50%;transform:translateY(-50%);right:max(12px,env(safe-area-inset-right,0px));z-index:1100;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .rcol .rb{width:58px;height:58px;box-sizing:border-box;border:2px solid #0d0e11;border-radius:12px;background:#3a3d47;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35)}
 .rcol .rb svg{width:34px;height:34px;display:block}
 .rcol .rb.on{background:#4f8ac9}
 .rcol .rtog{height:46px}
 .rpan{display:flex;flex-direction:column;gap:7px;background:#20232a;border-radius:14px;padding:6px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.rpan[hidden]{display:none!important}
+.rpan[hidden]{display:flex!important;visibility:hidden}
 .rcalc{position:relative}
 .cpop{position:absolute;right:66px;top:0;display:flex;gap:7px;background:#20232a;border-radius:14px;padding:6px;margin:-6px 0;box-shadow:0 2px 10px rgba(0,0,0,.4)}
 .cpop[hidden]{display:none!important}
-.rmsg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:1300;background:rgba(20,22,27,.88);color:#fff;font:800 26px var(--sans);letter-spacing:.04em;padding:14px 26px;border-radius:14px;pointer-events:none;direction:ltr;white-space:nowrap;transition:opacity .35s}
+.rmsg{position:absolute;z-index:1300;transform:translate(-100%,-50%);background:#444955;color:#fff;font:700 17px var(--sans);padding:9px 14px;margin-left:-14px;border-radius:7px;pointer-events:none;direction:ltr;white-space:nowrap;transition:opacity .35s;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.rmsg::after{content:"";position:absolute;right:-11px;top:50%;margin-top:-12px;border:12px solid transparent;border-right:0;border-left:11px solid #444955}
 .rmsg.hide{opacity:0}
 </style>
 
@@ -1630,7 +1631,7 @@ function applyLock(){const on=!!st.locked;$("tbLock").innerHTML=on?LOCK_SHUT:LOC
 $("tbLock").onclick=()=>{st.locked=!st.locked;save();applyLock();toast(st.locked?"Map locked":"Map unlocked")};
 $("mapLock").addEventListener("click",()=>toast("Map is locked · tap the padlock to unlock"));
 $("tbGps").onclick=e=>{e.stopPropagation();tbShow("gps")};$("tbSet").onclick=e=>{e.stopPropagation();tbShow("set")};
-document.addEventListener("click",e=>{if(tbOpen&&!$("tbPop").contains(e.target)&&!$("tbar").contains(e.target))tbClose()},true);
+document.addEventListener("pointerdown",e=>{if(tbOpen&&e.target.isConnected&&!$("tbPop").contains(e.target)&&!$("tbar").contains(e.target))tbClose()},true);
 applyBright();applyTheme();applyMts();applyLock();applySleep();drawCorridor();
 
 // Saudi eAIP ENR 4.4 significant points, AIRAC AMDT 11/26 (eff 29 OCT 2026)
@@ -2119,7 +2120,8 @@ window.__procSet=procSet;
   app.appendChild(col);
   ["pointerdown","touchstart","wheel","dblclick","click","contextmenu"].forEach(ev=>{col.addEventListener(ev,e=>e.stopPropagation(),{passive:true});zc.addEventListener(ev,e=>e.stopPropagation(),{passive:true})});
   const msg=document.createElement("div");msg.className="rmsg hide";app.appendChild(msg);let mt=0;
-  const say=t=>{msg.textContent=t;msg.classList.remove("hide");clearTimeout(mt);mt=setTimeout(()=>msg.classList.add("hide"),1300)};
+  const say=(t,b)=>{const r=b.getBoundingClientRect(),a=app.getBoundingClientRect();msg.style.left=($("rPan").getBoundingClientRect().left-a.left-4)+"px";msg.style.top=(r.top-a.top+r.height/2)+"px";
+    msg.textContent=t;msg.classList.remove("hide");clearTimeout(mt);mt=setTimeout(()=>msg.classList.add("hide"),1500)};
   const P=i=>$(i)&&$(i).getAttribute("aria-pressed")==="true";
   const sync=()=>{$("rApt").classList.toggle("on",P("apt"));$("rVor").classList.toggle("on",P("vor"));$("rAwy").classList.toggle("on",P("aws"));
     $("rAsp").classList.toggle("on",P("asp")||P("sua"));$("rOsm").classList.toggle("on",P("osmb"));
@@ -2127,12 +2129,12 @@ window.__procSet=procSet;
     $("cRul").classList.toggle("on",ru);$("cRng").classList.toggle("on",rn);
     const hid=!!st.rpanHidden;$("rPan").hidden=hid;$("rTog").style.transform="";$("rTog").firstChild.style.transform=hid?"rotate(180deg)":""};
   const mo=new MutationObserver(sync);["apt","vor","aws","asp","sua","osmb","rul","rng"].forEach(i=>{if($(i))mo.observe($(i),{attributes:true,attributeFilter:["aria-pressed"]})});
-  const tg=(id,name)=>()=>{$(id).click();say(name+(P(id)?" ON":" OFF"))};
-  $("rApt").onclick=tg("apt","AIRPORTS");$("rVor").onclick=tg("vor","VOR");$("rAwy").onclick=tg("aws","AIRWAYS");$("rOsm").onclick=tg("osmb","CULTURAL");
-  $("rAsp").onclick=()=>{const on=!(P("asp")||P("sua"));if(P("asp")!==on)$("asp").click();if(P("sua")!==on)$("sua").click();say("AIRSPACE"+(on?" ON":" OFF"))};
+  const tg=(id,name)=>e=>{$(id).click();say(name+(P(id)?" ON":" OFF"),e.currentTarget)};
+  $("rApt").onclick=tg("apt","Airports");$("rVor").onclick=tg("vor","VOR");$("rAwy").onclick=tg("aws","Airways");$("rOsm").onclick=tg("osmb","Cultural");
+  $("rAsp").onclick=()=>{const on=!(P("asp")||P("sua"));if(P("asp")!==on)$("asp").click();if(P("sua")!==on)$("sua").click();say("Airspace"+(on?" ON":" OFF"),$("rAsp"))};
   $("rCalc").onclick=()=>{$("cPop").hidden=!$("cPop").hidden};
-  const tool=(id,other,name)=>()=>{const on=!P(id);if(on&&P(other))$(other).click();$(id).click();$("cPop").hidden=true;say(name+(on?" ON":" OFF"))};
-  $("cRul").onclick=tool("rul","rng","RULER");$("cRng").onclick=tool("rng","rul","RANGE RINGS");
+  const tool=(id,other,name)=>()=>{const on=!P(id);if(on&&P(other))$(other).click();$(id).click();$("cPop").hidden=true;say(name+(on?" ON":" OFF"),$("rCalc"))};
+  $("cRul").onclick=tool("rul","rng","Ruler");$("cRng").onclick=tool("rng","rul","Range Rings");
   $("rTog").onclick=()=>{st.rpanHidden=!st.rpanHidden;save();$("cPop").hidden=true;sync()};
   document.addEventListener("click",e=>{if(!$("cPop").hidden&&!e.target.closest(".rcalc"))$("cPop").hidden=true},true);
   sync();
