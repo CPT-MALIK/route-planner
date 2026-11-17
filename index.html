@@ -483,6 +483,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
       <button id="rul" aria-label="Measuring ruler" title="Ruler" aria-pressed="false" style="font-size:11px">RUL</button>
       <button id="grd" aria-label="Show or hide the latitude/longitude grid" title="Grid" aria-pressed="true" style="font-size:11px">GRD</button>
       <button id="rng" aria-label="Range rings around the map centre" title="Range rings" aria-pressed="false" style="font-size:11px">RNG</button>
+      <button id="osmb" aria-label="Show or hide roads, wadis and towns" title="Roads, wadis, towns" aria-pressed="true" style="font-size:11px">OSM</button>
     </div>
     <div class="chrail" id="chrail" hidden>
       <button id="chApt" class="chr-apt">—<span>▾</span></button>
@@ -1083,7 +1084,7 @@ const CITIES=[[1,"Riyadh",24.7136,46.6753],[1,"Jeddah",21.4858,39.1925],[1,"Makk
   OSM_TOWNS.forEach(([t,n,la,lo])=>{if(n&&!near(n,la,lo))CITIES.push([4,n,la,lo])})}
 map.createPane("cities").style.zIndex=176;map.getPane("cities").style.pointerEvents="none";
 const cityL=L.layerGroup();
-function drawCities(){cityL.clearLayers();const z=map.getZoom();const maxT=z<5?0:z<6?1:z<7?2:z<OSM_MINZ?3:4;const vb=map.getBounds().pad(0.1);
+function drawCities(){cityL.clearLayers();const z=map.getZoom();const maxT=z<5?0:z<6?1:z<7?2:(z<OSM_MINZ||st.showOsm===false)?3:4;const vb=map.getBounds().pad(0.1);
   CITIES.forEach(([t,n,la,lo])=>{if(t>maxT||(t>=3&&!vb.contains([la,lo])))return;
     L.marker([la,lo],{pane:"cities",keyboard:false,interactive:false,icon:L.divIcon({className:"",iconSize:[28,28],iconAnchor:[14,14],html:'<div class="cdot t'+t+'"></div><div class="cnm t'+t+'">'+escH(n)+'</div>'})}).addTo(cityL)})}
 function showCity(n,la,lo,back){suppress=Date.now();pinL.clearLayers();openSheet({title:n,sub:"City · Saudi Arabia",back:back||null,p:[la,lo,n.toUpperCase().replace(/[^A-Z]/g,"").slice(0,8)],note:"City-centre position, approximate.",rows:relRows([la,lo])})}
@@ -1931,6 +1932,9 @@ awVis();
   map.on("move zoom resize viewreset",draw);setInterval(()=>{if(st.showRng)draw()},2000);
   $("rng").setAttribute("aria-pressed",String(!!st.showRng));
   $("rng").onclick=()=>{st.showRng=!st.showRng;$("rng").setAttribute("aria-pressed",String(st.showRng));save();draw()};
+  /* OSM button: roads, wadis, towns on/off */
+  const osmApply=()=>{const on=st.showOsm!==false;$("osmb").setAttribute("aria-pressed",String(on));osmCv.style.display=on?"":"none";try{drawCities()}catch(e){}};
+  $("osmb").onclick=()=>{st.showOsm=st.showOsm===false;save();osmApply()};osmApply();
   draw();
 })();
 
