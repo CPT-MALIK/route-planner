@@ -627,6 +627,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .svd>*{flex:none}
 .svm{color:var(--p-mu);font-size:12px}
 .svload{flex:none;margin:6px 14px 14px;height:52px;border:0;border-radius:9px;background:var(--p-btn);color:#4cc06a;font:700 19px var(--sans);cursor:pointer}
+
+/* orbit type selector */
+.oseg{display:flex;border:1px solid var(--p-bd);border-radius:7px;overflow:hidden}
+.oseg button{flex:1;height:38px;border:0;border-left:1px solid var(--p-bd);background:var(--p-in);color:var(--p-tx);font:700 12px var(--sans);cursor:pointer;padding:0 2px}
+.oseg button:first-child{border-left:0}
+.oseg button.on{background:#2f7bd2;color:#fff}
+.onote{font:500 12px/1.35 var(--sans);color:var(--p-mu)}
 </style>
 
 <div class="app">
@@ -2578,18 +2585,20 @@ window.__procSet=procSet;
 /* ---- ORBIT kept apart from ROUTE: st.orbit={c,r,n,pts,closed}, own map layer */
 (function(){
   const orbL=L.layerGroup().addTo(map);
-  function drawOrb(){orbL.clearLayers();const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=css("--route"),w=o.pts.slice();
-    if(o.closed&&w.length>2)w.push(w[0]);
-    for(let i=1;i<w.length;i++)L.polyline(gc(w[i-1],w[i]),{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL);
-    o.pts.forEach((p,i)=>{L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:26px;border-radius:13px">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).on("click",()=>inspectAt(L.latLng(p[0],p[1]),true)).addTo(orbL)});
-    L.marker(o.c,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>',iconSize:[24,24],iconAnchor:[12,12]})}).on("click",()=>{const sv=st.center;st.center={p:o.c,r:o.r,n:o.n};try{showCenter()}finally{st.center=sv}}).addTo(orbL)}
+  function drawOrb(){orbL.clearLayers();const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=css("--route"),G=orbGeom(o);
+    if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++)L.polyline(gc(w[i-1],w[i]),{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL)}
+    else L.polyline(G.path,{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL);
+    const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
+    grp.forEach(({p,ix})=>{const t=ix.map(k=>k+1).join("/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>inspectAt(L.latLng(p[0],p[1]),true)).addTo(orbL)});
+    G.anchors.forEach(([q,lb])=>{const m=L.marker(q,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>'+(lb?'<div class="lbl" style="position:absolute;left:26px;top:2px">'+lb+'</div>':''),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(orbL);
+      if(!lb)m.on("click",()=>{const sv=st.center;st.center={p:o.c,r:o.r,n:o.n};try{showCenter()}finally{st.center=sv}});else m.on("click",()=>inspectAt(L.latLng(q[0],q[1]),true))})}
   const _dr=drawRoute;drawRoute=function(){_dr();drawOrb()};
   syncClosed=function(){$("closed").checked=st.closed};
   const ob=$("fOrbPts");
   const box=()=>{const P=(st.orbit&&st.orbit.pts)||[];ob.classList.toggle("fph",!P.length);ob.innerHTML=P.length?P.map((p,i)=>'<div class="orow"><span>'+(i+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"};
   if(st.orbit){$("pclosed").checked=!!st.orbit.closed;$("pccw").checked=st.orbit.ccw!==false;$("pc").value=fmt(st.orbit.c);$("pn").value=st.orbit.n;$("pr").value=st.orbit.r}else $("pclosed").checked=false;
   $("pclosed").onchange=e=>{if(st.orbit){st.orbit.closed=e.target.checked;save();drawOrb()}};
-  $("pccw").onchange=e=>{const o=st.orbit;if(!o)return;o.ccw=e.target.checked;const dir=o.ccw?-1:1;o.pts=[];for(let i=0;i<o.n;i++)o.pts.push(dest(o.c,o.r,dir*i*360/o.n));save();drawOrb();box();toast(o.ccw?"Counter-clockwise":"Clockwise")};
+  $("pccw").onchange=e=>{const o=st.orbit;if(!o)return;o.ccw=e.target.checked;o.pts=orbGeom(o).pts;save();drawOrb();box();toast(o.ccw?"Counter-clockwise":"Clockwise")};
   $("pGo").onclick=()=>{const c=parse($("pc").value),r=parseFloat($("pr").value),n=parseInt($("pn").value);
     if(!$("pc").value.trim()){$("pErr").textContent="Enter the center point first";return}
     if(!c){$("pErr").textContent="Center coordinates not recognized";return}
@@ -2654,7 +2663,7 @@ window.__procSet=procSet;
     const o=f.orbit;
     return '<div class="svit" data-i="'+i+'">'+(edit?'<button class="svsel'+(selIx.has(i)?' on':'')+'" data-s="'+i+'"><i></i></button>':'')+
       '<div class="svtx"><b>'+escH(f.name||"NO NAME")+'</b>'+(act?'<em>ACTIVE FLIGHT (LAST SAVED)</em>':'')+'<small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
-      (f.wps&&f.wps.length?'<label>ROUTE</label><p>'+escH(rStr(f))+'</p>':'')+(o?'<label>ORBIT</label><p>'+fmt(o.c)+' · '+o.r+' NM · '+o.n+' POINTS</p>':'')+'</div><i class="svch">›</i></div>'}
+      (f.wps&&f.wps.length?'<label>ROUTE</label><p>'+escH(rStr(f))+'</p>':'')+(o?'<label>ORBIT</label><p>'+orbSum(o)+'</p>':'')+'</div><i class="svch">›</i></div>'}
   function list(kind){sv.hidden=false;const A=kind==="saved"?st.flights:st.cleared;
     let ix=A.map((f,i)=>i);if(kind==="saved"&&sortBy==="name")ix.sort((a,b)=>(A[a].name||"").localeCompare(A[b].name||""));else ix.sort((a,b)=>A[b].t-A[a].t);
     const right=kind==="saved"?(edit?'<button class="svlnk" data-a="done">Done</button>':'<button class="svlnk" data-a="edit">Edit</button>'):(A.length?'<button class="svlnk" data-a="clrall">Clear</button>':'');
@@ -2666,12 +2675,12 @@ window.__procSet=procSet;
     sv.innerHTML=head("list",kind==="saved"?"Saved Flight":"Cleared Flight",'<button class="svlnk" data-a="share" aria-label="Copy route">'+$("fShare").innerHTML+'</button>')+
       '<div class="svd"><b>'+escH(f.name||"NO NAME")+'</b><small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
       '<label>ROUTE</label><p>'+(f.wps&&f.wps.length?escH(rStr(f))+(f.closed?' <span class="svm">(CLOSED)</span>':''):'Not Specified')+'</p>'+
-      '<label>ORBIT</label><p>'+(o?'CENTER '+fmt(o.c)+'<br>RADIUS '+o.r+' NM · '+o.n+' POINTS'+(o.ccw===false?' · CLOCKWISE':' · COUNTER-CLOCKWISE'):'Not Specified')+'</p></div>'+
+      '<label>ORBIT</label><p>'+(o?orbText(o).slice(1).join('<br>')+((o.type||'circle')!=='line'?(o.ccw===false?'<br>CLOCKWISE':'<br>COUNTER-CLOCKWISE'):''):'Not Specified')+'</p></div>'+
       '<button class="svload" data-a="load">Load Flight</button>';
     wire(kind,i)}
   function load(f){const c=cur();if(!empty(c)&&JSON.stringify([c.wps,c.orbit])!==JSON.stringify([f.wps,f.orbit]))pushCleared(c);
     st.wps=JSON.parse(JSON.stringify(f.wps||[]));st.closed=!!f.closed;st.center=null;st.orbit=f.orbit?JSON.parse(JSON.stringify(f.orbit)):null;st.fname=f.name||"";$("fName").value=st.fname;
-    const o=st.orbit;$("pc").value=o?fmt(o.c):"";$("pn").value=o?o.n:"";$("pr").value=o?o.r:"";$("pclosed").checked=!!(o&&o.closed);if(o)$("pccw").checked=o.ccw!==false;
+    const o=st.orbit;orbFill(o);
     const ob=$("fOrbPts");if(ob){const P=(o&&o.pts)||[];ob.classList.toggle("fph",!P.length);ob.innerHTML=P.length?P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"}
     $("closed").checked=st.closed;update();save();
     const pts=st.wps.concat(o?o.pts:[]);if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11});
@@ -2694,11 +2703,66 @@ window.__procSet=procSet;
   /* copy text: name, route, orbit with numbered points */
   const fText=f=>{const L_=[];if(f.name)L_.push("FLIGHT NAME: "+f.name,"");
     if(f.wps&&f.wps.length)L_.push("ROUTE:",rStr(f),"","");
-    const o=f.orbit;if(o){L_.push("ORBIT:","CENTER POINT: "+fmt(o.c),"RADIUS: "+o.r+" NM","");(o.pts||[]).forEach((p,k)=>L_.push((k+1)+"- "+fmt(p)))}
+    const o=f.orbit;if(o){L_.push(...orbText(o),"");(o.pts||[]).forEach((p,k)=>L_.push((k+1)+"- "+fmt(p)))}
     return L_.join("\n").replace(/\n+$/,"")};
   const copyT=t=>{if(!t){toast("Nothing to copy");return}(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Flight copied"),()=>toast("Copy failed"))};
   $("fShare").onclick=()=>copyT(fText(cur()));
   shareF=f=>copyT(fText(f));
+})();
+
+
+/* ---- ORBIT types: circle, race track (A/B turn centres, width), figure 8 (two centres), line (A to B) */
+function orbGeom(o){const t=o.type||"circle",s=o.ccw===false?-1:1,pts=[],path=[],anchors=[];
+  if(t==="circle"){const dir=o.ccw===false?1:-1;for(let i=0;i<o.n;i++)pts.push(dest(o.c,o.r,dir*i*360/o.n));anchors.push([o.c,""]);return{pts,path:pts,anchors}}
+  const A=o.a,B=o.b,th=brg(A,B),tB=brg(B,A)+180;
+  if(t==="line"){return{pts:[A,B],path:[A,B],anchors:[]}}
+  if(t==="rt"){const r=o.w/2,M=dest(A,dist(A,B)/2,th);
+    pts.push(dest(A,r,th+s*90),dest(M,r,th+s*90),dest(B,r,tB+s*90),dest(B,r,tB+s*30),dest(B,r,tB-s*30),dest(B,r,tB-s*90),dest(A,r,th-s*90),dest(A,r,th-s*150),dest(A,r,th+s*150));
+    path.push(dest(A,r,th+s*90));for(let k=0;k<=36;k++)path.push(dest(B,r,tB+s*90-s*k*5));for(let k=0;k<=36;k++)path.push(dest(A,r,th-s*90-s*k*5));
+    anchors.push([A,"A"],[B,"B"]);return{pts,path,anchors}}
+  if(t==="f8"){const r=dist(A,B)/2,X=dest(A,r,th);
+    pts.push(X,dest(A,r,th-s*90),dest(A,r,th+180),dest(A,r,th+s*90),X,dest(B,r,tB-s*90),dest(B,r,tB),dest(B,r,tB+s*90),X);
+    for(let k=0;k<=72;k++)path.push(dest(A,r,th-s*k*5));for(let k=0;k<=72;k++)path.push(dest(B,r,tB+180+s*k*5));
+    anchors.push([A,"C1"],[B,"C2"]);return{pts,path,anchors}}
+  return{pts,path,anchors}}
+function orbText(o){const t=o.type||"circle";
+  if(t==="circle")return["ORBIT:","CENTER POINT: "+fmt(o.c),"RADIUS: "+o.r+" NM"];
+  if(t==="rt")return["ORBIT: RACE TRACK","POINT A: "+fmt(o.a),"POINT B: "+fmt(o.b),"WIDTH: "+o.w+" NM"];
+  if(t==="f8")return["ORBIT: FIGURE 8","CENTRE 1: "+fmt(o.a),"CENTRE 2: "+fmt(o.b),"RADIUS: "+(Math.round(dist(o.a,o.b)/2*10)/10)+" NM"];
+  return["ORBIT: LINE","POINT A: "+fmt(o.a),"POINT B: "+fmt(o.b)]}
+function orbSum(o){const t=o.type||"circle";if(t==="circle")return fmt(o.c)+' · '+o.r+' NM · '+o.n+' POINTS';
+  return({rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]+' · '+fmt(o.a)+' → '+fmt(o.b)+(t==="rt"?' · '+o.w+' NM':'')}
+function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&&o.type)||st.orbType||"circle";
+  set("pc",o&&t==="circle"?fmt(o.c):"");set("pn",o&&t==="circle"?o.n:"");set("pr",o&&t==="circle"?o.r:"");
+  set("oA",o&&o.a?fmt(o.a):"");set("oB",o&&o.b?fmt(o.b):"");set("oW",o&&o.w?o.w:"");
+  $("pclosed").checked=!!(o&&o.closed);if(o)$("pccw").checked=o.ccw!==false;const b=document.querySelector('.oseg [data-ot="'+t+'"]');if(b)b.click()}
+(function(){
+  const pc=$("pc");if(!pc||!$("fOrbPts"))return;
+  const seg=document.createElement("div");seg.className="oseg";
+  seg.innerHTML=[["circle","CIRCLE"],["rt","RACE TRACK"],["f8","FIGURE 8"],["line","LINE"]].map(([k,n])=>'<button data-ot="'+k+'">'+n+'</button>').join("");
+  const note=document.createElement("div");note.className="onote";
+  const mk=(id,ph)=>{const e=document.createElement("input");e.id=id;e.className="fin c";e.placeholder=ph;e.autocomplete="off";e.setAttribute("autocapitalize","characters");e.spellcheck=false;return e};
+  const oA=mk("oA","POINT A"),oB=mk("oB","POINT B"),oW=mk("oW","WIDTH (NM)");oW.inputMode="decimal";
+  pc.parentNode.insertBefore(seg,pc);pc.parentNode.insertBefore(note,pc);[oA,oB,oW].forEach(e=>pc.parentNode.insertBefore(e,pc));
+  const pair=$("pn").parentNode,cw=$("pccw").closest("label"),cl=$("pclosed").closest("label");
+  const NOTE={rt:"Point A and point B are the turn centres (the two ends of the centre line). Width = turn diameter.",f8:"Centre 1 and centre 2 are the circle centres. The circles meet halfway between them.",line:"Points 1 and 2 at A and B.",circle:""};
+  function setT(t){st.orbType=t;save();seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.ot===t));
+    const c=t==="circle";pc.hidden=!c;pair.hidden=!c;cl.hidden=!c;oA.hidden=c;oB.hidden=c;oW.hidden=t!=="rt";cw.hidden=t==="line";
+    oA.placeholder=t==="f8"?"CENTRE 1":"POINT A";oB.placeholder=t==="f8"?"CENTRE 2":"POINT B";note.textContent=NOTE[t];note.hidden=!NOTE[t];$("pErr").textContent=""}
+  seg.querySelectorAll("button").forEach(b=>b.onclick=()=>setT(b.dataset.ot));
+  const _go=$("pGo").onclick;
+  $("pGo").onclick=()=>{const t=st.orbType||"circle";if(t==="circle"){_go();if(st.orbit)st.orbit.type="circle";save();return}
+    const E=m=>{$("pErr").textContent=m},a=parse(oA.value),b=parse(oB.value),w=parseFloat(oW.value),nm=t==="f8"?["Centre 1","Centre 2"]:["Point A","Point B"];
+    if(!oA.value.trim()||!oB.value.trim())return E("Enter "+nm[0]+" and "+nm[1]);
+    if(!a)return E(nm[0]+" coordinates not recognized");if(!b)return E(nm[1]+" coordinates not recognized");
+    if(dist(a,b)<0.1)return E(nm[0]+" and "+nm[1]+" must be different");
+    if(t==="rt"&&!(w>0))return E("Enter the width in NM");
+    E("");const o={type:t,a:a,b:b,c:a,w:t==="rt"?w:null,ccw:$("pccw").checked,closed:false};o.pts=orbGeom(o).pts;o.n=o.pts.length;o.r=t==="rt"?w/2:Math.round(dist(a,b)/2*10)/10;
+    st.orbit=o;save();drawRoute();
+    const ob=$("fOrbPts");ob.classList.toggle("fph",!o.pts.length);ob.innerHTML=o.pts.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join("");
+    map.fitBounds(L.latLngBounds(orbGeom(o).path).pad(0.15),{maxZoom:11});toast(({rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]+": "+o.pts.length+" points")};
+  const _oc=$("fOrbClr").onclick;$("fOrbClr").onclick=()=>{oA.value="";oB.value="";oW.value="";_oc()};
+  setT((st.orbit&&st.orbit.type)||st.orbType||"circle");if(st.orbit)orbFill(st.orbit);
 })();
 
 })();
