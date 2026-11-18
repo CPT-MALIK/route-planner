@@ -2589,6 +2589,7 @@ window.__procSet=procSet;
   const box=()=>{const P=(st.orbit&&st.orbit.pts)||[];ob.classList.toggle("fph",!P.length);ob.innerHTML=P.length?P.map((p,i)=>'<div class="orow"><span>'+(i+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"};
   if(st.orbit){$("pclosed").checked=!!st.orbit.closed;$("pccw").checked=st.orbit.ccw!==false;$("pc").value=fmt(st.orbit.c);$("pn").value=st.orbit.n;$("pr").value=st.orbit.r}else $("pclosed").checked=false;
   $("pclosed").onchange=e=>{if(st.orbit){st.orbit.closed=e.target.checked;save();drawOrb()}};
+  $("pccw").onchange=e=>{const o=st.orbit;if(!o)return;o.ccw=e.target.checked;const dir=o.ccw?-1:1;o.pts=[];for(let i=0;i<o.n;i++)o.pts.push(dest(o.c,o.r,dir*i*360/o.n));save();drawOrb();box();toast(o.ccw?"Counter-clockwise":"Clockwise")};
   $("pGo").onclick=()=>{const c=parse($("pc").value),r=parseFloat($("pr").value),n=parseInt($("pn").value);
     if(!$("pc").value.trim()){$("pErr").textContent="Enter the center point first";return}
     if(!c){$("pErr").textContent="Center coordinates not recognized";return}
