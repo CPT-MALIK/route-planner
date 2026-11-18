@@ -607,7 +607,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .svr{width:64px;display:flex;justify-content:flex-end}
 .svlnk{border:0;background:none;color:#4a9bf0;font:600 16px var(--sans);cursor:pointer;padding:4px}
 .svlnk svg{width:24px;height:24px;display:block}
-.svrow{display:flex;align-items:center;gap:10px;padding:16px 16px;border:0;border-bottom:1px solid var(--p-bd);background:var(--p-btn);color:var(--p-tx);text-align:left;cursor:pointer}
+.svrow{display:flex;align-items:center;gap:10px;padding:16px 16px;border:0;border-bottom:1px solid var(--p-bd);background:none;color:var(--p-tx);text-align:left;cursor:pointer}
 .svrow b{flex:1;font:700 17px var(--sans)}.svrow span{font:600 15px var(--sans);color:var(--p-mu)}.svrow i{font:400 26px/1 var(--sans);color:var(--p-mu);font-style:normal}
 .svsort{padding:10px 14px;font:700 14px var(--sans);border-bottom:1px solid var(--p-bd)}
 .svlist{flex:1;overflow-y:auto}
@@ -2646,7 +2646,8 @@ window.__procSet=procSet;
   const close=()=>{sv.hidden=true;edit=false;selIx.clear()};
   const fl=document.querySelector('.lrail [data-m="fl"]');if(fl)fl.addEventListener("click",close);
   const head=(back,title,right)=>'<div class="svh"><button class="svb" data-a="'+back+'">'+(back==="x"?"✕":"‹")+'</button><b>'+title+'</b><span class="svr">'+(right||"")+'</span></div>';
-  function menu(){edit=false;selIx.clear();sv.hidden=false;
+  const tint=()=>{const cs=getComputedStyle(panel);["--panel","--p-btn","--p-bd","--p-tx","--p-mu","--p-in"].forEach(n=>{const v=cs.getPropertyValue(n);if(v)sv.style.setProperty(n,v)});sv.style.background=cs.backgroundColor};
+  function menu(){tint();edit=false;selIx.clear();sv.hidden=false;
     sv.innerHTML=head("x","Flights")+'<button class="svrow" data-v="cleared"><b>Recently Cleared</b><span>'+(st.cleared.length||"")+'</span><i>›</i></button><button class="svrow" data-v="saved"><b>Saved Flights</b><span>'+(st.flights.length||"")+'</span><i>›</i></button>';wire()}
   function item(f,i,kind){const act=kind==="saved"&&f===st.flights.reduce((a,b)=>!a||b.t>a.t?b:a,null);
     const o=f.orbit;
