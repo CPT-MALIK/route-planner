@@ -586,6 +586,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .fpage .check input[type=checkbox]:checked::after{content:"";position:absolute;left:11px;top:6px;width:7px;height:14px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg)}
 .fpage #pGo,.fpage #fAdd{background:var(--p-btn);border:1px solid var(--p-bd)}
 .fpage [hidden]{display:none!important}
+
+.lrail #rMap{margin-top:8px}
 </style>
 
 <div class="app">
@@ -2559,6 +2561,14 @@ window.__procSet=procSet;
   $("fOrbClr").onclick=()=>{$("pc").value="";$("pn").value="";$("pr").value="";$("pErr").textContent="";clrO()};
   const _y=$("nfYes").onclick;$("nfYes").onclick=()=>{_y();$("fOrbClr").click()};
   drawOrb();box();
+})();
+
+
+/* ---- MAP rail button under HOLD: closes an open chart and chart lists, back to the map */
+(function(){
+  const h=document.querySelector('.lrail [data-m="hold"]');if(!h)return;
+  const b=document.createElement("button");b.className="lb";b.id="rMap";b.textContent="MAP";h.insertAdjacentElement("afterend",b);
+  b.onclick=()=>{const v=chEl("chv");if(v&&!v.hidden){const x=chEl("chvX");if(x)x.click();v.hidden=true}try{chClosePop()}catch(e){}};
 })();
 
 })();
