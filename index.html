@@ -633,6 +633,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .oseg button{flex:1;height:38px;border:0;border-left:1px solid var(--p-bd);background:var(--p-in);color:var(--p-tx);font:700 12px var(--sans);cursor:pointer;padding:0 2px}
 .oseg button:first-child{border-left:0}
 .oseg button.on{background:#2f7bd2;color:#fff}
+.olr{display:flex;align-items:center;gap:8px}.olr b{width:22px;text-align:center;font:700 15px var(--sans);color:var(--p-mu)}.olr input{flex:1;min-width:0}
+.olns{display:flex;flex-direction:column;gap:8px}.olns[hidden]{display:none!important}
 .onote{font:500 12px/1.35 var(--sans);color:var(--p-mu)}
 .fpage>*,.hpage>*{flex-shrink:0}
 .oseg{flex:none;min-height:38px}
@@ -2717,7 +2719,7 @@ window.__procSet=procSet;
 function orbGeom(o){const t=o.type||"circle",s=o.ccw===false?-1:1,pts=[],path=[],anchors=[];
   if(t==="circle"){const dir=o.ccw===false?1:-1;for(let i=0;i<o.n;i++)pts.push(dest(o.c,o.r,dir*i*360/o.n));anchors.push([o.c,""]);return{pts,path:pts,anchors}}
   const A=o.a,B=o.b,th=brg(A,B),tB=brg(B,A)+180;
-  if(t==="line"){const n=Math.max(2,o.n||2),d=dist(A,B);for(let i=0;i<n;i++)pts.push(i===0?A:i===n-1?B:dest(A,d*i/(n-1),th));return{pts,path:pts,anchors:[]}}
+  if(t==="line"){const P=o.lpts||[A,B];return{pts:P.slice(),path:P.slice(),anchors:[]}}
   if(t==="rt"){const r=o.w/2,M=dest(A,dist(A,B)/2,th);
     pts.push(dest(A,r,th+s*90),dest(M,r,th+s*90),dest(B,r,tB+s*90),dest(B,r,tB+s*30),dest(B,r,tB-s*30),dest(B,r,tB-s*90),dest(A,r,th-s*90),dest(A,r,th-s*150),dest(A,r,th+s*150));
     path.push(dest(A,r,th+s*90));for(let k=0;k<=36;k++)path.push(dest(B,r,tB+s*90-s*k*5));for(let k=0;k<=36;k++)path.push(dest(A,r,th-s*90-s*k*5));
@@ -2731,12 +2733,12 @@ function orbText(o){const t=o.type||"circle";
   if(t==="circle")return["ORBIT:","CENTER POINT: "+fmt(o.c),"RADIUS: "+o.r+" NM"];
   if(t==="rt")return["ORBIT: RACE TRACK","POINT A: "+fmt(o.a),"POINT B: "+fmt(o.b),"WIDTH: "+o.w+" NM"];
   if(t==="f8")return["ORBIT: FIGURE 8","CENTRE 1: "+fmt(o.a),"CENTRE 2: "+fmt(o.b),"RADIUS: "+(Math.round(dist(o.a,o.b)/2*10)/10)+" NM"];
-  return["ORBIT: LINE","POINT A: "+fmt(o.a),"POINT B: "+fmt(o.b),"POINTS: "+(o.n||2)]}
+  return["ORBIT: LINE"]}
 function orbSum(o){const t=o.type||"circle";if(t==="circle")return fmt(o.c)+' · '+o.r+' NM · '+o.n+' POINTS';
-  return({rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]+' · '+fmt(o.a)+' → '+fmt(o.b)+(t==="rt"?' · '+o.w+' NM':'')}
+  if(t==="line")return 'LINE · '+(o.lpts||[0,0]).length+' POINTS';return({rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]+' · '+fmt(o.a)+' → '+fmt(o.b)+(t==="rt"?' · '+o.w+' NM':'')}
 function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&&o.type)||st.orbType||"circle";
   set("pc",o&&t==="circle"?fmt(o.c):"");set("pn",o&&t==="circle"?o.n:"");set("pr",o&&t==="circle"?o.r:"");
-  set("oA",o&&o.a?fmt(o.a):"");set("oB",o&&o.b?fmt(o.b):"");set("oW",o&&o.w?o.w:"");set("oN",o&&t==="line"?(o.n||2):"");
+  set("oA",o&&o.a?fmt(o.a):"");set("oB",o&&o.b?fmt(o.b):"");set("oW",o&&o.w?o.w:"");set("oN",o&&t==="line"?(o.lpts||[0,0]).length:"");if(window._lnFill)window._lnFill(o&&t==="line"?(o.lpts||[o.a,o.b]):null);
   $("pclosed").checked=!!(o&&o.closed);if(o)$("pccw").checked=o.ccw!==false;const b=document.querySelector('.oseg [data-ot="'+t+'"]');if(b)b.click()}
 (function(){
   const pc=$("pc");if(!pc||!$("fOrbPts"))return;
@@ -2745,25 +2747,35 @@ function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&
   const note=document.createElement("div");note.className="onote";
   const mk=(id,ph)=>{const e=document.createElement("input");e.id=id;e.className="fin c";e.placeholder=ph;e.autocomplete="off";e.setAttribute("autocapitalize","characters");e.spellcheck=false;return e};
   const oA=mk("oA","POINT A"),oB=mk("oB","POINT B"),oW=mk("oW","WIDTH (NM)"),oN=mk("oN","NUMBER OF POINTS");oW.inputMode="decimal";oN.inputMode="numeric";
-  pc.parentNode.insertBefore(seg,pc);pc.parentNode.insertBefore(note,pc);[oA,oB,oW,oN].forEach(e=>pc.parentNode.insertBefore(e,pc));
+  pc.parentNode.insertBefore(seg,pc);pc.parentNode.insertBefore(note,pc);const lb=document.createElement("div");lb.className="olns";[oA,oB,oW,oN,lb].forEach(e=>pc.parentNode.insertBefore(e,pc));
+  const LET=k=>String.fromCharCode(65+k);
+  function lnRender(){const n=Math.min(26,Math.max(2,parseInt(oN.value)||2)),old=[...lb.querySelectorAll("input")].map(e=>e.value);lb.innerHTML="";
+    for(let k=0;k<n;k++){const e=mk("oL"+k,"POINT "+LET(k));e.value=old[k]||"";const r=document.createElement("div");r.className="olr";r.innerHTML="<b>"+LET(k)+"</b>";r.appendChild(e);lb.appendChild(r)}}
+  oN.addEventListener("input",lnRender);
+  window._lnFill=P=>{if(!P){oN.value="";lnRender();[...lb.querySelectorAll("input")].forEach(e=>e.value="");return}oN.value=P.length;lnRender();[...lb.querySelectorAll("input")].forEach((e,k)=>e.value=P[k]?fmt(P[k]):"")};
+  lnRender();
   const pair=$("pn").parentNode,cw=$("pccw").closest("label"),cl=$("pclosed").closest("label");
-  const NOTE={rt:"Point A and point B are the turn centres (the two ends of the centre line). Width = turn diameter.",f8:"Centre 1 and centre 2 are the circle centres. The circles meet halfway between them.",line:"Points spread evenly from A to B, including A and B.",circle:""};
+  const NOTE={rt:"Point A and point B are the turn centres (the two ends of the centre line). Width = turn diameter.",f8:"Centre 1 and centre 2 are the circle centres. The circles meet halfway between them.",line:"Enter the number of points, then the coordinates of each point. The line is drawn A to B to C ...",circle:""};
   function setT(t){st.orbType=t;save();seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.ot===t));
-    const c=t==="circle";pc.hidden=!c;pair.hidden=!c;cl.hidden=!c;oA.hidden=c;oB.hidden=c;oW.hidden=t!=="rt";oN.hidden=t!=="line";cw.hidden=t==="line";
+    const c=t==="circle";pc.hidden=!c;pair.hidden=!c;cl.hidden=!c;oA.hidden=c;oB.hidden=c;oW.hidden=t!=="rt";oN.hidden=t!=="line";lb.hidden=t!=="line";if(t==="line"){oA.hidden=true;oB.hidden=true}cw.hidden=t==="line";
     oA.placeholder=t==="f8"?"CENTRE 1":"POINT A";oB.placeholder=t==="f8"?"CENTRE 2":"POINT B";note.textContent=NOTE[t];note.hidden=!NOTE[t];$("pErr").textContent=""}
   seg.querySelectorAll("button").forEach(b=>b.onclick=()=>setT(b.dataset.ot));
   const _go=$("pGo").onclick;
   $("pGo").onclick=()=>{const t=st.orbType||"circle";if(t==="circle"){_go();if(st.orbit)st.orbit.type="circle";save();return}
+    if(t==="line"){const I=[...lb.querySelectorAll("input")],P=[];for(let k=0;k<I.length;k++){const v=I[k].value.trim();if(!v){$("pErr").textContent="Enter point "+LET(k);return}const q=parse(v);if(!q){$("pErr").textContent="Point "+LET(k)+" coordinates not recognized";return}P.push(q)}
+      $("pErr").textContent="";const o={type:"line",lpts:P,a:P[0],b:P[P.length-1],c:P[0],ccw:true,closed:false,n:P.length,r:0};o.pts=P.slice();st.orbit=o;save();drawRoute();
+      const ob=$("fOrbPts");ob.classList.remove("fph");ob.innerHTML=P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join("");
+      map.fitBounds(L.latLngBounds(P).pad(0.15),{maxZoom:11});toast("LINE: "+P.length+" points");return}
     const E=m=>{$("pErr").textContent=m},a=parse(oA.value),b=parse(oB.value),w=parseFloat(oW.value),nm=t==="f8"?["Centre 1","Centre 2"]:["Point A","Point B"];
     if(!oA.value.trim()||!oB.value.trim())return E("Enter "+nm[0]+" and "+nm[1]);
     if(!a)return E(nm[0]+" coordinates not recognized");if(!b)return E(nm[1]+" coordinates not recognized");
     if(dist(a,b)<0.1)return E(nm[0]+" and "+nm[1]+" must be different");
-    if(t==="rt"&&!(w>0))return E("Enter the width in NM");const nn=parseInt(oN.value);if(t==="line"&&!(nn>=2&&nn<=72))return E("Number of points must be between 2 and 72");
-    E("");const o={type:t,a:a,b:b,c:a,w:t==="rt"?w:null,ccw:$("pccw").checked,closed:false,n:t==="line"?nn:0};o.pts=orbGeom(o).pts;o.n=o.pts.length;o.r=t==="rt"?w/2:Math.round(dist(a,b)/2*10)/10;
+    if(t==="rt"&&!(w>0))return E("Enter the width in NM");
+    E("");const o={type:t,a:a,b:b,c:a,w:t==="rt"?w:null,ccw:$("pccw").checked,closed:false,n:0};o.pts=orbGeom(o).pts;o.n=o.pts.length;o.r=t==="rt"?w/2:Math.round(dist(a,b)/2*10)/10;
     st.orbit=o;save();drawRoute();
     const ob=$("fOrbPts");ob.classList.toggle("fph",!o.pts.length);ob.innerHTML=o.pts.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join("");
     map.fitBounds(L.latLngBounds(orbGeom(o).path).pad(0.15),{maxZoom:11});toast(({rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]+": "+o.pts.length+" points")};
-  const _oc=$("fOrbClr").onclick;$("fOrbClr").onclick=()=>{oA.value="";oB.value="";oW.value="";oN.value="";_oc()};
+  const _oc=$("fOrbClr").onclick;$("fOrbClr").onclick=()=>{oA.value="";oB.value="";oW.value="";window._lnFill(null);_oc()};
   setT((st.orbit&&st.orbit.type)||st.orbType||"circle");if(st.orbit)orbFill(st.orbit);
 })();
 
