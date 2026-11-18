@@ -2642,7 +2642,7 @@ window.__procSet=procSet;
     if(i>=0)st.flights.splice(i,1);f.t=Date.now();st.flights.unshift(f);save();toast("Saved: "+f.name)};
   /* view over the FLIGHT page */
   const sv=document.createElement("div");sv.className="svp";sv.id="svP";sv.hidden=true;(document.querySelector(".mapwrap")||panel).appendChild(sv);
-  let sortBy="date",edit=false,selIx=new Set();
+  let sortBy="date",edit=false,selIx=new Set();let shareF=()=>{};
   const close=()=>{sv.hidden=true;edit=false;selIx.clear()};
   const fl=document.querySelector('.lrail [data-m="fl"]');if(fl)fl.addEventListener("click",close);
   const head=(back,title,right)=>'<div class="svh"><button class="svb" data-a="'+back+'">'+(back==="x"?"✕":"‹")+'</button><b>'+title+'</b><span class="svr">'+(right||"")+'</span></div>';
@@ -2683,13 +2683,21 @@ window.__procSet=procSet;
       else if(a==="del"){if(!selIx.size){toast("Select flights to delete");return}if(!confirm("Delete "+selIx.size+" saved flight"+(selIx.size>1?"s":"")+"?"))return;
         st.flights=st.flights.filter((f,k)=>!selIx.has(k));selIx.clear();save();list(kind)}
       else if(a==="clrall"){if(confirm("Empty the Recently Cleared list?")){st.cleared=[];save();list(kind)}}
-      else if(a==="share"){const f=(kind==="saved"?st.flights:st.cleared)[i],t=(f.name?f.name+" ":"")+rStr(f);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Route copied"),()=>toast(t))}
+      else if(a==="share")shareF((kind==="saved"?st.flights:st.cleared)[i])
       else if(a==="load")load((kind==="saved"?st.flights:st.cleared)[i])});
     sv.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>list(b.dataset.v));
     sv.querySelectorAll(".svsel").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=+b.dataset.s;selIx.has(k)?selIx.delete(k):selIx.add(k);b.classList.toggle("on")});
     sv.querySelectorAll(".svit").forEach(r=>r.onclick=()=>{const k=+r.dataset.i;if(edit){const b=r.querySelector(".svsel");if(b)b.click();return}detail(kind,k)})}
   const IC_TR='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
   $("fSaved").onclick=menu;
+  /* copy text: name, route, orbit with numbered points */
+  const fText=f=>{const L_=[];if(f.name)L_.push("FLIGHT NAME: "+f.name,"");
+    if(f.wps&&f.wps.length)L_.push("ROUTE:",rStr(f),"","");
+    const o=f.orbit;if(o){L_.push("ORBIT:","CENTER POINT: "+fmt(o.c),"RADIUS: "+o.r+" NM","");(o.pts||[]).forEach((p,k)=>L_.push((k+1)+"- "+fmt(p)))}
+    return L_.join("\n").replace(/\n+$/,"")};
+  const copyT=t=>{if(!t){toast("Nothing to copy");return}(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Flight copied"),()=>toast("Copy failed"))};
+  $("fShare").onclick=()=>copyT(fText(cur()));
+  shareF=f=>copyT(fText(f));
 })();
 
 })();
