@@ -533,6 +533,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .fcap{font:600 11px var(--sans)}
 .hpage h2,.fpage h2{font:700 18px var(--sans)}
 .chpop .it .curt{font:700 11px var(--sans);font-style:normal;color:#2fb36b;margin-left:8px;letter-spacing:.05em;vertical-align:2px}
+/* new-flight confirm + locate button (session 5) */
+.zctl{flex-direction:column}
+.zctl #fit{display:none}
+.nfov{position:fixed;inset:0;z-index:1400;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center}
+.nfov[hidden]{display:none!important}
+.nfbox{width:min(440px,86vw);background:#3a3d47;border-radius:16px;color:#fff;text-align:center;direction:ltr;overflow:hidden;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.nfbox h3{margin:0;padding:26px 18px 0;font:700 24px var(--sans)}
+.nfbox p{margin:16px 22px 0;font:700 19px/1.25 var(--sans)}
+.nfbox .nfg{color:#4caf3a;margin:14px 22px 14px}
+.nfbtn{display:flex;border-top:1px solid #d8d8d8}
+.nfbtn button{flex:1;height:52px;border:0;background:none;color:#fff;font:700 19px var(--sans);cursor:pointer}
+.nfbtn button+button{border-left:1px solid #d8d8d8}
 </style>
 
 <div class="app">
@@ -2413,5 +2425,20 @@ window.__procSet=procSet;
     p.querySelectorAll(".it[data-pr]").forEach(b=>b.onclick=()=>{const i=+b.dataset.pr;if(procCur&&procCur.k===k&&procCur.i===i)procSet(null);else{procSet(k,i,true);chClosePop()}chEl("chv").hidden=true})};
   chGo=function(icao,kind){closeSheet();st.chApt=icao;save();setMode(kind==="TAXI"?"taxi":"app")};
 })();
+/* session 5: New Flight confirm dialog, locate-aircraft button */
+(function(){
+  const ov=document.createElement("div");ov.className="nfov";ov.id="nfOv";ov.hidden=true;
+  ov.innerHTML='<div class="nfbox"><h3>ARE YOU SURE ?</h3><p>Creating a new flight will remove your current flight.</p><p class="nfg">save it before if you want</p><div class="nfbtn"><button id="nfNo">Cancel</button><button id="nfYes">Create</button></div></div>';
+  document.body.appendChild(ov);
+  $("fNew").onclick=()=>{ov.hidden=false};
+  $("nfNo").onclick=()=>{ov.hidden=true};
+  ov.addEventListener("pointerdown",e=>{if(e.target===ov)ov.hidden=true});
+  $("nfYes").onclick=()=>{ov.hidden=true;const c=$("clr");if(!c.dataset.c)c.click();c.click();st.fname="";$("fName").value="";save()};
+  const b=document.createElement("button");b.id="zLoc";b.setAttribute("aria-label","Go to aircraft");
+  b.innerHTML='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>';
+  $("zctl").appendChild(b);
+  b.onclick=()=>{if(!ownPos){toast("No GPS position");return}map.setView(ownPos,map.getZoom())};
+})();
+
 })();
 </script>
