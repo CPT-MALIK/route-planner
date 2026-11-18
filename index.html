@@ -547,8 +547,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .nfbtn button{flex:1;height:52px;border:0;background:none;color:#fff;font:700 19px var(--sans);cursor:pointer}
 .nfbtn button+button{border-left:1px solid #d8d8d8}
 /* solid band behind the iPad status bar; the app starts below it (session 5) */
-html::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:#2b2e36;z-index:5000;pointer-events:none}
-.app{margin-top:env(safe-area-inset-top,0px);height:calc(100% - env(safe-area-inset-top,0px))}
+html,body{background:#2b2e36}
+body{padding-top:env(safe-area-inset-top,0px);box-sizing:border-box;overflow:hidden}
 .chv-h{padding-top:10px}
 </style>
 
