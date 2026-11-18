@@ -584,7 +584,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .fpage .check input[type=checkbox]{-webkit-appearance:none;appearance:none;flex:none;width:32px;height:32px;margin:0;border-radius:50%;border:1px solid var(--p-bd);background:#000;cursor:pointer;position:relative}
 .fpage .check input[type=checkbox]:checked{background:#2f7bd2;border-color:#2f7bd2}
 .fpage .check input[type=checkbox]:checked::after{content:"";position:absolute;left:11px;top:6px;width:7px;height:14px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg)}
-.fpage #pGo,.fpage #fAdd{background:var(--p-btn);border:1px solid var(--p-bd)}
+.fpage #pGo,.fpage #fAdd{background:var(--p-btn);border:1px solid var(--p-bd);color:var(--p-tx)}
 .fpage [hidden]{display:none!important}
 
 .lrail #rMap{margin-top:8px}
@@ -596,7 +596,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 
 /* saved flights view */
 .panel{position:relative}
-.svp{position:absolute;inset:0;z-index:30;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;color:var(--p-tx)}
+.svp{position:absolute;left:12px;top:calc(var(--sb,0px) + 12px);width:370px;max-height:calc(100% - 24px - var(--sb,0px));z-index:1255;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;color:var(--p-tx);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.55);border:1px solid var(--p-bd)}
+.svp .svlist{flex:0 1 auto;min-height:0}
 .svp[hidden]{display:none!important}
 .svh{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--p-bd);min-height:46px;box-sizing:border-box}
 .svh b{flex:1;text-align:center;font:700 18px var(--sans)}
@@ -622,10 +623,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .svsel.on{background:#2f7bd2;border-color:#2f7bd2}
 .svsel.on i{position:absolute;left:10px;top:5px;width:6px;height:12px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
 .svempty{padding:30px 14px;text-align:center;color:var(--p-mu);font:600 14px var(--sans)}
-.svd{flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;overflow-y:auto}
+.svd{flex:0 1 auto;min-height:0;padding:14px;display:flex;flex-direction:column;overflow-y:auto}
 .svd>*{flex:none}
 .svm{color:var(--p-mu);font-size:12px}
-.svload{margin:14px;height:52px;border:0;border-radius:9px;background:var(--p-btn);color:#4cc06a;font:700 19px var(--sans);cursor:pointer}
+.svload{flex:none;margin:6px 14px 14px;height:52px;border:0;border-radius:9px;background:var(--p-btn);color:#4cc06a;font:700 19px var(--sans);cursor:pointer}
 </style>
 
 <div class="app">
@@ -2640,7 +2641,7 @@ window.__procSet=procSet;
     if(i>=0&&!confirm('A flight named "'+f.name+'" is already saved. Replace it?'))return;
     if(i>=0)st.flights.splice(i,1);f.t=Date.now();st.flights.unshift(f);save();toast("Saved: "+f.name)};
   /* view over the FLIGHT page */
-  const sv=document.createElement("div");sv.className="svp";sv.id="svP";sv.hidden=true;panel.appendChild(sv);
+  const sv=document.createElement("div");sv.className="svp";sv.id="svP";sv.hidden=true;(document.querySelector(".mapwrap")||panel).appendChild(sv);
   let sortBy="date",edit=false,selIx=new Set();
   const close=()=>{sv.hidden=true;edit=false;selIx.clear()};
   const fl=document.querySelector('.lrail [data-m="fl"]');if(fl)fl.addEventListener("click",close);
