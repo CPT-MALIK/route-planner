@@ -2456,12 +2456,12 @@ window.__procSet=procSet;
   const TT={APP:"Approach Charts",TAXI:"Taxi / Aerodrome Charts",SID:"SID Charts",STAR:"STAR Charts"};
   chList=function(kind){const k=chApt(),L=(CHARTS[k]||[]).filter(c=>c.k===kind),p=chEl("chpop"),sr=sel(k),dk=k+"|"+kind,def=(st.chDef||{})[dk];chKind=kind;p.scrollTop=0;
     let h='<div class="ph"><h3>'+TT[kind]+' · '+escH(k)+'</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>';
-    if(kind==="APP"&&typeof PROCS!=="undefined"&&PROCS[k]){h+='<div class="grp">Draw on map</div>'+PROCS[k].list.map((q,i)=>'<button class="it'+(procCur&&procCur.k===k&&procCur.i===i?' on':'')+'" data-pr="'+i+'"><b>'+escH(q.n)+'</b><span>'+(procCur&&procCur.k===k&&procCur.i===i?'Shown on map · tap to hide':'Approach path, fixes and altitudes')+'</span></button>').join("")}
     if(!L.length)h+='<div class="empty">No '+TT[kind].replace(" Charts","").toLowerCase()+' charts added for '+escH(k)+' yet.</div>';
     const groups={};L.forEach(c=>{(c.rwy?c.rwy.split("-"):[""]).forEach(g=>{(groups[g]=groups[g]||[]).push(c)})});
     const order=Object.keys(groups).sort((a,b)=>(b===sr)-(a===sr)||(a==="")-(b==="")||a.localeCompare(b,undefined,{numeric:true}));
     order.forEach(g=>{h+='<div class="grp"><span>'+(g?"Runway "+escH(g):"General")+'</span>'+(g&&g===sr?'<span class="selr">SELECTED RWY</span>':'')+'</div>'+
       groups[g].map(c=>'<div class="itw'+(chCur&&chCur===c&&!chEl("chv").hidden?' cur':'')+'"><button class="it" data-pg="'+escH(c.pg)+'"><b>'+escH(c.t)+'</b><span>AD 2 '+escH(k)+'-'+escH(c.pg)+'</span></button><button class="rd'+(def===c.pg?' on':'')+'" data-def="'+escH(c.pg)+'" aria-label="Open this chart first"><i></i></button></div>').join("")});
+    if(kind==="APP"&&typeof PROCS!=="undefined"&&PROCS[k]){h+='<div class="grp">Draw on map</div>'+PROCS[k].list.map((q,i)=>'<button class="it'+(procCur&&procCur.k===k&&procCur.i===i?' on':'')+'" data-pr="'+i+'"><b>'+escH(q.n)+'</b><span>'+(procCur&&procCur.k===k&&procCur.i===i?'Shown on map · tap to hide':'Approach path, fixes and altitudes')+'</span></button>').join("")}
     p.innerHTML=h;p.hidden=false;chEl("chPX").onclick=chClosePop;
     p.querySelectorAll(".it[data-pg]").forEach(b=>b.onclick=()=>{chOpen(k,(CHARTS[k]||[]).find(c=>c.pg===b.dataset.pg));chClosePop()});
     p.querySelectorAll(".rd[data-def]").forEach(b=>b.onclick=()=>{st.chDef=st.chDef||{};if(st.chDef[dk]===b.dataset.def)delete st.chDef[dk];else st.chDef[dk]=b.dataset.def;save();chList(kind)});
