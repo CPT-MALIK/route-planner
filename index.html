@@ -8,7 +8,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1d2418">
 <script>if("serviceWorker"in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
-<meta name="viewport" content="viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -546,10 +545,6 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .nfbtn{display:flex;border-top:1px solid #d8d8d8}
 .nfbtn button{flex:1;height:52px;border:0;background:none;color:#fff;font:700 19px var(--sans);cursor:pointer}
 .nfbtn button+button{border-left:1px solid #d8d8d8}
-/* solid band behind the iPad status bar; the app starts below it (session 5) */
-html,body{background:#2b2e36;overflow:hidden}
-.app{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:0;height:auto!important}
-.chv-h{padding-top:10px}
 /* dark waypoint menu + HOLD turns toggle (session 5) */
 :root[data-map="dark"] .wpm-top{background:#2b2e36;border-bottom-color:#0d0e11}
 :root[data-map="dark"] .wpm-top button{border-right-color:#0d0e11;color:#4a98e8}
@@ -2454,9 +2449,6 @@ window.__procSet=procSet;
   $("zctl").appendChild(b);
   b.onclick=()=>{if(!ownPos){toast("No GPS position");return}map.setView(ownPos,map.getZoom())};
 })();
-
-/* keep the page from scrolling under the status bar */
-(function(){const f=()=>{if(window.scrollY||document.documentElement.scrollTop)window.scrollTo(0,0)};window.addEventListener("scroll",f,{passive:true});window.addEventListener("resize",f);f()})();
 
 })();
 </script>
