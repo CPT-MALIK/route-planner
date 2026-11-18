@@ -588,6 +588,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .fpage [hidden]{display:none!important}
 
 .lrail #rMap{margin-top:8px}
+
+/* VOR names white in dark theme */
+:root[data-map="dark"] .navbox,:root[data-map="dark"] .navbox legend,:root[data-map="dark"] .navcls,:root[data-map="dark"] .navsm{color:#fff!important}
+:root[data-map="dark"] .navbox{border-color:#fff!important}
 </style>
 
 <div class="app">
@@ -2569,6 +2573,15 @@ window.__procSet=procSet;
   const h=document.querySelector('.lrail [data-m="hold"]');if(!h)return;
   const b=document.createElement("button");b.className="lb";b.id="rMap";b.textContent="MAP";h.insertAdjacentElement("afterend",b);
   b.onclick=()=>{const v=chEl("chv");if(v&&!v.hidden){const x=chEl("chvX");if(x)x.click();v.hidden=true}try{chClosePop()}catch(e){}};
+})();
+
+
+/* ---- X to close the HOLD page (same as FLIGHT) */
+(function(){
+  const hp=$("hPage");if(!hp)return;const h2=hp.querySelector("h2");
+  const d=document.createElement("div");d.className="fclose";d.innerHTML='<button id="hX" aria-label="Close">✕</button>';
+  hp.insertBefore(d,hp.firstChild);
+  $("hX").onclick=()=>{const b=document.querySelector('.lrail [data-m="hold"]');if(b&&b.classList.contains("on"))b.click()};
 })();
 
 })();
