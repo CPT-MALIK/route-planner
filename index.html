@@ -651,6 +651,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .pentb .pw i{width:22px;background:#fff;border-radius:6px}
 .pentb .psep{width:1px;height:28px;background:#4a4f5c}
 .mapwrap.penmode #map{cursor:crosshair}
+
+/* one palette for cards and menus: the FLIGHT panel colours (light unless the map theme is dark) */
+html:root:not([data-map="dark"]){--panel:#eef1f5;--line:#b9c1cc;--fg:#1d232c;--muted:#6b7584;--soft:#ffffff;--btn:#1d232c;--btnfg:#ffffff}
+html:root[data-map="dark"]{--panel:#2f323b;--line:#4a4f5c;--fg:#ffffff;--muted:#a9adb8;--soft:#3a3d47;--btn:#ffffff;--btnfg:#2f323b}
+.sbtn{background:var(--soft)}
+html:root[data-map="dark"] .sbtn{color:#8fa0ff}html:root[data-map="dark"] .sbtn.dct{color:#8fa0ff}html:root[data-map="dark"] .sbtn.go{color:#4cc06a}html:root[data-map="dark"] .sbtn.danger{color:#ff6b63}
+html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[data-map="dark"] #cPop{background:#2f323b}
 </style>
 
 <div class="app">
