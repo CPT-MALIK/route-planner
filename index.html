@@ -555,6 +555,17 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .panel .seg{border:1.5px solid #2f7bd2;border-radius:9px}
 .panel .seg button{background:var(--p-in,#fff);color:var(--p-tx,#2f7bd2)}
 .panel .seg button[aria-pressed="true"]{background:#2f7bd2;color:#fff}
+/* move controls below the iPad status bar in the installed app (session 5) */
+:root{--sb:0px}
+:root.sa{--sb:24px}
+.tbar,.srch{top:calc(12px + var(--sb))}
+.zctl,.tbpop{top:calc(62px + var(--sb))}
+.chpop{top:calc(10px + var(--sb))!important;max-height:calc(100% - 20px - var(--sb))!important}
+.lrail{padding-top:calc(10px + var(--sb))}
+.fpage,.hpage{padding-top:calc(12px + var(--sb))}
+.chv-h{padding-top:calc(10px + var(--sb))}
+.fclose{display:flex;justify-content:flex-end;margin:-4px 0 -6px}
+.fclose button{width:36px;height:30px;border:0;border-radius:8px;background:var(--p-btn);color:var(--p-tx);font:700 18px var(--sans);cursor:pointer}
 </style>
 
 <div class="app">
@@ -2448,6 +2459,15 @@ window.__procSet=procSet;
   b.innerHTML='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>';
   $("zctl").appendChild(b);
   b.onclick=()=>{if(!ownPos){toast("No GPS position");return}map.setView(ownPos,map.getZoom())};
+})();
+
+/* installed app: push controls below the status bar; FLIGHT close button */
+(function(){
+  if(navigator.standalone||matchMedia("(display-mode: standalone)").matches)document.documentElement.classList.add("sa");
+  const top=document.querySelector("#fPage .ftop");if(!top)return;
+  const d=document.createElement("div");d.className="fclose";d.innerHTML='<button id="fX" aria-label="Close">\u2715</button>';
+  top.parentNode.insertBefore(d,top);
+  $("fX").onclick=()=>{const b=document.querySelector('.lrail [data-m="fl"]');if(b&&b.classList.contains("on"))b.click()};
 })();
 
 })();
