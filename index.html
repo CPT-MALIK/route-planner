@@ -2594,7 +2594,7 @@ window.__procSet=procSet;
     else L.polyline(G.path,{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL);
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ix.map(k=>k+1).join("/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>inspectAt(L.latLng(p[0],p[1]),true)).addTo(orbL)});
-    G.anchors.forEach(([q,lb])=>{const m=L.marker(q,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>'+(lb?'<div class="lbl" style="position:absolute;left:26px;top:2px">'+lb+'</div>':''),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(orbL);
+    (st.orbShowC===false?[]:G.anchors).forEach(([q,lb])=>{const m=L.marker(q,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>'+(lb?'<div class="lbl" style="position:absolute;left:26px;top:2px">'+lb+'</div>':''),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(orbL);
       if(!lb)m.on("click",()=>{const sv=st.center;st.center={p:o.c,r:o.r,n:o.n};try{showCenter()}finally{st.center=sv}});else m.on("click",()=>inspectAt(L.latLng(q[0],q[1]),true))})}
   const _dr=drawRoute;drawRoute=function(){_dr();drawOrb()};
   syncClosed=function(){$("closed").checked=st.closed};
@@ -2777,6 +2777,14 @@ function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&
     map.fitBounds(L.latLngBounds(orbGeom(o).path).pad(0.15),{maxZoom:11});toast(({rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]+": "+o.pts.length+" points")};
   const _oc=$("fOrbClr").onclick;$("fOrbClr").onclick=()=>{oA.value="";oB.value="";oW.value="";window._lnFill(null);_oc()};
   setT((st.orbit&&st.orbit.type)||st.orbType||"circle");if(st.orbit)orbFill(st.orbit);
+})();
+
+
+/* ---- ORBIT: show / hide the centre point (and A/B, C1/C2) on the map */
+(function(){const cw=$("pccw");if(!cw)return;const l=document.createElement("label");l.className="check";
+  l.innerHTML='<input type="checkbox" id="pShowC"'+(st.orbShowC===false?'':' checked')+'> Show center point';
+  cw.closest("label").insertAdjacentElement("afterend",l);
+  $("pShowC").onchange=e=>{st.orbShowC=e.target.checked;save();drawRoute()};
 })();
 
 })();
