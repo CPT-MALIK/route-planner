@@ -638,6 +638,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .onote{font:500 12px/1.35 var(--sans);color:var(--p-mu)}
 .fpage>*,.hpage>*{flex-shrink:0}
 .oseg{flex:none;min-height:38px}
+
+/* pen */
+#penSvg{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:none;overflow:visible}
+#penSvg path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.lrail .lic button.on{opacity:1;background:#2f7bd2;border-radius:50%}
+.pentb{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);z-index:1265;display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(30,33,40,.94);border:1px solid #4a4f5c;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.pentb[hidden]{display:none!important}
+.pentb button{width:40px;height:40px;border:0;border-radius:10px;background:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font:700 22px var(--sans)}
+.pentb button.on{background:#2f7bd2}
+.pentb .pc i{width:22px;height:22px;border-radius:50%;background:var(--c);border:2px solid rgba(255,255,255,.7)}
+.pentb .pw i{width:22px;background:#fff;border-radius:6px}
+.pentb .psep{width:1px;height:28px;background:#4a4f5c}
+.mapwrap.penmode #map{cursor:crosshair}
 </style>
 
 <div class="app">
@@ -2006,7 +2019,7 @@ function chOwnDraw(){const el=chEl("chvOwn");if(!el)return;const g=chCur&&chCur.
   el.innerHTML='<div style="transform:translate(-'+hf+'px,-'+hf+'px) rotate('+(isFinite(chOwnH)&&chOwnH!==null?chOwnH:0)+'deg);transform-origin:'+hf+'px '+hf+'px">'+planeSVG+'</div>';
   const pl=el.querySelector(".plane");if(pl){pl.style.width=sz+"px";pl.style.height=sz+"px"}
   el.style.transform="translate("+(CV.x+px*CV.s)+"px,"+(CV.y+py*CV.s)+"px)"}
-function cvApply(){chEl("chvImg").style.transform="translate("+CV.x+"px,"+CV.y+"px) scale("+CV.s+")";chOwnDraw();
+function cvApply(){chEl("chvImg").style.transform="translate("+CV.x+"px,"+CV.y+"px) scale("+CV.s+")";if(window.penChartT)window.penChartT();chOwnDraw();
   const z=chEl("chvZ");if(z)z.textContent="\u00d7"+(CV.min>0?CV.s/CV.min:1).toFixed(1)}
 function cvClamp(){const b=chEl("chvBox"),W=b.clientWidth,H=b.clientHeight,iw=CV.w*CV.s,ih=CV.h*CV.s;
   CV.x=iw<=W?(W-iw)/2:Math.min(0,Math.max(W-iw,CV.x));CV.y=ih<=H?(H-ih)/2:Math.min(0,Math.max(H-ih,CV.y))}
@@ -2015,12 +2028,12 @@ function cvZoomAt(px,py,ns){ns=Math.max(CV.min,Math.min(CV.max,ns));CV.x=px-(px-
 (function(){const b=chEl("chvBox"),P=new Map();let last=null,pinch=null,tapT=0;
   const rel=e=>{const r=b.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
   b.addEventListener("pointerdown",e=>{b.setPointerCapture(e.pointerId);P.set(e.pointerId,rel(e));
-    if(P.size===1){last=rel(e);const now=Date.now();if(now-tapT<300){const[px,py]=last;cvZoomAt(px,py,CV.s>CV.min*1.5?CV.min:CV.s*2.5);tapT=0}else tapT=now}
+    if(P.size===1){last=rel(e);const now=Date.now();if(!window.penOn&&now-tapT<300){const[px,py]=last;cvZoomAt(px,py,CV.s>CV.min*1.5?CV.min:CV.s*2.5);tapT=0}else tapT=now}
     if(P.size===2){const[a,c]=[...P.values()];pinch={d:Math.hypot(a[0]-c[0],a[1]-c[1]),s:CV.s,m:[(a[0]+c[0])/2,(a[1]+c[1])/2]}}});
   b.addEventListener("pointermove",e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,rel(e));
     if(P.size>=2&&pinch){const[a,c]=[...P.values()],d=Math.hypot(a[0]-c[0],a[1]-c[1]),m=[(a[0]+c[0])/2,(a[1]+c[1])/2];
       CV.x+=m[0]-pinch.m[0];CV.y+=m[1]-pinch.m[1];pinch.m=m;cvZoomAt(m[0],m[1],pinch.s*d/pinch.d)}
-    else if(P.size===1&&last){const p=rel(e);CV.x+=p[0]-last[0];CV.y+=p[1]-last[1];last=p;cvClamp();cvApply()}});
+    else if(P.size===1&&last&&!window.penOn){const p=rel(e);CV.x+=p[0]-last[0];CV.y+=p[1]-last[1];last=p;cvClamp();cvApply()}});
   const up=e=>{P.delete(e.pointerId);if(P.size<2)pinch=null;if(P.size===1)last=[...P.values()][0];if(!P.size)last=null};
   b.addEventListener("pointerup",up);b.addEventListener("pointercancel",up);
   b.addEventListener("wheel",e=>{e.preventDefault();const[px,py]=rel(e);cvZoomAt(px,py,CV.s*Math.exp(-e.deltaY*0.002))},{passive:false});
@@ -2785,6 +2798,68 @@ function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&
   l.innerHTML='<input type="checkbox" id="pShowC"'+(st.orbShowC===false?'':' checked')+'> Show center point';
   cw.closest("label").insertAdjacentElement("afterend",l);
   $("pShowC").onchange=e=>{st.orbShowC=e.target.checked;save();drawRoute()};
+})();
+
+
+/* ---- PEN: draw on the map (strokes fixed to lat/lon) or on a chart (strokes in chart pixels, per chart) */
+(function(){
+  const btn=document.querySelector('.lrail [data-ic="pen"]'),mw=document.querySelector(".mapwrap");if(!btn||!mw)return;
+  st.pen=st.pen||{map:[],ch:{}};st.pen.map=st.pen.map||[];st.pen.ch=st.pen.ch||{};
+  const COL=["#ff3b30","#ffd60a","#34c759","#ffffff"],WID=[3,6,11];let col=st.penC||COL[0],wid=st.penW||WID[1],erase=false;
+  window.penOn=false;
+  map.createPane("pen").style.zIndex=645;map.getPane("pen").style.pointerEvents="none";
+  const penL=L.layerGroup().addTo(map);
+  const drawMap=()=>{penL.clearLayers();st.pen.map.forEach(k=>L.polyline(k.p,{pane:"pen",color:k.c,weight:k.w,opacity:.95,lineCap:"round",lineJoin:"round",interactive:false}).addTo(penL))};drawMap();
+  /* chart overlay */
+  const box=chEl("chvBox"),NS="http://www.w3.org/2000/svg",svg=document.createElementNS(NS,"svg");svg.id="penSvg";box.appendChild(svg);
+  const chKey=()=>chCur?chCur.f:null,chList_=()=>{const k=chKey();if(!k)return null;return st.pen.ch[k]=st.pen.ch[k]||[]};
+  const pathD=P=>P.map((q,i)=>(i?"L":"M")+q[0].toFixed(1)+" "+q[1].toFixed(1)).join(" ")+(P.length===1?" l0.1 0":"");
+  function drawChart(){svg.innerHTML="";const L_=chKey()&&st.pen.ch[chKey()];svg.setAttribute("width",CV.w);svg.setAttribute("height",CV.h);svg.setAttribute("viewBox","0 0 "+CV.w+" "+CV.h);
+    (L_||[]).forEach(k=>{const e=document.createElementNS(NS,"path");e.setAttribute("d",pathD(k.p));e.setAttribute("stroke",k.c);e.setAttribute("stroke-width",k.w);svg.appendChild(e)})}
+  window.penChartT=()=>{svg.style.transform="translate("+CV.x+"px,"+CV.y+"px) scale("+CV.s+")";if(svg.dataset.f!==String(chKey())){svg.dataset.f=String(chKey());drawChart()}};
+  const onChart=()=>!chEl("chv").hidden;
+  /* toolbar */
+  const tb=document.createElement("div");tb.className="pentb";tb.hidden=true;
+  tb.innerHTML=COL.map(c=>'<button class="pc" data-c="'+c+'" style="--c:'+c+'"><i></i></button>').join("")+'<span class="psep"></span>'+
+    WID.map(w=>'<button class="pw" data-w="'+w+'"><i style="height:'+w+'px"></i></button>').join("")+'<span class="psep"></span>'+
+    '<button class="pa" data-a="undo" aria-label="Undo">↶</button><button class="pa" data-a="erase" aria-label="Eraser"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 20h12M4.5 14.5 13 6l6 6-8 8H8z"/><path d="M9 10l6 6"/></svg></button><button class="pa" data-a="clear" aria-label="Clear all"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>';
+  mw.appendChild(tb);
+  const sync=()=>{tb.querySelectorAll(".pc").forEach(b=>b.classList.toggle("on",!erase&&b.dataset.c===col));tb.querySelectorAll(".pw").forEach(b=>b.classList.toggle("on",+b.dataset.w===wid));tb.querySelector('[data-a="erase"]').classList.toggle("on",erase)};
+  tb.querySelectorAll(".pc").forEach(b=>b.onclick=()=>{col=b.dataset.c;erase=false;st.penC=col;save();sync()});
+  tb.querySelectorAll(".pw").forEach(b=>b.onclick=()=>{wid=+b.dataset.w;st.penW=wid;save();sync()});
+  tb.querySelector('[data-a="erase"]').onclick=()=>{erase=!erase;sync()};
+  tb.querySelector('[data-a="undo"]').onclick=()=>{const A=onChart()?chList_():st.pen.map;if(!A||!A.length){toast("Nothing to undo");return}A.pop();save();onChart()?drawChart():drawMap()};
+  tb.querySelector('[data-a="clear"]').onclick=()=>{const A=onChart()?chList_():st.pen.map;if(!A||!A.length){toast("Nothing to clear");return}
+    if(!confirm(onChart()?"Clear all drawing on this chart?":"Clear all drawing on the map?"))return;A.length=0;save();onChart()?drawChart():drawMap()};
+  function setPen(on){window.penOn=on;btn.classList.toggle("on",on);tb.hidden=!on;mw.classList.toggle("penmode",on);
+    if(on){map.dragging.disable();map.doubleClickZoom.disable();erase=false;sync()}else{map.dragging.enable();map.doubleClickZoom.enable()}}
+  btn.onclick=()=>setPen(!window.penOn);
+  /* drawing */
+  const ptrs=new Set();let cur=null,curEl=null,lastPx=null;
+  const ERR=16;
+  function eraseAt(px,py){if(onChart()){const A=chList_();if(!A)return;const n=A.length;for(let i=A.length-1;i>=0;i--)if(A[i].p.some(q=>Math.hypot(CV.x+q[0]*CV.s-px,CV.y+q[1]*CV.s-py)<ERR))A.splice(i,1);if(A.length!==n){save();drawChart()}}
+    else{const A=st.pen.map,n=A.length;for(let i=A.length-1;i>=0;i--)if(A[i].p.some(q=>{const c=map.latLngToContainerPoint(q);return Math.hypot(c.x-px,c.y-py)<ERR}))A.splice(i,1);if(A.length!==n){save();drawMap()}}}
+  function start(e,el){if(!window.penOn)return;ptrs.add(e.pointerId);
+    if(ptrs.size>1){if(curEl){onChart()?curEl.remove():penL.removeLayer(curEl)}cur=null;curEl=null;return}
+    const r=el.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;lastPx=[px,py];suppress=Date.now();
+    if(erase){cur={erase:true};eraseAt(px,py);return}
+    if(onChart()){const q=[(px-CV.x)/CV.s,(py-CV.y)/CV.s];cur={c:col,w:wid/CV.min,p:[q]};curEl=document.createElementNS(NS,"path");curEl.setAttribute("stroke",col);curEl.setAttribute("stroke-width",cur.w);curEl.setAttribute("d",pathD(cur.p));svg.appendChild(curEl)}
+    else{const ll=map.containerPointToLatLng([px,py]);cur={c:col,w:wid,p:[[ll.lat,ll.lng]]};curEl=L.polyline(cur.p,{pane:"pen",color:col,weight:wid,opacity:.95,lineCap:"round",lineJoin:"round",interactive:false}).addTo(penL)}}
+  function move(e,el){if(!window.penOn||!cur||ptrs.size>1||!ptrs.has(e.pointerId))return;const r=el.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
+    if(Math.hypot(px-lastPx[0],py-lastPx[1])<2.5)return;lastPx=[px,py];e.preventDefault();
+    if(cur.erase){eraseAt(px,py);return}
+    if(onChart()){cur.p.push([(px-CV.x)/CV.s,(py-CV.y)/CV.s]);curEl.setAttribute("d",pathD(cur.p))}
+    else{const ll=map.containerPointToLatLng([px,py]);cur.p.push([ll.lat,ll.lng]);curEl.addLatLng(ll)}}
+  function end(e){ptrs.delete(e.pointerId);if(!window.penOn)return;
+    if(cur&&!cur.erase){const r6=x=>Math.round(x*1e6)/1e6,r1=x=>Math.round(x*10)/10;
+      if(onChart()){const A=chList_();cur.p=cur.p.map(q=>[r1(q[0]),r1(q[1])]);cur.w=r1(cur.w);if(A)A.push(cur)}else{cur.p=cur.p.map(q=>[r6(q[0]),r6(q[1])]);st.pen.map.push(cur)}save();suppress=Date.now()}
+    cur=null;curEl=null}
+  const mc=map.getContainer();
+  [[mc,()=>!onChart()],[box,onChart]].forEach(([el,ok])=>{
+    el.addEventListener("pointerdown",e=>{if(window.penOn&&ok())start(e,el)},true);
+    el.addEventListener("pointermove",e=>{if(window.penOn&&ok())move(e,el)},true);
+    ["pointerup","pointercancel"].forEach(t=>el.addEventListener(t,end,true))});
+  sync();
 })();
 
 })();
