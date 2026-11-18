@@ -547,8 +547,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .nfbtn button{flex:1;height:52px;border:0;background:none;color:#fff;font:700 19px var(--sans);cursor:pointer}
 .nfbtn button+button{border-left:1px solid #d8d8d8}
 /* solid band behind the iPad status bar; the app starts below it (session 5) */
-html,body{background:#2b2e36}
-body{padding-top:env(safe-area-inset-top,0px);box-sizing:border-box;overflow:hidden}
+html,body{background:#2b2e36;overflow:hidden}
+.app{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:0;height:auto!important}
 .chv-h{padding-top:10px}
 </style>
 
@@ -2444,6 +2444,9 @@ window.__procSet=procSet;
   $("zctl").appendChild(b);
   b.onclick=()=>{if(!ownPos){toast("No GPS position");return}map.setView(ownPos,map.getZoom())};
 })();
+
+/* keep the page from scrolling under the status bar */
+(function(){const f=()=>{if(window.scrollY||document.documentElement.scrollTop)window.scrollTo(0,0)};window.addEventListener("scroll",f,{passive:true});window.addEventListener("resize",f);f()})();
 
 })();
 </script>
