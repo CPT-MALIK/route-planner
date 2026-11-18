@@ -593,6 +593,39 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 :root[data-map="dark"] .navbox,:root[data-map="dark"] .navbox legend,:root[data-map="dark"] .navcls,:root[data-map="dark"] .navsm{color:#fff!important}
 :root[data-map="dark"] .navbox{border-color:#fff!important}
 :root[data-map="dark"] .navsym{filter:invert(1)}
+
+/* saved flights view */
+.panel{position:relative}
+.svp{position:absolute;inset:0;z-index:30;background:var(--panel);display:flex;flex-direction:column;overflow:hidden;color:var(--p-tx)}
+.svp[hidden]{display:none!important}
+.svh{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--p-bd);min-height:46px;box-sizing:border-box}
+.svh b{flex:1;text-align:center;font:700 18px var(--sans)}
+.svb{width:44px;height:36px;border:0;background:none;color:#4a9bf0;font:400 30px/1 var(--sans);cursor:pointer;padding:0}
+.svb[data-a="x"]{font:700 18px var(--sans);color:var(--p-tx)}
+.svtr{color:var(--p-mu)}
+.svr{width:64px;display:flex;justify-content:flex-end}
+.svlnk{border:0;background:none;color:#4a9bf0;font:600 16px var(--sans);cursor:pointer;padding:4px}
+.svlnk svg{width:24px;height:24px;display:block}
+.svrow{display:flex;align-items:center;gap:10px;padding:16px 16px;border:0;border-bottom:1px solid var(--p-bd);background:var(--p-btn);color:var(--p-tx);text-align:left;cursor:pointer}
+.svrow b{flex:1;font:700 17px var(--sans)}.svrow span{font:600 15px var(--sans);color:var(--p-mu)}.svrow i{font:400 26px/1 var(--sans);color:var(--p-mu);font-style:normal}
+.svsort{padding:10px 14px;font:700 14px var(--sans);border-bottom:1px solid var(--p-bd)}
+.svlist{flex:1;overflow-y:auto}
+.svit{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;border-bottom:1px solid var(--p-bd);cursor:pointer}
+.svtx{flex:1;min-width:0;display:flex;flex-direction:column}
+.svtx b,.svd b{font:700 17px var(--sans)}
+.svtx em{font:700 12.5px var(--sans);color:#4cc06a;font-style:normal;letter-spacing:.02em}
+.svtx small,.svd small{font:700 12.5px var(--sans);color:var(--p-mu);letter-spacing:.02em}
+.svtx label,.svd label{margin-top:10px;font:600 12.5px var(--sans);color:var(--p-mu);letter-spacing:.03em}
+.svtx p,.svd p{margin:2px 0 0;font:600 14px/1.35 var(--sans);word-break:break-word}
+.svch{font:400 26px/1 var(--sans);color:var(--p-mu);font-style:normal}
+.svsel{flex:none;width:30px;height:30px;border-radius:50%;border:1.5px solid var(--p-mu);background:none;padding:0;cursor:pointer;position:relative}
+.svsel.on{background:#2f7bd2;border-color:#2f7bd2}
+.svsel.on i{position:absolute;left:10px;top:5px;width:6px;height:12px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.svempty{padding:30px 14px;text-align:center;color:var(--p-mu);font:600 14px var(--sans)}
+.svd{flex:1;min-height:0;padding:14px;display:flex;flex-direction:column;overflow-y:auto}
+.svd>*{flex:none}
+.svm{color:var(--p-mu);font-size:12px}
+.svload{margin:14px;height:52px;border:0;border-radius:9px;background:var(--p-btn);color:#4cc06a;font:700 19px var(--sans);cursor:pointer}
 </style>
 
 <div class="app">
@@ -2583,6 +2616,78 @@ window.__procSet=procSet;
   const d=document.createElement("div");d.className="fclose";d.innerHTML='<button id="hX" aria-label="Close">✕</button>';
   hp.insertBefore(d,hp.firstChild);
   $("hX").onclick=()=>{const b=document.querySelector('.lrail [data-m="hold"]');if(b&&b.classList.contains("on"))b.click()};
+})();
+
+
+/* ---- SAVE / SAVED Flight: st.flights (saved), st.cleared (last 20 cleared); HOLD is not saved */
+(function(){
+  const fp=$("fPage");if(!fp)return;const panel=fp.parentNode;
+  st.flights=st.flights||[];st.cleared=st.cleared||[];
+  const MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  const zt=t=>{const d=new Date(t);return String(d.getUTCHours()).padStart(2,"0")+String(d.getUTCMinutes()).padStart(2,"0")+"Z "+String(d.getUTCDate()).padStart(2,"0")+" "+MON[d.getUTCMonth()]};
+  const word=p=>{const n=p[2];if(n&&/^[A-Z0-9]{2,6}$/.test(n)){const f=resolveFix(n);if(f&&Math.abs(f[0]-p[0])<1e-4&&Math.abs(f[1]-p[1])<1e-4)return n}return fmt(p)};
+  const rStr=f=>(f.wps||[]).map(word).join(" ");
+  const cur=()=>({name:(st.fname||"").trim(),wps:JSON.parse(JSON.stringify(st.wps||[])),closed:!!st.closed,orbit:st.orbit?JSON.parse(JSON.stringify(st.orbit)):null});
+  const empty=f=>!(f.wps&&f.wps.length)&&!f.orbit;
+  const pushCleared=f=>{if(empty(f))return;f.t=Date.now();st.cleared.unshift(f);st.cleared=st.cleared.slice(0,20);save()};
+  /* remember what CLEAR ALL removes (the second, confirming tap) */
+  const _clr=$("clr").onclick;$("clr").onclick=()=>{if($("clr").dataset.c)pushCleared(cur());_clr()};
+  /* SAVE */
+  $("fSave").onclick=()=>{const f=cur();
+    if(!f.name){toast("Enter the flight name first");$("fName").focus();return}
+    if(empty(f)){toast("Nothing to save: the route and orbit are empty");return}
+    const i=st.flights.findIndex(x=>x.name.toUpperCase()===f.name.toUpperCase());
+    if(i>=0&&!confirm('A flight named "'+f.name+'" is already saved. Replace it?'))return;
+    if(i>=0)st.flights.splice(i,1);f.t=Date.now();st.flights.unshift(f);save();toast("Saved: "+f.name)};
+  /* view over the FLIGHT page */
+  const sv=document.createElement("div");sv.className="svp";sv.id="svP";sv.hidden=true;panel.appendChild(sv);
+  let sortBy="date",edit=false,selIx=new Set();
+  const close=()=>{sv.hidden=true;edit=false;selIx.clear()};
+  const fl=document.querySelector('.lrail [data-m="fl"]');if(fl)fl.addEventListener("click",close);
+  const head=(back,title,right)=>'<div class="svh"><button class="svb" data-a="'+back+'">'+(back==="x"?"✕":"‹")+'</button><b>'+title+'</b><span class="svr">'+(right||"")+'</span></div>';
+  function menu(){edit=false;selIx.clear();sv.hidden=false;
+    sv.innerHTML=head("x","Flights")+'<button class="svrow" data-v="cleared"><b>Recently Cleared</b><span>'+(st.cleared.length||"")+'</span><i>›</i></button><button class="svrow" data-v="saved"><b>Saved Flights</b><span>'+(st.flights.length||"")+'</span><i>›</i></button>';wire()}
+  function item(f,i,kind){const act=kind==="saved"&&f===st.flights.reduce((a,b)=>!a||b.t>a.t?b:a,null);
+    const o=f.orbit;
+    return '<div class="svit" data-i="'+i+'">'+(edit?'<button class="svsel'+(selIx.has(i)?' on':'')+'" data-s="'+i+'"><i></i></button>':'')+
+      '<div class="svtx"><b>'+escH(f.name||"NO NAME")+'</b>'+(act?'<em>ACTIVE FLIGHT (LAST SAVED)</em>':'')+'<small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
+      (f.wps&&f.wps.length?'<label>ROUTE</label><p>'+escH(rStr(f))+'</p>':'')+(o?'<label>ORBIT</label><p>'+fmt(o.c)+' · '+o.r+' NM · '+o.n+' POINTS</p>':'')+'</div><i class="svch">›</i></div>'}
+  function list(kind){sv.hidden=false;const A=kind==="saved"?st.flights:st.cleared;
+    let ix=A.map((f,i)=>i);if(kind==="saved"&&sortBy==="name")ix.sort((a,b)=>(A[a].name||"").localeCompare(A[b].name||""));else ix.sort((a,b)=>A[b].t-A[a].t);
+    const right=kind==="saved"?(edit?'<button class="svlnk" data-a="done">Done</button>':'<button class="svlnk" data-a="edit">Edit</button>'):(A.length?'<button class="svlnk" data-a="clrall">Clear</button>':'');
+    sv.innerHTML=(edit?'<div class="svh"><button class="svb svtr" data-a="del" aria-label="Delete selected">'+IC_TR+'</button><b>Saved Flights</b><span class="svr">'+right+'</span></div>':head("menu",kind==="saved"?"Saved Flights":"Recently Cleared",right))+
+      (kind==="saved"?'<div class="svsort">Sort By: <button class="svlnk" data-a="sort">'+(sortBy==="date"?"Date Saved":"Name")+'</button></div>':'')+
+      '<div class="svlist">'+(A.length?ix.map(i=>item(A[i],i,kind)).join(""):'<div class="svempty">'+(kind==="saved"?"No saved flights yet":"Nothing cleared yet")+'</div>')+'</div>';
+    wire(kind)}
+  function detail(kind,i){const f=(kind==="saved"?st.flights:st.cleared)[i];if(!f)return list(kind);const o=f.orbit;
+    sv.innerHTML=head("list",kind==="saved"?"Saved Flight":"Cleared Flight",'<button class="svlnk" data-a="share" aria-label="Copy route">'+$("fShare").innerHTML+'</button>')+
+      '<div class="svd"><b>'+escH(f.name||"NO NAME")+'</b><small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
+      '<label>ROUTE</label><p>'+(f.wps&&f.wps.length?escH(rStr(f))+(f.closed?' <span class="svm">(CLOSED)</span>':''):'Not Specified')+'</p>'+
+      '<label>ORBIT</label><p>'+(o?'CENTER '+fmt(o.c)+'<br>RADIUS '+o.r+' NM · '+o.n+' POINTS'+(o.ccw===false?' · CLOCKWISE':' · COUNTER-CLOCKWISE'):'Not Specified')+'</p></div>'+
+      '<button class="svload" data-a="load">Load Flight</button>';
+    wire(kind,i)}
+  function load(f){const c=cur();if(!empty(c)&&JSON.stringify([c.wps,c.orbit])!==JSON.stringify([f.wps,f.orbit]))pushCleared(c);
+    st.wps=JSON.parse(JSON.stringify(f.wps||[]));st.closed=!!f.closed;st.center=null;st.orbit=f.orbit?JSON.parse(JSON.stringify(f.orbit)):null;st.fname=f.name||"";$("fName").value=st.fname;
+    const o=st.orbit;$("pc").value=o?fmt(o.c):"";$("pn").value=o?o.n:"";$("pr").value=o?o.r:"";$("pclosed").checked=!!(o&&o.closed);if(o)$("pccw").checked=o.ccw!==false;
+    const ob=$("fOrbPts");if(ob){const P=(o&&o.pts)||[];ob.classList.toggle("fph",!P.length);ob.innerHTML=P.length?P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"}
+    $("closed").checked=st.closed;update();save();
+    const pts=st.wps.concat(o?o.pts:[]);if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11});
+    close();toast("Loaded: "+(f.name||"flight"))}
+  function wire(kind,i){
+    sv.querySelectorAll("[data-a]").forEach(b=>b.onclick=e=>{e.stopPropagation();const a=b.dataset.a;
+      if(a==="x")close();else if(a==="menu")menu();else if(a==="list")list(kind);
+      else if(a==="edit"){edit=true;selIx.clear();list(kind)}else if(a==="done"){edit=false;selIx.clear();list(kind)}
+      else if(a==="sort"){sortBy=sortBy==="date"?"name":"date";list(kind)}
+      else if(a==="del"){if(!selIx.size){toast("Select flights to delete");return}if(!confirm("Delete "+selIx.size+" saved flight"+(selIx.size>1?"s":"")+"?"))return;
+        st.flights=st.flights.filter((f,k)=>!selIx.has(k));selIx.clear();save();list(kind)}
+      else if(a==="clrall"){if(confirm("Empty the Recently Cleared list?")){st.cleared=[];save();list(kind)}}
+      else if(a==="share"){const f=(kind==="saved"?st.flights:st.cleared)[i],t=(f.name?f.name+" ":"")+rStr(f);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Route copied"),()=>toast(t))}
+      else if(a==="load")load((kind==="saved"?st.flights:st.cleared)[i])});
+    sv.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>list(b.dataset.v));
+    sv.querySelectorAll(".svsel").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=+b.dataset.s;selIx.has(k)?selIx.delete(k):selIx.add(k);b.classList.toggle("on")});
+    sv.querySelectorAll(".svit").forEach(r=>r.onclick=()=>{const k=+r.dataset.i;if(edit){const b=r.querySelector(".svsel");if(b)b.click();return}detail(kind,k)})}
+  const IC_TR='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>';
+  $("fSaved").onclick=menu;
 })();
 
 })();
