@@ -550,6 +550,16 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 html,body{background:#2b2e36;overflow:hidden}
 .app{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);bottom:0;height:auto!important}
 .chv-h{padding-top:10px}
+/* dark waypoint menu + HOLD turns toggle (session 5) */
+:root[data-map="dark"] .wpm-top{background:#2b2e36;border-bottom-color:#0d0e11}
+:root[data-map="dark"] .wpm-top button{border-right-color:#0d0e11;color:#4a98e8}
+:root[data-map="dark"] .wpm-top button:last-child{color:#ff6b5e}
+:root[data-map="dark"] .wpm-it{background:#22252c;color:#fff;border-bottom-color:#0d0e11}
+:root[data-map="dark"] .wpm-h{color:#fff}
+:root[data-map="dark"] .wpm-in{background:#2b2e36;color:#fff;border-color:#0d0e11}
+.panel .seg{border:1.5px solid #2f7bd2;border-radius:9px}
+.panel .seg button{background:var(--p-in,#fff);color:var(--p-tx,#2f7bd2)}
+.panel .seg button[aria-pressed="true"]{background:#2f7bd2;color:#fff}
 </style>
 
 <div class="app">
