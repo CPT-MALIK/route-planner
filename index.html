@@ -2533,5 +2533,33 @@ window.__procSet=procSet;
   oc.onclick=()=>{pc.value="";$("pn").value="";$("pr").value="";$("pErr").textContent="";opts=[];drawO()};
 })();
 
+
+/* ---- ORBIT kept apart from ROUTE: st.orbit={c,r,n,pts,closed}, own map layer */
+(function(){
+  const orbL=L.layerGroup().addTo(map);
+  function drawOrb(){orbL.clearLayers();const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=css("--route"),w=o.pts.slice();
+    if(o.closed&&w.length>2)w.push(w[0]);
+    for(let i=1;i<w.length;i++)L.polyline(gc(w[i-1],w[i]),{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL);
+    o.pts.forEach((p,i)=>{L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:26px;border-radius:13px">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).on("click",()=>inspectAt(L.latLng(p[0],p[1]),true)).addTo(orbL)});
+    L.marker(o.c,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>',iconSize:[24,24],iconAnchor:[12,12]})}).on("click",()=>{const sv=st.center;st.center={p:o.c,r:o.r,n:o.n};try{showCenter()}finally{st.center=sv}}).addTo(orbL)}
+  const _dr=drawRoute;drawRoute=function(){_dr();drawOrb()};
+  syncClosed=function(){$("closed").checked=st.closed};
+  const ob=$("fOrbPts");
+  const box=()=>{const P=(st.orbit&&st.orbit.pts)||[];ob.classList.toggle("fph",!P.length);ob.innerHTML=P.length?P.map((p,i)=>'<div class="orow"><span>'+(i+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"};
+  if(st.orbit){$("pclosed").checked=!!st.orbit.closed;$("pccw").checked=st.orbit.ccw!==false;$("pc").value=fmt(st.orbit.c);$("pn").value=st.orbit.n;$("pr").value=st.orbit.r}else $("pclosed").checked=false;
+  $("pclosed").onchange=e=>{if(st.orbit){st.orbit.closed=e.target.checked;save();drawOrb()}};
+  $("pGo").onclick=()=>{const c=parse($("pc").value),r=parseFloat($("pr").value),n=parseInt($("pn").value);
+    if(!$("pc").value.trim()){$("pErr").textContent="Enter the center point first";return}
+    if(!c){$("pErr").textContent="Center coordinates not recognized";return}
+    if(!(r>0)||!(n>=3&&n<=72)){$("pErr").textContent="Radius must be above 0 and points between 3 and 72";return}
+    $("pErr").textContent="";const ccw=$("pccw").checked,dir=ccw?-1:1,pts=[];for(let i=0;i<n;i++)pts.push(dest(c,r,dir*i*360/n));
+    st.orbit={c:c,r:r,n:n,pts:pts,closed:$("pclosed").checked,ccw:ccw};save();drawOrb();box();
+    map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11});toast("ORBIT: "+n+" points")};
+  const clrO=()=>{st.orbit=null;save();drawOrb();box()};
+  $("fOrbClr").onclick=()=>{$("pc").value="";$("pn").value="";$("pr").value="";$("pErr").textContent="";clrO()};
+  const _y=$("nfYes").onclick;$("nfYes").onclick=()=>{_y();$("fOrbClr").click()};
+  drawOrb();box();
+})();
+
 })();
 </script>
