@@ -1587,7 +1587,7 @@ function showRwy(ad,A,B,dim){
   openSheet({title:ad.icao+" RWY "+A.id+"/"+B.id,sub:ad.name,p:a.concat([ad.icao+A.id]),rows,note:"Source: "+ad.src,
     custom:[{label:"Add THR "+A.id,small:"to route",cls:"go",fn:()=>{st.wps.push([a[0],a[1],ad.icao.slice(2)+A.id]);update();closeSheet();toast("Added THR "+A.id)}},
             {label:"Add THR "+B.id,small:"to route",cls:"go",fn:()=>{st.wps.push([b[0],b[1],ad.icao.slice(2)+B.id]);update();closeSheet();toast("Added THR "+B.id)}},
-            {label:"Copy THR "+A.id,small:A.thr,fn:()=>copyTxt(A.thr)},{label:"Copy THR "+B.id,small:B.thr,fn:()=>copyTxt(B.thr)}]});
+            {label:"Copy THR "+A.id,small:thrF(A.thr),fn:()=>copyTxt(thrF(A.thr))},{label:"Copy THR "+B.id,small:thrF(B.thr),fn:()=>copyTxt(thrF(B.thr))}]});
 }
 map.on("moveend",drawAD);
 // ---- VOR frequency boxes (zoom 10+): like the charting app the user showed, a box that would cover a runway, an airport ident,
@@ -2880,6 +2880,9 @@ function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&
   window.simP=[+p[0],+p[1]];window.simH=+(q.get("hdg")||353);
   setTimeout(()=>toast("TEST MODE: plane at "+v.toUpperCase()),800);
 })();
+
+/* threshold coordinate for copy: N18 14.996 E042 38.653 */
+function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Math.floor(a),m=(a-d)*60;if(+m.toFixed(3)>=60){d++;m=0}return(v<0?N:P)+String(d).padStart(dw,"0")+" "+m.toFixed(3).padStart(6,"0")};return f(p[0],2,"N","S")+" "+f(p[1],3,"E","W")}catch(e){return t}}
 
 })();
 </script>
