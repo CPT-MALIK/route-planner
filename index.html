@@ -676,8 +676,8 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .fundo{display:flex;align-items:center;gap:10px}
 .fundo>label{flex:1;min-width:0}
 .fundo>label{white-space:nowrap}
-.fundo>#undo2{flex:0 0 auto;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--p-bd);border-radius:7px;background:var(--p-btn);color:var(--p-tx);font:700 14px var(--sans);text-transform:uppercase}
-.fundo>#undo2[disabled]{opacity:.45}
+.fundo>#undo2,.fundo>#fOrbUndo{flex:0 0 auto;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--p-bd);border-radius:7px;background:var(--p-btn);color:var(--p-tx);font:700 14px var(--sans);text-transform:uppercase}
+.fundo>#undo2[disabled],.fundo>#fOrbUndo[disabled]{opacity:.45}
 </style>
 
 <div class="app">
@@ -2921,15 +2921,17 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
 
 (function(){
   /* UNDO buttons on the FLIGHT page: ROUTE uses the existing route history; ORBIT gets its own */
+  const UNDO_SVG='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
   const bR=$("clr")&&$("clr").parentNode,u=$("undo2"),oc=$("fOrbClr");
-  if(bR&&u){u.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';u.setAttribute("aria-label","Undo");u.classList.remove("ghost");u.onclick=()=>undo();
+  if(bR&&u){u.innerHTML=UNDO_SVG;u.setAttribute("aria-label","Undo");u.classList.remove("ghost");u.onclick=()=>undo();
     const lb=$("closed")&&$("closed").closest("label");
     if(lb){const w=document.createElement("div");w.className="fundo";lb.parentNode.insertBefore(w,lb);w.appendChild(lb);w.appendChild(u)}else bR.insertBefore(u,$("clr"))}
   const oh=[];let ocur=JSON.stringify(st.orbit||null),lock=false,lastT=0;
   const _sv=save;save=function(){const now=JSON.stringify(st.orbit||null);if(!lock&&now!==ocur){if(Date.now()-lastT>400){oh.push(ocur);if(oh.length>50)oh.shift()}lastT=Date.now();ocur=now}ref();return _sv.apply(this,arguments)};
   const ob_=document.createElement("button");ob_.className="btn";ob_.id="fOrbUndo";ob_.textContent="Undo";
   function ref(){ob_.disabled=!oh.length}
-  if(oc){oc.parentNode.insertBefore(ob_,oc)}ref();
+  ob_.innerHTML=UNDO_SVG;ob_.setAttribute("aria-label","Undo orbit");
+  {const lb=$("pccw")&&$("pccw").closest("label");if(lb){const w=document.createElement("div");w.className="fundo";lb.parentNode.insertBefore(w,lb);w.appendChild(lb);w.appendChild(ob_)}else if(oc)oc.parentNode.insertBefore(ob_,oc)}ref();
   ob_.onclick=()=>{if(!oh.length){toast("Nothing to undo");return}lock=true;try{const o=JSON.parse(oh.pop());st.orbit=o;ocur=JSON.stringify(o||null);
       try{orbFill(o)}catch(e){}
       const b=$("fOrbPts");if(b){const P=(o&&o.pts)||[];b.classList.toggle("fph",!P.length);b.innerHTML=P.length?P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"}
