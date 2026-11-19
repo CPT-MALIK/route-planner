@@ -667,6 +667,8 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 #chvOwn>div{animation:none}
 #chvOwn.still>div{animation:ownBlink 1s ease-in-out infinite}
 #chvOwn:not(.still)::before{content:"";position:absolute;left:-48px;top:-48px;width:96px;height:96px;border-radius:50%;background:rgba(165,40,185,.2)}
+
+#clr[data-c]{background:#d64545!important;border-color:#d64545!important;color:#fff!important}
 </style>
 
 <div class="app">
@@ -1068,7 +1070,7 @@ function syncClosed(){$("closed").checked=st.closed;$("pclosed").checked=st.clos
 syncClosed();["closed","pclosed"].forEach(id=>$(id).onchange=e=>{st.closed=e.target.checked;syncClosed();update()});
 let adding=false;$("addMode").onclick=()=>{adding=!adding;$("addMode").setAttribute("aria-pressed",adding);$("addMode").classList.toggle("ghost",!adding);document.querySelector(".mapwrap").classList.toggle("adding",adding);toast(adding?"Tap the map to add waypoints":"Tap-to-add is off")};
 map.on("click",e=>{if(Date.now()-suppress<800)return;if(!adding){closeSheet();return}st.wps.push([e.latlng.lat,e.latlng.lng]);update()});
-$("clr").onclick=()=>{if($("clr").dataset.c){st.wps=[];st.center=null;update();$("bulk").value="";$("wpIn").value="";delete $("clr").dataset.c;$("clr").textContent="Clear all"}else{$("clr").dataset.c=1;$("clr").textContent="Tap again to confirm";setTimeout(()=>{delete $("clr").dataset.c;$("clr").textContent="Clear all"},3000)}};
+$("clr").onclick=()=>{if($("clr").dataset.c){st.wps=[];st.center=null;update();$("bulk").value="";$("wpIn").value="";delete $("clr").dataset.c;$("clr").textContent="Clear all"}else{$("clr").dataset.c=1;$("clr").textContent="Confirm?";setTimeout(()=>{delete $("clr").dataset.c;$("clr").textContent="Clear all"},3000)}};
 
 function awyPts(name){if(AIP_AWY[name])return AIP_AWY[name][0].map(q=>[q[1],q[2],q[0]]);
   const u=(st.airways||[]).find(a=>(a.name||"").toUpperCase()===name);if(u)return u.pts.map(p=>[p.p[0],p.p[1],p.id]);return null}
