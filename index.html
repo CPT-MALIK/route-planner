@@ -2634,7 +2634,7 @@ window.__procSet=procSet;
     else L.polyline(G.path,{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL);
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ix.map(k=>k+1).join("/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{suppress=Date.now();const ln=(o.type||"circle")==="line";
-      openSheet({title:"ORBIT "+t,sub:fmt(p),p:[p[0],p[1]],rows:[],custom:ln?[{label:"Set HOLD Fix",small:"send to HOLD tab",fn:()=>{$("hf").value=fmt(p);$("t-hold").click();closeSheet();toast("Holding fix set. Complete the details and tap Draw HOLD")}}]:[]})}).addTo(orbL)});
+      openSheet({title:"ORBIT "+t,sub:fmt(p),p:[p[0],p[1]],rows:[],custom:ln?[{label:"Set HOLD Fix",small:"send to HOLD tab",fn:()=>{$("hf").value=fmt(p);$("t-hold").click();closeSheet();toast("Holding fix set. Complete the details and tap Draw HOLD")}}]:(ix[0]===0?[]:[{label:"Set as Point 1",small:"renumber from here",cls:"go",fn:()=>{o.p1=[p[0],p[1]];o.pts=orbGeom(o).pts;save();drawRoute();box();closeSheet();toast("Point 1 moved")}}])})}).addTo(orbL)});
     (st.orbShowC===false?[]:G.anchors).forEach(([q,lb])=>{const m=L.marker(q,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>'+(lb?'<div class="lbl" style="position:absolute;left:26px;top:2px">'+lb+'</div>':''),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(orbL);
       if(!lb)m.on("click",()=>{const sv=st.center;st.center={p:o.c,r:o.r,n:o.n};try{showCenter()}finally{st.center=sv}});else m.on("click",()=>inspectAt(L.latLng(q[0],q[1]),true))})}
   const _dr=drawRoute;drawRoute=function(){_dr();drawOrb()};
@@ -2937,6 +2937,14 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
       try{orbFill(o)}catch(e){}
       const b=$("fOrbPts");if(b){const P=(o&&o.pts)||[];b.classList.toggle("fph",!P.length);b.innerHTML=P.length?P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"}
       st.orbit=o;ocur=JSON.stringify(o||null);save();drawRoute()}finally{lock=false;ref()}toast("Orbit undone")};
+})();
+
+(function(){
+  /* orbit: keep the user's chosen point 1 (o.p1) first whenever the points are rebuilt (e.g. clockwise / counter-clockwise) */
+  const _og=orbGeom;orbGeom=function(o){const G=_og.apply(this,arguments);
+    try{if(o&&o.p1&&(o.type||"circle")!=="line"&&G&&G.pts&&G.pts.length>2){let P=G.pts.slice();const dup=samePt(P[0],P[P.length-1]);if(dup)P.pop();
+      const k=P.findIndex(q=>samePt(q,o.p1));if(k>0){P=P.slice(k).concat(P.slice(0,k))}if(dup)P.push(P[0]);G.pts=P}}catch(e){}
+    return G};
 })();
 
 })();
