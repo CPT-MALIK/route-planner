@@ -2884,5 +2884,21 @@ function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&
 /* threshold coordinate for copy: N18 14.996 E042 38.653 */
 function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Math.floor(a),m=(a-d)*60;if(+m.toFixed(3)>=60){d++;m=0}return(v<0?N:P)+String(d).padStart(dw,"0")+" "+m.toFixed(3).padStart(6,"0")};return f(p[0],2,"N","S")+" "+f(p[1],3,"E","W")}catch(e){return t}}
 
+(function(){
+  /* Direct To line: GPS updates redrew it in the middle of a pinch/zoom, so it was drawn at the wrong place until the finger lifted. Hold redraws until the gesture ends. */
+  let busy=false,pend=false;const _dd=drawDirect;
+  drawDirect=function(){if(busy){pend=true;return}_dd()};
+  map.on("zoomstart movestart",()=>{busy=true});
+  map.on("zoomend moveend",()=>{busy=false;if(pend){pend=false;_dd()}});
+})();
+
+(function(){
+  /* Direct To: do not redraw while the map is being pinched/dragged (GPS updates mid-gesture drew the line in the wrong place) */
+  let busy=false,pend=false;const _dd=drawDirect;
+  drawDirect=function(){if(busy){pend=true;return}pend=false;return _dd.apply(this,arguments)};
+  map.on("zoomstart movestart",()=>{busy=true});
+  map.on("moveend zoomend",()=>{busy=false;if(pend)drawDirect()});
+})();
+
 })();
 </script>
