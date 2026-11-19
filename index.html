@@ -2692,10 +2692,10 @@ window.__procSet=procSet;
   const tint=()=>{const cs=getComputedStyle(panel);["--panel","--p-btn","--p-bd","--p-tx","--p-mu","--p-in"].forEach(n=>{const v=cs.getPropertyValue(n);if(v)sv.style.setProperty(n,v)});sv.style.background=cs.backgroundColor};
   function menu(){tint();edit=false;selIx.clear();sv.hidden=false;
     sv.innerHTML=head("x","Flights")+'<button class="svrow" data-v="cleared"><b>Recently Cleared</b><span>'+(st.cleared.length||"")+'</span><i>›</i></button><button class="svrow" data-v="saved"><b>Saved Flights</b><span>'+(st.flights.length||"")+'</span><i>›</i></button>';wire()}
-  function item(f,i,kind){const act=kind==="saved"&&f===st.flights.reduce((a,b)=>!a||b.t>a.t?b:a,null);
+  function item(f,i,kind){const key=w=>JSON.stringify((w||[]).map(q=>[(+q[0]).toFixed(4),(+q[1]).toFixed(4)])),act=kind==="saved"&&String(f.name||"").trim().toUpperCase()===String(st.fname||"").trim().toUpperCase()&&key(f.wps)===key(st.wps);
     const o=f.orbit;
     return '<div class="svit" data-i="'+i+'">'+(edit?'<button class="svsel'+(selIx.has(i)?' on':'')+'" data-s="'+i+'"><i></i></button>':'')+
-      '<div class="svtx"><b>'+escH(f.name||"NO NAME")+'</b>'+(act?'<em>ACTIVE FLIGHT (LAST SAVED)</em>':'')+'<small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
+      '<div class="svtx"><b>'+escH(f.name||"NO NAME")+'</b>'+(act?'<em>ACTIVE FLIGHT</em>':'')+'<small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
       (f.wps&&f.wps.length?'<label>ROUTE</label><p>'+escH(rStr(f))+'</p>':'')+(o?'<label>ORBIT</label><p>'+orbSum(o)+'</p>':'')+'</div><i class="svch">›</i></div>'}
   function list(kind){sv.hidden=false;const A=kind==="saved"?st.flights:st.cleared;
     let ix=A.map((f,i)=>i);if(kind==="saved"&&sortBy==="name")ix.sort((a,b)=>(A[a].name||"").localeCompare(A[b].name||""));else ix.sort((a,b)=>A[b].t-A[a].t);
