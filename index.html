@@ -2875,7 +2875,7 @@ function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&
   const q=new URLSearchParams(location.search),v=q.get("sim");if(!v)return;
   let p=null;try{const r=resolveFix(v.trim().toUpperCase());if(r)p=r.p||(Array.isArray(r)?r:null)}catch(e){}
   if(!p){try{p=parse(v)}catch(e){}}
-  if(!p){const F={TUGEG:[23+49/60+26.5/3600,47+36/60+6.1/3600],DIRAH:[23+58/60+3.4/3600,47+35/60+20.7/3600],ODKIV:[24+2/60+17.9/3600,47+34/60+58.2/3600]};p=F[v.trim().toUpperCase()]||null}
+  if(!p){try{Object.keys(PROCS).some(a=>{const F=PROCS[a]&&PROCS[a].F,t=F&&F[v.trim().toUpperCase()];if(t){p=dmsP(t);return true}})}catch(e){}}
   if(!p){toast("SIM: point not found");return}
   window.simP=[+p[0],+p[1]];window.simH=+(q.get("hdg")||353);
   setTimeout(()=>toast("TEST MODE: plane at "+v.toUpperCase()),800);
