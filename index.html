@@ -2633,7 +2633,8 @@ window.__procSet=procSet;
     if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++)L.polyline(gc(w[i-1],w[i]),{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL)}
     else L.polyline(G.path,{color:col,weight:5,opacity:.9,interactive:false}).addTo(orbL);
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
-    grp.forEach(({p,ix})=>{const t=ix.map(k=>k+1).join("/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>inspectAt(L.latLng(p[0],p[1]),true)).addTo(orbL)});
+    grp.forEach(({p,ix})=>{const t=ix.map(k=>k+1).join("/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{suppress=Date.now();const ln=(o.type||"circle")==="line";
+      openSheet({title:"ORBIT "+t,sub:fmt(p),p:[p[0],p[1]],rows:[],custom:ln?[{label:"Set HOLD Fix",small:"send to HOLD tab",fn:()=>{$("hf").value=fmt(p);$("t-hold").click();closeSheet();toast("Holding fix set. Complete the details and tap Draw HOLD")}}]:[]})}).addTo(orbL)});
     (st.orbShowC===false?[]:G.anchors).forEach(([q,lb])=>{const m=L.marker(q,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>'+(lb?'<div class="lbl" style="position:absolute;left:26px;top:2px">'+lb+'</div>':''),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(orbL);
       if(!lb)m.on("click",()=>{const sv=st.center;st.center={p:o.c,r:o.r,n:o.n};try{showCenter()}finally{st.center=sv}});else m.on("click",()=>inspectAt(L.latLng(q[0],q[1]),true))})}
   const _dr=drawRoute;drawRoute=function(){_dr();drawOrb()};
