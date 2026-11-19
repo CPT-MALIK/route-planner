@@ -669,6 +669,9 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 #chvOwn:not(.still)::before{content:"";position:absolute;left:-48px;top:-48px;width:96px;height:96px;border-radius:50%;background:rgba(165,40,185,.2)}
 
 #clr[data-c]{background:#d64545!important;border-color:#d64545!important;color:#fff!important}
+
+.fbot #undo2,.fbot #fOrbUndo{flex:0 0 auto;min-width:0;padding-left:14px;padding-right:14px}
+.fbot button[disabled]{opacity:.45}
 </style>
 
 <div class="app">
@@ -2908,6 +2911,21 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
   drawDirect=function(){if(busy){pend=true;return}pend=false;return _dd.apply(this,arguments)};
   map.on("zoomstart movestart",()=>{busy=true});
   map.on("moveend zoomend",()=>{busy=false;if(pend)drawDirect()});
+})();
+
+(function(){
+  /* UNDO buttons on the FLIGHT page: ROUTE uses the existing route history; ORBIT gets its own */
+  const bR=$("clr")&&$("clr").parentNode,u=$("undo2"),oc=$("fOrbClr");
+  if(bR&&u){u.textContent="Undo";u.classList.remove("ghost");bR.insertBefore(u,$("clr"));u.onclick=()=>undo()}
+  const oh=[];let ocur=JSON.stringify(st.orbit||null),lock=false,lastT=0;
+  const _sv=save;save=function(){const now=JSON.stringify(st.orbit||null);if(!lock&&now!==ocur){if(Date.now()-lastT>400){oh.push(ocur);if(oh.length>50)oh.shift()}lastT=Date.now();ocur=now}ref();return _sv.apply(this,arguments)};
+  const ob_=document.createElement("button");ob_.className="btn";ob_.id="fOrbUndo";ob_.textContent="Undo";
+  function ref(){ob_.disabled=!oh.length}
+  if(oc){oc.parentNode.insertBefore(ob_,oc)}ref();
+  ob_.onclick=()=>{if(!oh.length){toast("Nothing to undo");return}lock=true;try{const o=JSON.parse(oh.pop());st.orbit=o;ocur=JSON.stringify(o||null);
+      try{orbFill(o)}catch(e){}
+      const b=$("fOrbPts");if(b){const P=(o&&o.pts)||[];b.classList.toggle("fph",!P.length);b.innerHTML=P.length?P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"}
+      st.orbit=o;ocur=JSON.stringify(o||null);save();drawRoute()}finally{lock=false;ref()}toast("Orbit undone")};
 })();
 
 })();
