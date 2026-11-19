@@ -659,6 +659,14 @@ html:root[data-map="dark"]{--panel:#2f323b;--line:#4a4f5c;--fg:#ffffff;--muted:#
 .sbtn{background:var(--soft)}
 html:root[data-map="dark"] .sbtn{color:#8fa0ff}html:root[data-map="dark"] .sbtn.dct{color:#8fa0ff}html:root[data-map="dark"] .sbtn.go{color:#4cc06a}html:root[data-map="dark"] .sbtn.danger{color:#ff6b63}
 html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[data-map="dark"] #cPop{background:#2f323b}
+
+/* own-ship: blink + pulse only when stopped; moving = steady plane in a shaded circle */
+.ownR{animation:none}
+.ownW.still .ownR{animation:ownBlink 1s ease-in-out infinite}
+.ownW:not(.still)::before{content:"";position:absolute;left:-30px;top:-30px;width:112px;height:112px;border-radius:50%;background:rgba(165,40,185,.2)}
+#chvOwn>div{animation:none}
+#chvOwn.still>div{animation:ownBlink 1s ease-in-out infinite}
+#chvOwn:not(.still)::before{content:"";position:absolute;left:-48px;top:-48px;width:96px;height:96px;border-radius:50%;background:rgba(165,40,185,.2)}
 </style>
 
 <div class="app">
@@ -1397,9 +1405,9 @@ $("gps").onclick=()=>{
     const p=[pos.coords.latitude,pos.coords.longitude],hd=pos.coords.heading,sp=pos.coords.speed;ownPos=p;ownFix={p,acc:pos.coords.accuracy,alt:pos.coords.altitude,gs:sp,t:pos.timestamp||Date.now(),err:null};if(typeof tbRefresh==="function")tbRefresh();chOwnP=p;chOwnH=(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)?hd:ownHdg;chOwnDraw();if(typeof drawDirect==="function")drawDirect();ownGS=(sp!==null&&isFinite(sp))?sp*1.94384:null;
     $("gps").setAttribute("aria-pressed","true");
     if(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)ownHdg=hd; // keep the last track while stopped: GPS heading is noise below ~5 kt
-    const still=!(sp!==null&&isFinite(sp)&&sp>=0.5); // stopped (or no speed reported): pulse around the aircraft
+    const still=!(sp!==null&&isFinite(sp)&&sp>=1.5); // stopped (or no speed reported): pulse around the aircraft
     if(!ownMarker){ownMarker=L.marker(p,{interactive:false,pane:"own",icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="ownW"><div class="ownP"></div><div class="ownP p2"></div><div class="ownR">'+planeSVG+'</div></div>'})}).addTo(ownL)}else ownMarker.setLatLng(p);
-    {const oe=ownMarker.getElement();if(oe){const r=oe.querySelector(".ownR"),wv=oe.querySelector(".ownW");if(r)r.style.transform="rotate("+ownHdg+"deg)";if(wv)wv.classList.toggle("still",still)}}
+    {const oe=ownMarker.getElement();if(oe){const r=oe.querySelector(".ownR"),wv=oe.querySelector(".ownW");if(r)r.style.transform="rotate("+ownHdg+"deg)";if(wv)wv.classList.toggle("still",still)}{const co=document.getElementById("chvOwn");if(co)co.classList.toggle("still",still)}}
     if(first){map.setView(p,Math.max(map.getZoom(),9));first=false;$("toast").hidden=true}
     let t=fmt(p);if(sp!==null&&isFinite(sp))t+="  GS "+Math.round(sp*1.94384)+"kt";if(hd!==null&&isFinite(hd)&&sp!==null&&isFinite(sp)&&sp>=2.5)t+="  TRK "+deg3(hd);
     if(pos.coords.altitude!==null)t+="  ALT "+Math.round(pos.coords.altitude*3.28084)+"ft";
