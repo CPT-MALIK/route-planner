@@ -1609,7 +1609,8 @@ function showRwy(ad,A,B,dim){
   openSheet({title:ad.icao+" RWY "+A.id+"/"+B.id,sub:ad.name,p:a.concat([ad.icao+A.id]),rows,note:"Source: "+ad.src,
     custom:[{label:"Add THR "+A.id,small:"to route",cls:"go",fn:()=>{st.wps.push([a[0],a[1],ad.icao.slice(2)+A.id]);update();closeSheet();toast("Added THR "+A.id)}},
             {label:"Add THR "+B.id,small:"to route",cls:"go",fn:()=>{st.wps.push([b[0],b[1],ad.icao.slice(2)+B.id]);update();closeSheet();toast("Added THR "+B.id)}},
-            {label:"Copy THR "+A.id,small:thrF(A.thr),fn:()=>copyTxt(thrF(A.thr))},{label:"Copy THR "+B.id,small:thrF(B.thr),fn:()=>copyTxt(thrF(B.thr))}]});
+            {label:"Copy THR "+A.id,small:thrF(A.thr),fn:()=>copyTxt(thrF(A.thr))},{label:"Copy THR "+B.id,small:thrF(B.thr),fn:()=>copyTxt(thrF(B.thr))},{label:"Runway charts",small:"RWY "+A.id+" / "+B.id+" approaches + TAXI",cls:"go",fn:()=>{rwyCharts(ad.icao,[A.id,B.id])}}]});
+  rwyHL(ad,A,B,dim);
 }
 map.on("moveend",drawAD);
 // ---- VOR frequency boxes (zoom 10+): like the charting app the user showed, a box that would cover a runway, an airport ident,
@@ -3018,6 +3019,21 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
   const _sv=save;save=function(){const r=_sv.apply(this,arguments);lbl();return r};
   lbl();
 })();
+
+function rwyHL(ad,A,B,dim){try{const a=dmsP(A.thr),b=dmsP(B.thr),z=map.getZoom(),wm=parseFloat((dim.split("x")[1]||"45"))||45,wpx=Math.round(Math.max(z>=11?32:z>=10?14:7,wm/mPerPx(a[0])));
+  L.polyline([a,b],{pane:"rwy",color:"#2fbf4a",weight:wpx,lineCap:"butt",opacity:1,interactive:false}).addTo(hlL)}catch(e){}}
+function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
+  const C=CHARTS[k]||[],app=C.filter(c=>c.k==="APP"&&ids.includes(c.rwy)),tx=C.filter(c=>c.k==="TAXI"),p=chEl("chpop");
+  const pr=(typeof PROCS!=="undefined"&&PROCS[k])?PROCS[k].list.map((x,i)=>[x,i]).filter(([x])=>ids.includes(x.rwy)):[];
+  const it=c=>'<button class="it" data-pg="'+escH(c.pg)+'"><b>'+escH(c.t)+'</b><span>AD 2 '+escH(k)+'-'+escH(c.pg)+'</span></button>';
+  let h='<div class="ph"><h3>'+escH(k)+' RWY '+escH(ids.join(" / "))+'</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div>';
+  ids.forEach(id=>{const L=app.filter(c=>c.rwy===id);if(L.length)h+='<div class="grp">Approach · RWY '+escH(id)+'</div>'+L.map(it).join("")});
+  if(pr.length)h+='<div class="grp">Draw on map</div>'+pr.map(([x,i])=>'<button class="it" data-pr="'+i+'"><b>'+escH(x.n)+'</b><span>Approach path, fixes and altitudes</span></button>').join("");
+  h+='<div class="grp">TAXI</div>'+(tx.length?tx.map(it).join(""):'<div class="empty">No taxi charts for '+escH(k)+'</div>');
+  if(!app.length&&!pr.length)h='<div class="ph"><h3>'+escH(k)+' RWY '+escH(ids.join(" / "))+'</h3><button class="sh-x" id="chPX" aria-label="Close">✕</button></div><div class="empty">No approach charts for this runway</div>'+h.slice(h.indexOf('<div class="grp">TAXI'));
+  p.innerHTML=h;p.scrollTop=0;p.hidden=false;chEl("chPX").onclick=chClosePop;
+  p.querySelectorAll(".it[data-pg]").forEach(b=>b.onclick=()=>chOpen(k,C.find(c=>c.pg===b.dataset.pg)));
+  p.querySelectorAll(".it[data-pr]").forEach(b=>b.onclick=()=>{procSet(k,+b.dataset.pr,true);chClosePop();chEl("chv").hidden=true})}
 
 })();
 </script>
