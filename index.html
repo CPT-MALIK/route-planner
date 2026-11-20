@@ -681,6 +681,8 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 
 .zbadge{position:absolute;z-index:1100;min-width:64px;height:64px;padding:0 10px;border-radius:12px;background:#20232a;color:#fff;font:700 30px var(--mono,monospace);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3);pointer-events:none}
 .zbadge[hidden]{display:none!important}
+
+.rwyid.rsel{color:#52b56b!important}
 </style>
 
 <div class="app">
@@ -1285,7 +1287,7 @@ let selIls=null;
 document.addEventListener("click",ev=>{const sh=$("sheet");if(!sh||sh.hidden||sh.contains(ev.target))return;
   if(!document.body.contains(ev.target))return;
   closeSheet();if($("map")&&$("map").contains(ev.target))suppress=Date.now()},true);
-function closeSheet(){$("sheet").hidden=true;pinL.clearLayers();hlL.clearLayers();if(selIls){selIls=null;drawAD()}}
+function closeSheet(){$("sheet").hidden=true;pinL.clearLayers();hlL.clearLayers();if(window.rwySel){window.rwySel=null;drawAD()}if(selIls){selIls=null;drawAD()}}
 function showNav(i,back){
   const n=NAV[i];suppress=Date.now();pinL.clearLayers();
   const top=[n.city];if(n.freq)top.push(n.freq);
@@ -1564,7 +1566,7 @@ function drawAD(){const ilsTags=[],rwySegs=[];lastRwySegs=rwySegs;
     ad.rwys.forEach(([A,B,dim])=>{
       const wm=parseFloat((dim.split("x")[1]||"45"))||45;
       const a=dmsP(A.thr),b=dmsP(B.thr),mpp=mPerPx(a[0]),wpx=Math.round(Math.max(z>=11?32:z>=10?14:7,wm/mpp));
-      L.polyline([a,b],{pane:"rwy",color:rcol,weight:wpx,lineCap:"butt",opacity:1,interactive:true,bubblingMouseEvents:false}).on("click",()=>showRwy(ad,A,B,dim)).addTo(adL);rwySegs.push([a,b,wpx]);
+      const rsel=window.rwySel===ad.icao+"/"+A.id;L.polyline([a,b],{pane:"rwy",color:rsel?"#52b56b":rcol,weight:wpx,lineCap:"butt",opacity:1,interactive:true,bubblingMouseEvents:false}).on("click",()=>showRwy(ad,A,B,dim)).addTo(adL);rwySegs.push([a,b,wpx]);
       if(wpx>=12){const bpx=(wpx-Math.max(4,Math.round(wpx*0.2)))/2,inset=bpx*mpp/1852,ab=brg(a,b),len=dist(a,b);
         const lpx=map.latLngToLayerPoint(a).distanceTo(map.latLngToLayerPoint(b)),bp=Math.round(bpx);
         // same end points as the blue line (identical pixel rounding keeps both sides equal); dashes leave the blue ends showing
@@ -1577,7 +1579,7 @@ function drawAD(){const ilsTags=[],rwySegs=[];lastRwySegs=rwySegs;
           // tag just beyond the feather's tip, on the approach side; placed after all runways are drawn so overlapping tags can be pushed apart
           ilsTags.push({p,q,wpx,txt:E.ils[0]+(sel?' ILS':''),sel,open})}
         const lp=dest(p,Math.min(dist(p,q)*0.3,mPerPx(p[0])*(Math.min(40,(wpx-Math.max(4,Math.round(wpx*0.2)))/2)+16)/1852),brg(p,q));
-        L.marker(lp,{pane:"rwylbl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rwyid" style="transform:translate(-50%,-50%) rotate('+(((brg(p,q)+180)%360)-180)+'deg)">'+escH(E.id).replace(/^(\d+)([LRC])$/,'$1<br>$2')+'</div>'})}).addTo(adLblL);
+        L.marker(lp,{pane:"rwylbl",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rwyid'+(rsel?' rsel':'')+'" style="transform:translate(-50%,-50%) rotate('+(((brg(p,q)+180)%360)-180)+'deg)">'+escH(E.id).replace(/^(\d+)([LRC])$/,'$1<br>$2')+'</div>'})}).addTo(adLblL);
       });
     });
   });
@@ -3020,8 +3022,7 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
   lbl();
 })();
 
-function rwyHL(ad,A,B,dim){try{const a=dmsP(A.thr),b=dmsP(B.thr),z=map.getZoom(),wm=parseFloat((dim.split("x")[1]||"45"))||45,wpx=Math.round(Math.max(z>=11?32:z>=10?14:7,wm/mPerPx(a[0])));
-  L.polyline([a,b],{pane:"rwy",color:"#2fbf4a",weight:wpx,lineCap:"butt",opacity:1,interactive:false}).addTo(hlL)}catch(e){}}
+function rwyHL(ad,A,B,dim){window.rwySel=ad.icao+"/"+A.id;drawAD()}
 function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   const C=CHARTS[k]||[],app=C.filter(c=>c.k==="APP"&&ids.includes(c.rwy)),tx=C.filter(c=>c.k==="TAXI"),p=chEl("chpop");
   const pr=(typeof PROCS!=="undefined"&&PROCS[k])?PROCS[k].list.map((x,i)=>[x,i]).filter(([x])=>ids.includes(x.rwy)):[];
