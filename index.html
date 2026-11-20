@@ -678,6 +678,9 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .fundo>label{white-space:nowrap}
 .fundo>#undo2,.fundo>#fOrbUndo{flex:0 0 auto;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--p-bd);border-radius:7px;background:var(--p-btn);color:var(--p-tx);font:700 14px var(--sans);text-transform:uppercase}
 .fundo>#undo2[disabled],.fundo>#fOrbUndo[disabled]{opacity:.45}
+
+.zbadge{position:absolute;z-index:1100;min-width:64px;height:64px;padding:0 10px;border-radius:12px;background:#20232a;color:#fff;font:700 30px var(--mono,monospace);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3);pointer-events:none}
+.zbadge[hidden]{display:none!important}
 </style>
 
 <div class="app">
@@ -2945,6 +2948,16 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
     try{if(o&&o.p1&&(o.type||"circle")!=="line"&&G&&G.pts&&G.pts.length>2){let P=G.pts.slice();const dup=samePt(P[0],P[P.length-1]);if(dup)P.pop();
       const k=P.findIndex(q=>samePt(q,o.p1));if(k>0){P=P.slice(k).concat(P.slice(0,k))}if(dup)P.push(P[0]);G.pts=P}}catch(e){}
     return G};
+})();
+
+(function(){
+  /* zoom number beside the +/- control while zooming; hides 1 s after the zoom ends */
+  const zc=document.querySelector(".zctl"),wrap=zc&&zc.closest(".mapwrap");if(!zc||!wrap)return;
+  const b=document.createElement("div");b.className="zbadge";b.hidden=true;wrap.appendChild(b);let t=0;
+  function show(){const z=map.getZoom(),r=zc.getBoundingClientRect(),w=wrap.getBoundingClientRect();
+    b.textContent=(Math.round(z*10)/10).toFixed(Number.isInteger(Math.round(z*10)/10)?0:1);
+    b.style.top=(r.top-w.top+38)+"px";b.style.right=(w.right-r.left+10)+"px";b.hidden=false;clearTimeout(t)}
+  map.on("zoom",show);map.on("zoomend",()=>{show();clearTimeout(t);t=setTimeout(()=>{b.hidden=true},1000)});
 })();
 
 })();
