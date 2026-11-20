@@ -991,7 +991,7 @@ map.on("zoomend",navVis);navVis();
 function drawRoute(){
   routeL.clearLayers();const w=st.wps;const col=css("--route");
   if(w.length>1){const pts=w.slice();if(st.closed&&w.length>2)pts.push(w[0]);
-    for(let i=1;i<pts.length;i++){L.polyline(gc(pts[i-1],pts[i]),{color:col,weight:12,opacity:.9,interactive:false}).addTo(routeL)}}
+    for(let i=1;i<pts.length;i++){const g=gc(pts[i-1],pts[i]);window.rpHalo&&rpHalo(g,col,routeL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(routeL)}}
   const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})}); // points at the same position share one marker: "1+10"
   grp.forEach(({p,ix})=>{const i=ix[0],t=ix.map(k=>k+1).join("+"),wd=Math.max(26,12+t.length*8);
     const mk=L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
@@ -2633,8 +2633,8 @@ window.__procSet=procSet;
 (function(){
   const orbL=L.layerGroup().addTo(map);
   function drawOrb(){orbL.clearLayers();const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=css("--route"),G=orbGeom(o);
-    if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++)L.polyline(gc(w[i-1],w[i]),{color:col,weight:12,opacity:.9,interactive:false}).addTo(orbL)}
-    else L.polyline(G.path,{color:col,weight:12,opacity:.9,interactive:false}).addTo(orbL);
+    if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++){const g=gc(w[i-1],w[i]);window.rpHalo&&rpHalo(g,col,orbL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}}
+    else{window.rpHalo&&rpHalo(G.path,col,orbL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ix.map(k=>k+1).join("/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+t+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{suppress=Date.now();const ln=(o.type||"circle")==="line";
       openSheet({title:"ORBIT "+t,sub:fmt(p),p:[p[0],p[1]],rows:[],custom:ln?[{label:"Set HOLD Fix",small:"send to HOLD tab",fn:()=>{$("hf").value=fmt(p);$("t-hold").click();closeSheet();toast("Holding fix set. Complete the details and tap Draw HOLD")}}]:(ix[0]===0?[]:[{label:"Set as Point 1",small:"renumber from here",cls:"go",fn:()=>{o.p1=[p[0],p[1]];o.pts=orbGeom(o).pts;save();drawRoute();box();closeSheet();toast("Point 1 moved")}}])})}).addTo(orbL)});
@@ -2958,6 +2958,15 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
     b.textContent=(Math.round(z*10)/10).toFixed(Number.isInteger(Math.round(z*10)/10)?0:1);
     b.style.top=(r.top-w.top+38)+"px";b.style.right=(w.right-r.left+10)+"px";b.hidden=false;clearTimeout(t)}
   map.on("zoom",show);map.on("zoomend",()=>{show();clearTimeout(t);t=setTimeout(()=>{b.hidden=true},1000)});
+})();
+
+(function(){
+  /* ROUTE / ORBIT halo: light band under the thin line; 12 px at zoom 9.5 and below, grows with the map above 9.5 */
+  const H=new Set(),wz=()=>Math.min(6000,12*Math.pow(2,Math.max(0,map.getZoom()-9.5)));
+  window.rpHalo=function(ll,col,grp){const l=L.polyline(ll,{color:col,weight:wz(),opacity:.18,lineCap:"round",lineJoin:"round",interactive:false});
+    l.on("remove",()=>H.delete(l));H.add(l);l.addTo(grp);return l};
+  map.on("zoomend",()=>{const w=wz();H.forEach(l=>l.setStyle({weight:w}))});
+  try{drawRoute()}catch(e){}
 })();
 
 })();
