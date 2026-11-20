@@ -2547,7 +2547,6 @@ window.__procSet=procSet;
 
   /* airport for RWY / APP / TAXI: the one picked in APTS since the app opened, otherwise the nearest airport with charts
      to the GPS position (or to the map centre) */
-  st.chApt=null;
   chApt=function(){if(st.chApt&&APTS.some(a=>a[0]===st.chApt))return st.chApt;
     const c=map.getCenter(),q=ownPos||[c.lat,c.lng];let best="OERK",bd=1e9;
     APTS.forEach(a=>{if(!(CHARTS[a[0]]||[]).length)return;const d=dist(q,[a[3],a[4]]);if(d<bd){bd=d;best=a[0]}});return best};
@@ -3010,6 +3009,14 @@ function thrF(t){try{const p=dmsP(t),f=(v,dw,P,N)=>{const a=Math.abs(v);let d=Ma
     l.on("remove",()=>H.delete(l));H.add(l);l.addTo(grp);return l};
   map.on("zoomend",()=>{const w=wz();H.forEach(l=>l.setStyle({weight:w}))});
   try{drawRoute()}catch(e){}
+})();
+
+(function(){
+  /* APTS rail button shows the chosen airport (kept after closing the app) */
+  function lbl(){const b=document.querySelector('.lrail [data-m="apts"]');if(b)b.textContent=(st.chApt&&APTS.some(a=>a[0]===st.chApt))?st.chApt:"APTS"}
+  const _cr=chRail;chRail=function(){const r=_cr.apply(this,arguments);lbl();return r};
+  const _sv=save;save=function(){const r=_sv.apply(this,arguments);lbl();return r};
+  lbl();
 })();
 
 })();
