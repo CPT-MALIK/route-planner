@@ -683,6 +683,8 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .zbadge[hidden]{display:none!important}
 
 .rwyid.rsel{color:#52b56b!important}
+.pinlbl{position:absolute;left:28px;top:1px;white-space:nowrap;pointer-events:none;font:700 15px var(--mono);color:#000;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 4px #fff}
+:root[data-map="dark"] .pinlbl{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,0 0 4px #000}
 </style>
 
 <style>
@@ -2230,7 +2232,7 @@ awVis();
       Object.keys(info).forEach(n=>{if(WPTS[n]||(typeof AIP_PT!=="undefined"&&AIP_PT[n]))return;const v=o.F[n],q=Array.isArray(v)?v:dmsP(v);if(!q||isNaN(q[0]))return;const p=[q[0],q[1],n];
         const roles=[...new Set(info[n].map(x=>x[0]))].join(" / ");
         L_.push({tg:"APP",id:n,nm:"",sub:k+" · "+roles,p,open:()=>{go(p,11);suppress=Date.now();pinL.clearLayers();
-          L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="pin"></div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(pinL);
+          L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="pin"></div><div class="pinlbl">'+escH(n)+'</div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(pinL);
           openSheet({title:n,sub:"Approach fix · "+k+(an?" "+an:""),p,rows:info[n].map(x=>[x[0],x[1]]).concat(relRows(p)),note:"Saudi eAIP AD 2.24 "+k+" approach data."})}})})})}catch(e){}
     CITIES.forEach(([t,n,la,lo])=>L_.push({tg:"CITY",id:n,nm:"",sub:"",open:()=>go([la,lo],8.5)}));
     return L_}
