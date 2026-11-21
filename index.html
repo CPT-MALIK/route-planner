@@ -2374,7 +2374,7 @@ const procL=L.layerGroup().addTo(map);
 const PROC_NAME=n=>/^FAF\d/.test(n)?"FAF":/^IF\d/.test(n)?"IF":/^(?:D|TP)(\d+)R(\d{3})$/.test(n)?n.replace(/^(?:D|TP)(\d+)R(\d{3})$/,"D$1 R$2"):n==="MAP17L"||/^MAPT/.test(n)?"MAP":n==="D15R178"?"D15 PSA":/^RW\d/.test(n)?n:n;
 function procOff(n){const t=(n.length*7.6+12);return t}
 function procDraw(){procL.clearLayers();if(!procCur)return;
-  const o=PROCS[procCur.k],pr=o.list[procCur.i],pink=procCur.k==="OEPS"&&/^ILS or LOC RWY 35R/.test(pr.n),col=pink?(css("--hold")||"#c0168a"):(css("--proc")||"#0b7a55"),V=o.VAR;{const me=document.getElementById("map");if(pink)me.style.setProperty("--proc",col);else me.style.removeProperty("--proc")}
+  const o=PROCS[procCur.k],pr=o.list[procCur.i],pink=document.documentElement.dataset.map!=="light",col=pink?(css("--hold")||"#c0168a"):(css("--proc")||"#0b7a55"),V=o.VAR;{const me=document.getElementById("map");if(pink)me.style.setProperty("--proc",col);else me.style.removeProperty("--proc")}
   const ln=(pts,ma,w)=>L.polyline(pts,{pane:"proc",color:col,weight:w||2.6,opacity:.95,dashArray:ma?"9 7":null,interactive:false}).addTo(procL);
   const tag=(p,html,cls)=>L.marker(p,{pane:"proc",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="'+cls+'">'+html+'</div>'})}).addTo(procL);
   const z=map.getZoom();
@@ -3036,7 +3036,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   p.querySelectorAll(".it[data-pg]").forEach(b=>b.onclick=()=>chOpen(k,C.find(c=>c.pg===b.dataset.pg)));
   p.querySelectorAll(".it[data-pr]").forEach(b=>b.onclick=()=>{procSet(k,+b.dataset.pr,true);chClosePop();chEl("chv").hidden=true})}
 
-(function(){const _at=applyTheme;applyTheme=function(){const r=_at.apply(this,arguments);try{drawAD()}catch(e){}return r}})();
+(function(){const _at=applyTheme;applyTheme=function(){const r=_at.apply(this,arguments);try{drawAD()}catch(e){}try{procDraw()}catch(e){}return r}})();
 
 })();
 </script>
