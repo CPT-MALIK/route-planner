@@ -2224,6 +2224,14 @@ awVis();
       L_.push({tg:cat==="A"?"ASP":cat,id:it.id,nm:it.n||"",sub:(it.u||"")+" / "+(it.l||""),open:()=>{const b=L.latLngBounds([]);it.g.forEach(sg=>{for(let k=0;k<sg.length;k+=2)b.extend([sg[k],sg[k+1]])});if(b.isValid())map.fitBounds(b.pad(0.15));const c=aspLabelPt(it);setTimeout(()=>{try{highlightAsp(cat,it)}catch(e){}showAsp(cat,it,L.latLng(c[0],c[1]))},350)}})}));
     (st.marks||[]).forEach((m,k)=>L_.push({tg:m.t==="DP"?"DP":"MARK",id:m.n||("MARK "+(k+1)),nm:"",sub:fmt(m.p),open:()=>{go(m.p);showMark(k)}}));
     st.wps.forEach((p,k)=>L_.push({tg:"RTE",id:wpName(p,k),nm:"",sub:"Route point "+(k+1)+" · "+fmt(p),open:()=>{go(p);showWp(k)}}));
+    try{Object.keys(PROCS).forEach(k=>{const o=PROCS[k];if(!o||!o.F)return;const info={};
+      (o.list||[]).forEach(pr=>(pr.fixes||[]).forEach(f=>{const n=f.n;if(!n||!o.F[n]||/^RW|^(FAF|IF)\d|^(D|TP)\d/.test(n))return;const r=info[n]=info[n]||[];if(!r.some(x=>x[1]===pr.n))r.push([f.role||"Fix",pr.n])}));
+      const an=(APTS.find(x=>x[0]===k)||[])[1]||"";
+      Object.keys(info).forEach(n=>{if(WPTS[n]||(typeof AIP_PT!=="undefined"&&AIP_PT[n]))return;const v=o.F[n],q=Array.isArray(v)?v:dmsP(v);if(!q||isNaN(q[0]))return;const p=[q[0],q[1],n];
+        const roles=[...new Set(info[n].map(x=>x[0]))].join(" / ");
+        L_.push({tg:"APP",id:n,nm:"",sub:k+" · "+roles,p,open:()=>{go(p,11);suppress=Date.now();pinL.clearLayers();
+          L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="pin"></div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(pinL);
+          openSheet({title:n,sub:"Approach fix · "+k+(an?" "+an:""),p,rows:info[n].map(x=>[x[0],x[1]]).concat(relRows(p)),note:"Saudi eAIP AD 2.24 "+k+" approach data."})}})})})}catch(e){}
     CITIES.forEach(([t,n,la,lo])=>L_.push({tg:"CITY",id:n,nm:"",sub:"",open:()=>go([la,lo],8.5)}));
     return L_}
   let res=[];
@@ -2233,7 +2241,7 @@ awVis();
     res=[];if(f)res.push({tg:"POS",id:fmt(f),nm:"",sub:"Coordinates",open:()=>{go(f);showPoint(f)},r:-1});
     all().forEach(o=>{const id=o.id.toUpperCase(),nm=(o.nm||"").toUpperCase();
       const r=id===q?0:(id.startsWith(q)||nm.startsWith(q))?1:(id.includes(q)||nm.includes(q))?3:9;if(r<9){o.r=r;res.push(o)}});
-    const TO=["POS","VOR","APT","WPT","RTE","MARK","DP","AWY","CITY","ASP","P","R","D"],tw=o=>{const k=TO.indexOf(o.tg);return k<0?99:k};
+    const TO=["POS","VOR","APT","WPT","APP","RTE","MARK","DP","AWY","CITY","ASP","P","R","D"],tw=o=>{const k=TO.indexOf(o.tg);return k<0?99:k};
     res.sort((a,b)=>a.r-b.r||tw(a)-tw(b)||a.id.length-b.id.length||a.id.localeCompare(b.id));res=res.slice(0,30);
     box.innerHTML=res.length?res.map((o,k)=>'<button type="button" data-k="'+k+'"><span class="tg">'+escH(o.tg)+'</span><b>'+escH(o.id)+(o.nm&&o.nm.toUpperCase()!==o.id.toUpperCase()?' <small>'+escH(o.nm)+'</small>':'')+'</b><small>'+escH(o.sub||"")+'</small></button>').join(""):'<div class="none">No match</div>';
     box.hidden=false;box.scrollTop=0;
