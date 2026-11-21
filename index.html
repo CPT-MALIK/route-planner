@@ -2249,7 +2249,7 @@ awVis();
     box.hidden=false;box.scrollTop=0;
     box.querySelectorAll("button").forEach(b=>b.onclick=()=>pick(res[+b.dataset.k]))}
   function done(){inp.value="";box.hidden=true;cx.hidden=true;inp.blur()}
-  function pick(o){if(!o)return;done();try{o.open()}catch(e){toast("Could not open "+o.id)}}
+  function pick(o){if(!o)return;inp.value=o.id;box.hidden=true;cx.hidden=false;inp.blur();try{o.open()}catch(e){toast("Could not open "+o.id)}}
   inp.addEventListener("input",run);inp.addEventListener("focus",()=>{cx.hidden=false;if(inp.value)run()});
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();pick(res[0])}else if(e.key==="Escape")done()});
   cx.onclick=done;
