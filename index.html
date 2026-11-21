@@ -2231,8 +2231,7 @@ awVis();
       const an=(APTS.find(x=>x[0]===k)||[])[1]||"";
       Object.keys(info).forEach(n=>{if(WPTS[n]||(typeof AIP_PT!=="undefined"&&AIP_PT[n]))return;const v=o.F[n],q=Array.isArray(v)?v:dmsP(v);if(!q||isNaN(q[0]))return;const p=[q[0],q[1],n];
         const roles=[...new Set(info[n].map(x=>x[0]))].join(" / ");
-        L_.push({tg:"APP",id:n,nm:"",sub:k+" · "+roles,p,open:()=>{go(p,11);suppress=Date.now();pinL.clearLayers();
-          L.marker(p,{interactive:false,icon:L.divIcon({className:"",html:'<div class="pin"></div><div class="pinlbl">'+escH(n)+'</div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(pinL);
+        L_.push({tg:"APP",id:n,nm:"",sub:k+" · "+roles,p,open:()=>{go(p,11);suppress=Date.now();
           openSheet({title:n,sub:"Approach fix · "+k+(an?" "+an:""),p,rows:info[n].map(x=>[x[0],x[1]]).concat(relRows(p)),note:"Saudi eAIP AD 2.24 "+k+" approach data."})}})})})}catch(e){}
     CITIES.forEach(([t,n,la,lo])=>L_.push({tg:"CITY",id:n,nm:"",sub:"",open:()=>go([la,lo],8.5)}));
     return L_}
@@ -2248,8 +2247,9 @@ awVis();
     box.innerHTML=res.length?res.map((o,k)=>'<button type="button" data-k="'+k+'"><span class="tg">'+escH(o.tg)+'</span><b>'+escH(o.id)+(o.nm&&o.nm.toUpperCase()!==o.id.toUpperCase()?' <small>'+escH(o.nm)+'</small>':'')+'</b><small>'+escH(o.sub||"")+'</small></button>').join(""):'<div class="none">No match</div>';
     box.hidden=false;box.scrollTop=0;
     box.querySelectorAll("button").forEach(b=>b.onclick=()=>pick(res[+b.dataset.k]))}
-  function done(){inp.value="";box.hidden=true;cx.hidden=true;inp.blur()}
-  function pick(o){if(!o)return;inp.value=o.id;box.hidden=true;cx.hidden=false;inp.blur();try{o.open()}catch(e){toast("Could not open "+o.id)}}
+  const srL=L.layerGroup().addTo(map);
+  function done(){inp.value="";box.hidden=true;cx.hidden=true;inp.blur();srL.clearLayers()}
+  function pick(o){if(!o)return;inp.value=o.id;box.hidden=true;cx.hidden=false;inp.blur();srL.clearLayers();if(o.p&&!isNaN(o.p[0]))L.marker([o.p[0],o.p[1]],{interactive:false,icon:L.divIcon({className:"",html:'<div class="pin"></div><div class="pinlbl">'+escH(o.id)+'</div>',iconSize:[22,22],iconAnchor:[11,11]})}).addTo(srL);try{o.open()}catch(e){toast("Could not open "+o.id)}}
   inp.addEventListener("input",run);inp.addEventListener("focus",()=>{cx.hidden=false;if(inp.value)run()});
   inp.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();pick(res[0])}else if(e.key==="Escape")done()});
   cx.onclick=done;
