@@ -1,10 +1,10 @@
 <meta charset="utf-8">
-<title>Route &amp; Hold Planner</title>
+<title>SkyRadial</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Route Planner">
+<meta name="apple-mobile-web-app-title" content="SkyRadial">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1d2418">
 <script>if("serviceWorker"in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
@@ -685,10 +685,43 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .rwyid.rsel{color:#52b56b!important}
 </style>
 
+<style>
+#splash{position:fixed;inset:0;z-index:99999;background:#14181f;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .45s ease}
+#splash.out{opacity:0;pointer-events:none}
+#splash .spr{transform-origin:130px 130px;animation:spRot 14s linear infinite}
+#splash .spl{stroke-dasharray:120;stroke-dashoffset:120;animation:spLine 2.2s ease-out .3s infinite}
+#splash .spn{margin-top:26px;font:700 58px -apple-system,"SF Pro Display","Helvetica Neue",Arial,sans-serif;letter-spacing:3px;color:#fff;opacity:0;animation:spIn .9s ease-out .5s forwards}
+#splash .spn b{color:#2f7bd2;font-weight:700}
+#splash .sps{margin-top:10px;font:600 15px -apple-system,"Helvetica Neue",Arial,sans-serif;letter-spacing:6px;color:#a9adb8;opacity:0;animation:spIn .9s ease-out .9s forwards}
+@keyframes spRot{to{transform:rotate(360deg)}}
+@keyframes spLine{0%{stroke-dashoffset:120;opacity:1}70%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes spIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+<div id="splash">
+<svg width="260" height="260" viewBox="0 0 260 260">
+<g class="spr">
+<circle cx="130" cy="130" r="112" fill="none" stroke="#3a3d47" stroke-width="3"/>
+<circle cx="130" cy="130" r="92" fill="none" stroke="#2a2d35" stroke-width="2"/>
+<g stroke="#a9adb8" stroke-width="3"><line x1="130" y1="18" x2="130" y2="38"/><line x1="130" y1="222" x2="130" y2="242"/><line x1="18" y1="130" x2="38" y2="130"/><line x1="222" y1="130" x2="242" y2="130"/></g>
+<g stroke="#5a5f6b" stroke-width="2"><line x1="209" y1="51" x2="198" y2="62"/><line x1="51" y1="51" x2="62" y2="62"/><line x1="209" y1="209" x2="198" y2="198"/><line x1="51" y1="209" x2="62" y2="198"/></g>
+<text x="130" y="62" text-anchor="middle" fill="#2f7bd2" font-size="24" font-weight="700" font-family="Arial">N</text>
+<text x="130" y="214" text-anchor="middle" fill="#a9adb8" font-size="20" font-family="Arial">S</text>
+<text x="56" y="137" text-anchor="middle" fill="#a9adb8" font-size="20" font-family="Arial">W</text>
+<text x="204" y="137" text-anchor="middle" fill="#a9adb8" font-size="20" font-family="Arial">E</text>
+</g>
+<line class="spl" x1="130" y1="130" x2="210" y2="58" stroke="#e05aa8" stroke-width="4" stroke-linecap="round"/>
+<path d="M130 92 L142 140 L130 132 L118 140 Z" fill="#fff"/>
+<circle cx="130" cy="130" r="5" fill="#2f7bd2"/>
+</svg>
+<div class="spn">Sky<b>Radial</b></div>
+<div class="sps">ROUTE · HOLD · APPROACH</div>
+</div>
+<script>window.__spT=Date.now();setTimeout(function(){var e=document.getElementById("splash");if(e)e.remove()},15000);</script>
+
 <div class="app">
   <aside class="panel">
     <div class="head">
-      <h1>Route &amp; Hold Planner</h1>
+      <h1>SkyRadial</h1>
       <div class="total">Distance <b id="total">0</b> NM</div>
     </div>
     <div class="tabs" role="tablist">
@@ -1891,7 +1924,7 @@ function tbRefresh(){if(!tbOpen)return;const P=$("tbPop");
     '<div class="gap"></div>'+
     '<div class="r">Allow Device to Sleep<label class="tgl"><input type="checkbox" id="tbSleep"'+(st.sleep?" checked":"")+'><i></i></label></div>'+
     '<div class="r col">Map Text Size<input type="range" id="tbMts" min="0" max="3" step="1" value="'+mi+'"><div class="mts"><span style="font-size:12px">A</span><span style="font-size:15px">A</span><span style="font-size:18px">A</span><span style="font-size:21px">A</span></div></div>'+
-    '<div class="note" style="text-align:center">Route &amp; Hold Planner · data Saudi eAIP AIRAC AMDT 11/26</div>';
+    '<div class="note" style="text-align:center">SkyRadial · data Saudi eAIP AIRAC AMDT 11/26</div>';
   $("tbBr").oninput=e=>{st.bright=+e.target.value/100;applyBright();save()};
   P.querySelectorAll("[data-th]").forEach(b=>b.onclick=()=>{st.theme=b.dataset.th;applyTheme();save();tbRefresh()});
   P.querySelectorAll("[data-cw]").forEach(b=>b.onclick=()=>{st.corr=+b.dataset.cw;save();drawCorridor();tbRefresh()});
@@ -3040,3 +3073,4 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
 
 })();
 </script>
+<script>(function(){var e=document.getElementById("splash");if(!e)return;var w=Math.max(0,1600-(Date.now()-(window.__spT||0)));setTimeout(function(){e.classList.add("out");setTimeout(function(){e.remove()},500)},w)})();</script>
