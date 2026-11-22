@@ -3296,7 +3296,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
     '<b>FROM</b><input id="ffR1" inputmode="numeric" placeholder="090"><input id="ffD1" inputmode="decimal" placeholder="20">'+
     '<b>TO</b><input id="ffR2" inputmode="numeric" placeholder="180"><input id="ffD2" inputmode="decimal" placeholder="20"></div>'+
     '<div class="ffo"><div><small>HDG (NO WIND)</small><span id="ffC">---</span></div><div><small>DISTANCE</small><span id="ffN">--</span></div></div><svg id="ffS" viewBox="-100 -100 200 200"></svg></div>'+
-    '<div id="cvC" hidden><label>FROM VOR / VORTAC OR AIRPORT (IDENT / ICAO)</label><input id="psI" placeholder="KSN or OERK" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase">'+
+    '<div id="cvC" hidden><label>FROM VOR / VORTAC, AIRPORT OR RUNWAY THR</label><input id="psI" placeholder="KSN, OERK or OERK 33R" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase">'+
     '<div class="psn" id="psN"></div><div class="ffg" style="grid-template-columns:1fr 1fr"><label>RADIAL °M</label><label>DME NM</label>'+
     '<input id="psR" inputmode="numeric" placeholder="180"><input id="psD" inputmode="decimal" placeholder="20"></div>'+
     '<div class="psc" id="psC">-- --.- --- --.-</div><div class="psm" id="psM"></div><button id="psGo" class="on" style="width:100%" disabled>SHOW ON MAP</button></div>';
@@ -3320,12 +3320,17 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
     let ref=null,res=null,pin=null;
     function ps(){const u=g("psI").value.trim().toUpperCase();ref=null;
       const n=u&&NAV.find(x=>x.kind==="nav"&&x.ident===u),a=u&&APTS.find(x=>x[0]===u);
+      const tm=u.replace(/[\s\/-]+/g,"").match(/^([A-Z]{4})(?:RWY|RW)?(\d{2}[LRC]?)$/),ad=tm&&AD.find(x=>x.icao===tm[1]);
+      let th=null;if(ad)ad.rwys.forEach(r=>r.forEach(e=>{if(e&&e.id===tm[2]&&e.thr)th=e}));
       if(n)ref={id:n.ident,p:n.p,dec:n.decl,t:n.type+(n.freq?" · "+n.freq:"")};
-      else if(a)ref={id:a[0],p:[a[3],a[4]],dec:decAt([a[3],a[4]]),t:a[1]+" · airport (variation of nearest navaid)"};
+      else if(th){const q=dmsP(th.thr);ref={thr:1,id:tm[1]+th.id,p:[q[0],q[1]],dec:decAt(q),t:"THR "+th.id+" · "+ad.name+(th.elev?" · elev "+Math.round(parseFloat(th.elev))+" ft":"")}}
+      else if(a){const A=AD.find(x=>x.icao===a[0]),ids=A?[].concat(...A.rwys.map(r=>r.filter(e=>e&&e.id&&e.thr).map(e=>e.id))):[];
+        ref={id:a[0],p:[a[3],a[4]],dec:decAt([a[3],a[4]]),t:a[1]+" · airport ARP"+(ids.length?" · for a THR type: "+a[0]+" "+ids.join(" / "):"")}}
+      else if(false)ref={id:a[0],p:[a[3],a[4]],dec:decAt([a[3],a[4]]),t:a[1]+" · airport (variation of nearest navaid)"};
       g("psN").textContent=!u?"":ref?ref.t+" · VAR "+Math.abs(ref.dec)+"°"+(ref.dec>=0?"E":"W"):"Not found";g("psN").classList.toggle("bad",!!u&&!ref);
       const r=parseFloat(g("psR").value),d=parseFloat(g("psD").value);res=null;
       if(ref&&isFinite(r)&&isFinite(d)&&r>=0&&r<=360&&d>=0&&d<=500){res=dest(ref.p,d,(r+ref.dec+360)%360);
-        const nm=ref.id+String(Math.round(r)%360).padStart(3,"0")+"/"+(+d.toFixed(1));res.push(nm);
+        const nm=ref.id+(ref.thr?" ":"")+String(Math.round(r)%360).padStart(3,"0")+"/"+(+d.toFixed(1));res.push(nm);
         g("psC").textContent=fmt(res);g("psM").textContent=nm+"   ·   "+res[0].toFixed(5)+", "+res[1].toFixed(5)}
       else{g("psC").textContent="-- --.- --- --.-";g("psM").textContent=""}
       g("psGo").disabled=!res}
