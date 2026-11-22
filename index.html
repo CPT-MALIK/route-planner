@@ -735,6 +735,16 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .npg.draw textarea{pointer-events:none}
 
 /* ---- calculator icon: VOR/ILS frequency <-> TACAN/DME channel (session 9) */
+.cvp .cktab{grid-template-columns:1fr 1fr 1fr}
+.cvp .cktab button{font-size:13px;line-height:1.1}
+.cvp .psn{font:600 13px var(--sans);color:#2f7bd2;margin:-6px 0 8px;min-height:16px}
+.cvp .psn.bad{color:#d23a3a}
+.cvp .psc{text-align:center;font:700 26px ui-monospace,Menlo,monospace;color:#2f7bd2}
+.cvp .psm{text-align:center;font:600 13px var(--sans);color:#6b7584;margin:2px 0 10px;min-height:16px}
+:root[data-map="dark"] .cvp .psm{color:#a9adb8}
+.pspin{width:14px;height:14px;border-radius:50%;background:#d23a3a;border:2px solid #fff;box-shadow:0 0 0 1px #000}
+.pslbl{position:absolute;left:20px;top:-2px;white-space:nowrap;font:700 14px var(--sans);color:#000;text-shadow:0 0 3px #fff,0 0 3px #fff}
+:root[data-map="dark"] .pslbl{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
 .cvp .ffg{display:grid;grid-template-columns:56px 1fr 1fr;gap:0 6px;align-items:center}
 .cvp .ffg b{font:700 15px var(--sans);margin-bottom:10px}
 .cvp .ffo{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center}
@@ -3280,12 +3290,16 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   /* ---- calculator rail icon: VOR/ILS frequency <-> TACAN/DME channel; opens/closes from the icon only */
   const btn=document.querySelector('.lrail [data-ic="calc"]');if(!btn)return;
   const pop=document.createElement("div");pop.className="ckpop cvp";pop.hidden=true;
-  pop.innerHTML='<div class="cktab"><button data-v="a" class="on">FREQ ⇄ CH</button><button data-v="b">FIX TO FIX</button></div><div id="cvA"><label>VOR / ILS FREQUENCY (MHz)</label><input id="cvF" inputmode="decimal" placeholder="110.55" autocomplete="off">'+
+  pop.innerHTML='<div class="cktab"><button data-v="a" class="on">FREQ ⇄ CH</button><button data-v="b">FIX TO FIX</button><button data-v="c">RAD/DME → POS</button></div><div id="cvA"><label>VOR / ILS FREQUENCY (MHz)</label><input id="cvF" inputmode="decimal" placeholder="110.55" autocomplete="off">'+
     '<label>TACAN / DME CHANNEL</label><div class="cvch"><input id="cvN" inputmode="numeric" placeholder="42" autocomplete="off"><button data-x="X">X</button><button data-x="Y">Y</button></div><div class="cvr" id="cvR"></div></div>'+
     '<div id="cvB" hidden><div class="ffg"><span></span><label>RADIAL °</label><label>DME NM</label>'+
     '<b>FROM</b><input id="ffR1" inputmode="numeric" placeholder="090"><input id="ffD1" inputmode="decimal" placeholder="20">'+
     '<b>TO</b><input id="ffR2" inputmode="numeric" placeholder="180"><input id="ffD2" inputmode="decimal" placeholder="20"></div>'+
-    '<div class="ffo"><div><small>HDG (NO WIND)</small><span id="ffC">---</span></div><div><small>DISTANCE</small><span id="ffN">--</span></div></div><svg id="ffS" viewBox="-100 -100 200 200"></svg></div>';
+    '<div class="ffo"><div><small>HDG (NO WIND)</small><span id="ffC">---</span></div><div><small>DISTANCE</small><span id="ffN">--</span></div></div><svg id="ffS" viewBox="-100 -100 200 200"></svg></div>'+
+    '<div id="cvC" hidden><label>FROM VOR / VORTAC OR AIRPORT (IDENT / ICAO)</label><input id="psI" placeholder="KSN or OERK" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-transform:uppercase">'+
+    '<div class="psn" id="psN"></div><div class="ffg" style="grid-template-columns:1fr 1fr"><label>RADIAL °M</label><label>DME NM</label>'+
+    '<input id="psR" inputmode="numeric" placeholder="180"><input id="psD" inputmode="decimal" placeholder="20"></div>'+
+    '<div class="psc" id="psC">-- --.- --- --.-</div><div class="psm" id="psM"></div><button id="psGo" class="on" style="width:100%" disabled>SHOW ON MAP</button></div>';
   document.body.appendChild(pop);
   (function(){
     const g=id=>pop.querySelector("#"+id),S=g("ffS");
@@ -3302,7 +3316,26 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
         '<rect x="-4" y="-4" width="8" height="8" class="ffst"/><circle cx="'+a[0]+'" cy="'+a[1]+'" r="5" class="ffp1"/><circle cx="'+b[0]+'" cy="'+b[1]+'" r="5" class="ffp2"/>';
       S.innerHTML=h}
     ["ffR1","ffD1","ffR2","ffD2"].forEach(i=>g(i).oninput=calc);
-    pop.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(!b)return;pop.querySelectorAll("[data-v]").forEach(x=>x.classList.toggle("on",x===b));g("cvA").hidden=b.dataset.v!=="a";g("cvB").hidden=b.dataset.v!=="b"});
+    /* radial/DME from a navaid or airport -> coordinates (radial magnetic: true = radial + station declination) */
+    let ref=null,res=null,pin=null;
+    function ps(){const u=g("psI").value.trim().toUpperCase();ref=null;
+      const n=u&&NAV.find(x=>x.kind==="nav"&&x.ident===u),a=u&&APTS.find(x=>x[0]===u);
+      if(n)ref={id:n.ident,p:n.p,dec:n.decl,t:n.type+(n.freq?" · "+n.freq:"")};
+      else if(a)ref={id:a[0],p:[a[3],a[4]],dec:decAt([a[3],a[4]]),t:a[1]+" · airport (variation of nearest navaid)"};
+      g("psN").textContent=!u?"":ref?ref.t+" · VAR "+Math.abs(ref.dec)+"°"+(ref.dec>=0?"E":"W"):"Not found";g("psN").classList.toggle("bad",!!u&&!ref);
+      const r=parseFloat(g("psR").value),d=parseFloat(g("psD").value);res=null;
+      if(ref&&isFinite(r)&&isFinite(d)&&r>=0&&r<=360&&d>=0&&d<=500){res=dest(ref.p,d,(r+ref.dec+360)%360);
+        const nm=ref.id+String(Math.round(r)%360).padStart(3,"0")+"/"+(+d.toFixed(1));res.push(nm);
+        g("psC").textContent=fmt(res);g("psM").textContent=nm+"   ·   "+res[0].toFixed(5)+", "+res[1].toFixed(5)}
+      else{g("psC").textContent="-- --.- --- --.-";g("psM").textContent=""}
+      g("psGo").disabled=!res}
+    ["psI","psR","psD"].forEach(i=>g(i).oninput=ps);
+    g("psGo").onclick=()=>{if(!res)return;const p=res.slice(),r=g("psR").value,d=g("psD").value;
+      if(pin)map.removeLayer(pin);pin=L.marker([p[0],p[1]],{pane:"wpt",keyboard:false,interactive:false,icon:L.divIcon({className:"",iconSize:[16,16],iconAnchor:[8,8],html:'<div class="pspin"></div><div class="pslbl">'+escH(p[2])+'</div>'})}).addTo(map);
+      map.setView([p[0],p[1]],Math.max(map.getZoom(),9));
+      openSheet({title:p[2],sub:"Radial "+String(Math.round(+r)%360).padStart(3,"0")+"° / "+d+" NM from "+ref.id,p:p,rows:[["Reference",ref.t],["Variation used",Math.abs(ref.dec)+"°"+(ref.dec>=0?"E":"W")]]})};
+    btn.addEventListener("click",()=>{if(pop.hidden&&pin){map.removeLayer(pin);pin=null}});
+    pop.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(!b)return;pop.querySelectorAll("[data-v]").forEach(x=>x.classList.toggle("on",x===b));g("cvA").hidden=b.dataset.v!=="a";g("cvB").hidden=b.dataset.v!=="b";g("cvC").hidden=b.dataset.v!=="c"});
   })();
   const F=pop.querySelector("#cvF"),Nn=pop.querySelector("#cvN"),R=pop.querySelector("#cvR");let XY="X";
   const xy=()=>pop.querySelectorAll("[data-x]").forEach(b=>b.classList.toggle("on",b.dataset.x===XY));
