@@ -3138,7 +3138,6 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
     else if(b.id==="ckCan"){C.end=0}
     sv();build()};
   btn.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden;if(!pop.hidden)build()};
-  document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!btn.contains(e.target))pop.hidden=true},true);
   let AC=null;
   function audioInit(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const o=AC.createOscillator(),g=AC.createGain();g.gain.value=0;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.05)}catch(e){}}
   function beep(){try{if(!AC)return;const t=AC.currentTime;for(let i=0;i<3;i++){const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,t+i*.35);g.gain.exponentialRampToValueAtTime(.4,t+i*.35+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.35+.25);o.connect(g);g.connect(AC.destination);o.start(t+i*.35);o.stop(t+i*.35+.3)}}catch(e){}}
