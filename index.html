@@ -733,6 +733,17 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .npg canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;pointer-events:none}
 .npg.draw canvas{pointer-events:auto}
 .npg.draw textarea{pointer-events:none}
+
+/* ---- calculator icon: VOR/ILS frequency <-> TACAN/DME channel (session 9) */
+.cvp h3{margin:0 0 10px;text-align:center;font:700 17px var(--sans)}
+.cvp label{display:block;font:700 13px var(--sans);color:#6b7584;margin:0 0 4px}
+:root[data-map="dark"] .cvp label{color:#a9adb8}
+.cvp input{width:100%;box-sizing:border-box;height:50px;border:1px solid #b9c1cc;border-radius:9px;background:#fff;color:#1d232c;font:700 26px ui-monospace,Menlo,monospace;text-align:center;margin-bottom:10px}
+:root[data-map="dark"] .cvp input{background:#262931;color:#fff;border-color:#0d0e11}
+.cvp .cvch{display:grid;grid-template-columns:1fr 54px 54px;gap:6px}
+.cvp .cvch button{height:50px}
+.cvp .cvr{text-align:center;font:700 16px var(--sans);min-height:22px;color:#2f7bd2}
+.cvp .cvr.bad{color:#d23a3a}
 </style>
 
 <style>
@@ -3251,6 +3262,35 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   function tog(){const rl=document.querySelector(".lrail");if(rl)pg.style.left=Math.round(rl.getBoundingClientRect().right)+"px";pg.hidden=!pg.hidden;btn.classList.toggle("ckrun",!pg.hidden);if(!pg.hidden){ui();size()}else ta.blur()}
   btn.onclick=e=>{e.stopPropagation();tog()};
   window.addEventListener("resize",()=>{if(!pg.hidden){const rl=document.querySelector(".lrail");if(rl)pg.style.left=Math.round(rl.getBoundingClientRect().right)+"px";size()}});
+})();
+
+
+(function(){
+  /* ---- calculator rail icon: VOR/ILS frequency <-> TACAN/DME channel; opens/closes from the icon only */
+  const btn=document.querySelector('.lrail [data-ic="calc"]');if(!btn)return;
+  const pop=document.createElement("div");pop.className="ckpop cvp";pop.hidden=true;
+  pop.innerHTML='<h3>FREQ ⇄ TACAN CHANNEL</h3><label>VOR / ILS FREQUENCY (MHz)</label><input id="cvF" inputmode="decimal" placeholder="110.55" autocomplete="off">'+
+    '<label>TACAN / DME CHANNEL</label><div class="cvch"><input id="cvN" inputmode="numeric" placeholder="42" autocomplete="off"><button data-x="X">X</button><button data-x="Y">Y</button></div><div class="cvr" id="cvR"></div>';
+  document.body.appendChild(pop);
+  const F=pop.querySelector("#cvF"),Nn=pop.querySelector("#cvN"),R=pop.querySelector("#cvR");let XY="X";
+  const xy=()=>pop.querySelectorAll("[data-x]").forEach(b=>b.classList.toggle("on",b.dataset.x===XY));
+  const kind=f=>{const t=Math.round(f*100);return (t>=10810&&t<=11195&&Math.floor(t/10)%2===1)?"ILS LOC":"VOR"};
+  const msg=(t,bad)=>{R.textContent=t;R.classList.toggle("bad",!!bad)};
+  function fromF(){const v=F.value.trim().replace(",",".");if(!v){Nn.value="";msg("");return}
+    const f=parseFloat(v),t=Math.round(f*100);
+    if(!(t>=10800&&t<=11795)||t%5){Nn.value="";msg("Enter 108.00 – 117.95 (steps of .05)",true);return}
+    const d=Math.floor(t/10);const n=t<11230?d-1063:d-1053;XY=t%10?"Y":"X";Nn.value=n;xy();
+    msg(kind(f)+"  "+(t/100).toFixed(2)+"  →  CH "+n+XY)}
+  function fromN(){const n=parseInt(Nn.value);if(!Nn.value.trim()){F.value="";msg("");return}
+    let d;if(n>=17&&n<=59)d=n+1063;else if(n>=70&&n<=126)d=n+1053;else{F.value="";msg(n>=1&&n<=126?"CH "+n+XY+": no VOR/ILS pairing":"Channel 1 – 126",true);return}
+    const f=(d*10+(XY==="Y"?5:0))/100;F.value=f.toFixed(2);msg("CH "+n+XY+"  →  "+kind(f)+"  "+f.toFixed(2))}
+  F.oninput=fromF;Nn.oninput=fromN;
+  pop.onclick=e=>{const b=e.target.closest("[data-x]");if(!b)return;XY=b.dataset.x;xy();fromN()};
+  xy();
+  const ck=document.querySelector('.lrail [data-ic="clk"]');
+  if(ck)ck.addEventListener("click",()=>{pop.hidden=true;btn.classList.remove("ckrun")});
+  btn.onclick=e=>{e.stopPropagation();const cp=document.querySelector(".ckpop:not(.cvp)");if(pop.hidden&&cp&&!cp.hidden&&ck)ck.click();
+    pop.hidden=!pop.hidden;btn.classList.toggle("ckrun",!pop.hidden)};
 })();
 
 })();
