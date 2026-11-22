@@ -685,6 +685,30 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .rwyid.rsel{color:#52b56b!important}
 .pinlbl{position:absolute;left:28px;top:1px;white-space:nowrap;pointer-events:none;font:700 15px var(--mono);color:#000;text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 4px #fff}
 :root[data-map="dark"] .pinlbl{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,0 0 4px #000}
+
+/* ---- clock: stopwatch + countdown timer (session 9) */
+.ckpop{position:fixed;left:calc(env(safe-area-inset-left,0px) + 104px);bottom:16px;width:330px;box-sizing:border-box;z-index:1150;background:#eef1f5;color:#1d232c;border:1px solid #b9c1cc;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.35);padding:12px;font-family:var(--sans);direction:ltr}
+:root[data-map="dark"] .ckpop{background:#2f323b;color:#fff;border-color:#0d0e11}
+.ckpop .cktab{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.ckpop button{border:1px solid #b9c1cc;background:#fff;color:#1d232c;border-radius:9px;font:700 16px var(--sans);height:44px;cursor:pointer;padding:0}
+:root[data-map="dark"] .ckpop button{background:#3a3d47;color:#fff;border-color:#0d0e11}
+.ckpop button.on,:root[data-map="dark"] .ckpop button.on{background:#2f7bd2;color:#fff;border-color:#2f7bd2}
+.ckpop .ckd{font:700 52px/1.1 ui-monospace,Menlo,monospace;text-align:center;margin:6px 0 10px;letter-spacing:1px}
+.ckpop .ckd small{font-size:28px;color:#6b7584}
+:root[data-map="dark"] .ckpop .ckd small{color:#a9adb8}
+.ckpop .ckrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ckpop .ckpre{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.ckpop .ckadj{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+.ckpop .ckmu{text-align:center;font-size:13px;color:#6b7584;margin:-4px 0 8px}
+:root[data-map="dark"] .ckpop .ckmu{color:#a9adb8}
+.lrail .lic button.ckrun{opacity:1;border-radius:50%;box-shadow:0 0 0 3px #2f7bd2}
+.ckal{position:fixed;inset:0;z-index:3900;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center}
+.ckal>div{width:min(400px,80vw);background:#2f323b;color:#fff;border-radius:14px;padding:26px 20px 20px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5);font-family:var(--sans);direction:ltr}
+:root[data-map="light"] .ckal>div,:root[data-map="sat"] .ckal>div{background:#eef1f5;color:#1d232c}
+.ckal svg{width:56px;height:56px;display:block;margin:0 auto 12px}
+.ckal b{display:block;font:700 30px var(--sans);margin-bottom:6px}
+.ckal p{margin:0 0 18px;font-size:17px;opacity:.8}
+.ckal button{width:100%;height:52px;border:0;border-radius:10px;background:#2f7bd2;color:#fff;font:700 20px var(--sans);cursor:pointer}
 </style>
 
 <style>
@@ -3080,6 +3104,64 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   p.querySelectorAll(".it[data-pr]").forEach(b=>b.onclick=()=>{procSet(k,+b.dataset.pr,true);chClosePop();chEl("chv").hidden=true})}
 
 (function(){const _at=applyTheme;applyTheme=function(){const r=_at.apply(this,arguments);try{drawAD()}catch(e){}try{procDraw()}catch(e){}return r}})();
+
+
+(function(){
+  /* ---- clock rail icon: stopwatch + countdown timer with an alert in the middle of the screen */
+  const btn=document.querySelector('.lrail [data-ic="clk"]');if(!btn)return;
+  const K="skyradial.clock";let C={tab:"sw",swRun:false,swT0:0,swAcc:0,min:5,end:0,dur:0,ring:false};
+  try{Object.assign(C,JSON.parse(localStorage.getItem(K)||"{}"))}catch(e){}
+  const sv=()=>{try{localStorage.setItem(K,JSON.stringify(C))}catch(e){}};
+  const pop=document.createElement("div");pop.className="ckpop";pop.hidden=true;document.body.appendChild(pop);
+  const p2=n=>String(n).padStart(2,"0");
+  function fmtT(ms,tenth){ms=Math.max(0,ms);const t=Math.floor(ms/1000),h=Math.floor(t/3600),m=Math.floor(t/60)%60,sec=t%60;
+    return (h?h+":"+p2(m):p2(m))+":"+p2(sec)+(tenth?"<small>."+Math.floor(ms%1000/100)+"</small>":"")}
+  const swMs=()=>C.swAcc+(C.swRun?Date.now()-C.swT0:0);
+  function build(){
+    const sw=C.tab==="sw";
+    let h='<div class="cktab"><button data-t="sw" class="'+(sw?"on":"")+'">STOPWATCH</button><button data-t="tm" class="'+(sw?"":"on")+'">TIMER</button></div>';
+    if(sw){h+='<div class="ckd" id="ckD"></div><div class="ckrow"><button id="ckGo" class="on">'+(C.swRun?"STOP":(C.swAcc?"RESUME":"START"))+'</button><button id="ckRs">RESET</button></div>'}
+    else if(C.end){h+='<div class="ckd" id="ckD"></div><div class="ckmu">'+C.dur+' MIN TIMER</div><div class="ckrow"><button id="ckAdd">+1 MIN</button><button id="ckCan">CANCEL</button></div>'}
+    else{h+='<div class="ckpre">'+[1,2,3,5,10,15,20,30].map(m=>'<button data-m="'+m+'" class="'+(m===C.min?"on":"")+'">'+m+'</button>').join("")+'</div>'+
+      '<div class="ckd">'+p2(C.min)+'<small> MIN</small></div><div class="ckadj"><button data-a="-5">−5</button><button data-a="-1">−1</button><button data-a="1">+1</button><button data-a="5">+5</button></div>'+
+      '<div class="ckrow" style="grid-template-columns:1fr"><button id="ckSt" class="on">START</button></div>'}
+    pop.innerHTML=h;tick();
+  }
+  pop.onclick=e=>{const b=e.target.closest("button");if(!b)return;
+    if(b.dataset.t){C.tab=b.dataset.t}
+    else if(b.id==="ckGo"){if(C.swRun){C.swAcc+=Date.now()-C.swT0;C.swRun=false}else{C.swT0=Date.now();C.swRun=true}}
+    else if(b.id==="ckRs"){C.swRun=false;C.swAcc=0}
+    else if(b.dataset.m){C.min=+b.dataset.m}
+    else if(b.dataset.a){C.min=Math.max(1,Math.min(180,C.min+(+b.dataset.a)))}
+    else if(b.id==="ckSt"){C.dur=C.min;C.end=Date.now()+C.min*60000;audioInit()}
+    else if(b.id==="ckAdd"){C.end+=60000;C.dur+=1}
+    else if(b.id==="ckCan"){C.end=0}
+    sv();build()};
+  btn.onclick=e=>{e.stopPropagation();pop.hidden=!pop.hidden;if(!pop.hidden)build()};
+  document.addEventListener("pointerdown",e=>{if(!pop.hidden&&!pop.contains(e.target)&&!btn.contains(e.target))pop.hidden=true},true);
+  let AC=null;
+  function audioInit(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const o=AC.createOscillator(),g=AC.createGain();g.gain.value=0;o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+.05)}catch(e){}}
+  function beep(){try{if(!AC)return;const t=AC.currentTime;for(let i=0;i<3;i++){const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=880;g.gain.setValueAtTime(.0001,t+i*.35);g.gain.exponentialRampToValueAtTime(.4,t+i*.35+.02);g.gain.exponentialRampToValueAtTime(.0001,t+i*.35+.25);o.connect(g);g.connect(AC.destination);o.start(t+i*.35);o.stop(t+i*.35+.3)}}catch(e){}}
+  let bT=null;
+  function alertDone(){
+    const d=C.dur;C.end=0;C.ring=true;sv();if(!pop.hidden)build();
+    if(document.querySelector(".ckal"))return;
+    const a=document.createElement("div");a.className="ckal";
+    a.innerHTML='<div><svg viewBox="0 0 48 48"><circle cx="24" cy="26" r="18" fill="none" stroke="#2f7bd2" stroke-width="3"/><path d="M24 15v11l7 4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M19 4h10" stroke="#2f7bd2" stroke-width="3" stroke-linecap="round"/></svg><b>TIME UP</b><p>'+d+' minute'+(d===1?"":"s")+' completed</p><button>OK</button></div>';
+    document.body.appendChild(a);beep();clearInterval(bT);bT=setInterval(beep,2500);
+    a.querySelector("button").onclick=()=>{clearInterval(bT);a.remove();C.ring=false;sv()};
+  }
+  function tick(){
+    const d=document.getElementById("ckD");
+    if(d&&!pop.hidden){if(C.tab==="sw")d.innerHTML=fmtT(swMs(),true);else if(C.end)d.innerHTML=fmtT(C.end-Date.now()+999,false)}
+    if(C.end&&Date.now()>=C.end)alertDone();
+    btn.classList.toggle("ckrun",!!(C.swRun||C.end));
+  }
+  setInterval(tick,100);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden){audioInit();tick()}});
+  if(C.ring&&!C.end){C.end=1}
+  window.__clk=C;
+})();
 
 })();
 </script>
