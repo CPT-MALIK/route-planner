@@ -716,6 +716,16 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .npg .nptb button{height:44px;min-width:44px;border:1px solid #0d0e11;border-radius:9px;background:#3a3d47;color:#fff;font:700 16px var(--sans);padding:0 14px;cursor:pointer}
 .npg .nptb button.on{background:#2f7bd2;border-color:#2f7bd2}
 .npg .nptb .sp{flex:1}
+.npg .nptb #npL{font-size:13px;line-height:1.15}
+.npg .npls{position:absolute;top:0;right:10px;width:min(380px,90%);max-height:70%;overflow-y:auto;z-index:2;background:#2f323b;color:#fff;border:1px solid #0d0e11;border-top:0;border-radius:0 0 12px 12px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.npg .npls h4{margin:0;padding:12px 14px;font:700 17px var(--sans);border-bottom:1px solid #0d0e11;text-align:center}
+.npg .npls .it{display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-bottom:1px solid #0d0e11;cursor:pointer}
+.npg .npls .it.cur{background:#3a3d47}
+.npg .npls .it div{flex:1;min-width:0}
+.npg .npls .it b{display:block;font:700 17px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.npg .npls .it small{color:#a9adb8;font-size:13px}
+.npg .npls .it button{height:38px;border:1px solid #0d0e11;border-radius:8px;background:#3a3d47;color:#ff8080;font:700 14px var(--sans);padding:0 10px;cursor:pointer}
+.npg .npls .em{padding:18px;text-align:center;color:#a9adb8}
 .npg .nptb .col{width:44px;padding:0;display:flex;align-items:center;justify-content:center}
 .npg .nptb .col i{width:22px;height:22px;border-radius:50%;display:block;border:2px solid #fff}
 .npg .npw{position:relative;flex:1;min-height:0;overflow:hidden;background:#fff}
@@ -3187,8 +3197,8 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   const pg=document.createElement("div");pg.className="npg";pg.hidden=true;
   pg.innerHTML='<div class="nptb"><button id="npT">TYPE</button><button id="npD">DRAW</button>'+
     COLS.map(c=>'<button class="col" data-c="'+c+'"><i style="background:'+c+'"></i></button>').join("")+
-    '<button id="npE">ERASER</button><span class="sp"></span><button id="npU">UNDO</button><button id="npC">CLEAR</button><button id="npX">✕</button></div>'+
-    '<div class="npw"><textarea id="npTx" placeholder="Write here…" spellcheck="false"></textarea><canvas id="npCv"></canvas></div>';
+    '<button id="npE">ERASER</button><span class="sp"></span><button id="npS">SAVE</button><button id="npL">SAVED<br>FILES</button><button id="npU">UNDO</button><button id="npC">CLEAR</button><button id="npX">✕</button></div>'+
+    '<div class="npw"><textarea id="npTx" placeholder="Write here…" spellcheck="false"></textarea><canvas id="npCv"></canvas><div class="npls" id="npLs" hidden></div></div>';
   document.body.appendChild(pg);
   const ta=pg.querySelector("#npTx"),cv=pg.querySelector("#npCv"),cx=cv.getContext("2d");ta.value=N.text;
   ta.oninput=()=>{N.text=ta.value;sv()};
@@ -3210,9 +3220,34 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
     else if(b.id==="npE"){N.mode="erase";ta.blur()}
     else if(b.dataset.c){N.col=b.dataset.c;N.mode="draw";ta.blur()}
     else if(b.id==="npU"){N.strokes.pop();redraw()}
-    else if(b.id==="npC"){if(confirm("Clear the page (text and drawing)?")){N.strokes=[];N.text="";ta.value="";redraw()}}
+    else if(b.id==="npC"){if(confirm("Clear the page (text and drawing)? Saved files are kept.")){N.strokes=[];N.text="";N.fid=null;ta.value="";redraw()}}
     else if(b.id==="npX"){tog();return}
+    else if(b.id==="npS"){saveAs();return}
+    else if(b.id==="npL"){const l=pg.querySelector("#npLs");l.hidden=!l.hidden;if(!l.hidden)list();return}
     sv();ui()};
+  /* saved files: separate key, each {id,name,t,text,strokes} */
+  const FK="skyradial.notefiles";
+  const files=()=>{try{return JSON.parse(localStorage.getItem(FK)||"[]")}catch(e){return []}};
+  const putF=a=>{try{localStorage.setItem(FK,JSON.stringify(a));return true}catch(e){toast("Not saved: storage full");return false}};
+  const p2=n=>String(n).padStart(2,"0");
+  const dt=t=>{const d=new Date(t);return p2(d.getDate())+"/"+p2(d.getMonth()+1)+"/"+d.getFullYear()+" "+p2(d.getHours())+":"+p2(d.getMinutes())};
+  function saveAs(){
+    if(!N.text.trim()&&!N.strokes.length){toast("Page is empty");return}
+    const F=files(),c=F.find(f=>f.id===N.fid);
+    let nm=prompt("File name",c?c.name:("Note "+dt(Date.now())));if(nm===null)return;nm=nm.trim()||("Note "+dt(Date.now()));
+    let f=F.find(x=>x.name.toLowerCase()===nm.toLowerCase());
+    if(f&&f.id!==N.fid&&!confirm('Replace "'+f.name+'"?'))return;
+    if(!f){f={id:Date.now().toString(36)};F.unshift(f)}
+    Object.assign(f,{name:nm,t:Date.now(),text:N.text,strokes:N.strokes});
+    F.splice(F.indexOf(f),1);F.unshift(f);
+    if(putF(F)){N.fid=f.id;sv();toast('Saved "'+nm+'"');const l=pg.querySelector("#npLs");if(!l.hidden)list()}
+  }
+  function list(){const l=pg.querySelector("#npLs"),F=files();
+    l.innerHTML='<h4>SAVED FILES</h4>'+(F.length?F.map(f=>'<div class="it'+(f.id===N.fid?" cur":"")+'" data-id="'+f.id+'"><div><b>'+escH(f.name)+'</b><small>'+dt(f.t)+'</small></div><button data-del="'+f.id+'">DELETE</button></div>').join(""):'<div class="em">No saved files</div>');
+    l.onclick=e=>{const d=e.target.closest("[data-del]");
+      if(d){const F2=files(),f=F2.find(x=>x.id===d.dataset.del);if(f&&confirm('Delete "'+f.name+'"?')){putF(F2.filter(x=>x!==f));if(N.fid===f.id){N.fid=null;sv()}list()}return}
+      const it=e.target.closest(".it");if(!it)return;const f=files().find(x=>x.id===it.dataset.id);if(!f)return;
+      N.text=f.text||"";N.strokes=f.strokes||[];N.fid=f.id;ta.value=N.text;redraw();sv();l.hidden=true;toast('Opened "'+f.name+'"')}}
   function tog(){const rl=document.querySelector(".lrail");if(rl)pg.style.left=Math.round(rl.getBoundingClientRect().right)+"px";pg.hidden=!pg.hidden;btn.classList.toggle("ckrun",!pg.hidden);if(!pg.hidden){ui();size()}else ta.blur()}
   btn.onclick=e=>{e.stopPropagation();tog()};
   window.addEventListener("resize",()=>{if(!pg.hidden){const rl=document.querySelector(".lrail");if(rl)pg.style.left=Math.round(rl.getBoundingClientRect().right)+"px";size()}});
