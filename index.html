@@ -735,7 +735,18 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .npg.draw textarea{pointer-events:none}
 
 /* ---- calculator icon: VOR/ILS frequency <-> TACAN/DME channel (session 9) */
-.cvp h3{margin:0 0 10px;text-align:center;font:700 17px var(--sans)}
+.cvp .ffg{display:grid;grid-template-columns:56px 1fr 1fr;gap:0 6px;align-items:center}
+.cvp .ffg b{font:700 15px var(--sans);margin-bottom:10px}
+.cvp .ffo{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:center}
+.cvp .ffo small{display:block;font:700 12px var(--sans);color:#6b7584}
+:root[data-map="dark"] .cvp .ffo small{color:#a9adb8}
+.cvp .ffo span{font:700 30px ui-monospace,Menlo,monospace;color:#2f7bd2}
+.cvp svg{display:block;width:170px;height:170px;margin:6px auto 0}
+.cvp .ffr{fill:none;stroke:#6b7584;stroke-width:1.5}.cvp .fft{stroke:#6b7584;stroke-width:1.2}
+.cvp .ffl{fill:#2f7bd2;font:700 14px var(--sans);text-anchor:middle}
+.cvp .ffrad{stroke:#6b7584;stroke-width:1;stroke-dasharray:3 3}
+.cvp .ffc{stroke:#2f7bd2;stroke-width:2.5}
+.cvp .ffst{fill:#6b7584}.cvp .ffp1{fill:#2e9b4f}.cvp .ffp2{fill:#d23a3a}
 .cvp label{display:block;font:700 13px var(--sans);color:#6b7584;margin:0 0 4px}
 :root[data-map="dark"] .cvp label{color:#a9adb8}
 .cvp input{width:100%;box-sizing:border-box;height:50px;border:1px solid #b9c1cc;border-radius:9px;background:#fff;color:#1d232c;font:700 26px ui-monospace,Menlo,monospace;text-align:center;margin-bottom:10px}
@@ -3269,9 +3280,30 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   /* ---- calculator rail icon: VOR/ILS frequency <-> TACAN/DME channel; opens/closes from the icon only */
   const btn=document.querySelector('.lrail [data-ic="calc"]');if(!btn)return;
   const pop=document.createElement("div");pop.className="ckpop cvp";pop.hidden=true;
-  pop.innerHTML='<h3>FREQ ⇄ TACAN CHANNEL</h3><label>VOR / ILS FREQUENCY (MHz)</label><input id="cvF" inputmode="decimal" placeholder="110.55" autocomplete="off">'+
-    '<label>TACAN / DME CHANNEL</label><div class="cvch"><input id="cvN" inputmode="numeric" placeholder="42" autocomplete="off"><button data-x="X">X</button><button data-x="Y">Y</button></div><div class="cvr" id="cvR"></div>';
+  pop.innerHTML='<div class="cktab"><button data-v="a" class="on">FREQ ⇄ CH</button><button data-v="b">FIX TO FIX</button></div><div id="cvA"><label>VOR / ILS FREQUENCY (MHz)</label><input id="cvF" inputmode="decimal" placeholder="110.55" autocomplete="off">'+
+    '<label>TACAN / DME CHANNEL</label><div class="cvch"><input id="cvN" inputmode="numeric" placeholder="42" autocomplete="off"><button data-x="X">X</button><button data-x="Y">Y</button></div><div class="cvr" id="cvR"></div></div>'+
+    '<div id="cvB" hidden><div class="ffg"><span></span><label>RADIAL °</label><label>DME NM</label>'+
+    '<b>FROM</b><input id="ffR1" inputmode="numeric" placeholder="090"><input id="ffD1" inputmode="decimal" placeholder="20">'+
+    '<b>TO</b><input id="ffR2" inputmode="numeric" placeholder="180"><input id="ffD2" inputmode="decimal" placeholder="20"></div>'+
+    '<div class="ffo"><div><small>COURSE</small><span id="ffC">---</span></div><div><small>DISTANCE</small><span id="ffN">--</span></div></div><svg id="ffS" viewBox="-100 -100 200 200"></svg></div>';
   document.body.appendChild(pop);
+  (function(){
+    const g=id=>pop.querySelector("#"+id),S=g("ffS");
+    function calc(){const r1=parseFloat(g("ffR1").value),d1=parseFloat(g("ffD1").value),r2=parseFloat(g("ffR2").value),d2=parseFloat(g("ffD2").value);
+      const ok=[r1,d1,r2,d2].every(v=>isFinite(v))&&d1>=0&&d2>=0&&r1>=0&&r1<=360&&r2>=0&&r2<=360;
+      if(!ok){g("ffC").textContent="---";g("ffN").textContent="--";S.innerHTML="";return}
+      const rad=Math.PI/180,x1=d1*Math.sin(r1*rad),y1=d1*Math.cos(r1*rad),x2=d2*Math.sin(r2*rad),y2=d2*Math.cos(r2*rad);
+      const dx=x2-x1,dy=y2-y1,n=Math.hypot(dx,dy);let c=Math.round((Math.atan2(dx,dy)/rad+360)%360);if(c===0)c=360;
+      g("ffC").textContent=n<0.05?"---":String(c).padStart(3,"0")+"°";g("ffN").textContent=n.toFixed(1);
+      const k=80/Math.max(d1,d2,1),P=(x,y)=>[(x*k).toFixed(1),(-y*k).toFixed(1)],a=P(x1,y1),b=P(x2,y2);
+      let h='<circle r="80" class="ffr"/>';for(let i=0;i<36;i++){const t=i*10*rad,l=i%9?6:12;h+='<line class="fft" x1="'+(80*Math.sin(t))+'" y1="'+(-80*Math.cos(t))+'" x2="'+((80-l)*Math.sin(t))+'" y2="'+(-(80-l)*Math.cos(t))+'"/>'}
+      h+='<text class="ffl" x="0" y="-62">N</text><line class="ffrad" x1="0" y1="0" x2="'+a[0]+'" y2="'+a[1]+'"/><line class="ffrad" x1="0" y1="0" x2="'+b[0]+'" y2="'+b[1]+'"/>'+
+        '<line class="ffc" x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" marker-end="url(#ffAr)"/><defs><marker id="ffAr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#2f7bd2"/></marker></defs>'+
+        '<rect x="-4" y="-4" width="8" height="8" class="ffst"/><circle cx="'+a[0]+'" cy="'+a[1]+'" r="5" class="ffp1"/><circle cx="'+b[0]+'" cy="'+b[1]+'" r="5" class="ffp2"/>';
+      S.innerHTML=h}
+    ["ffR1","ffD1","ffR2","ffD2"].forEach(i=>g(i).oninput=calc);
+    pop.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(!b)return;pop.querySelectorAll("[data-v]").forEach(x=>x.classList.toggle("on",x===b));g("cvA").hidden=b.dataset.v!=="a";g("cvB").hidden=b.dataset.v!=="b"});
+  })();
   const F=pop.querySelector("#cvF"),Nn=pop.querySelector("#cvN"),R=pop.querySelector("#cvR");let XY="X";
   const xy=()=>pop.querySelectorAll("[data-x]").forEach(b=>b.classList.toggle("on",b.dataset.x===XY));
   const kind=f=>{const t=Math.round(f*100);return (t>=10810&&t<=11195&&Math.floor(t/10)%2===1)?"ILS LOC":"VOR"};
