@@ -799,6 +799,11 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .ocpop{display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:2px solid var(--p-bd);border-radius:11px;background:var(--p-btn)}
 .ocpop button{width:40px;height:40px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);cursor:pointer;padding:0;font:700 11px var(--sans);color:#fff}
 .ocpop button.on{box-shadow:0 0 0 3px #2f7bd2}
+
+/* ---- ORBIT hide / show (per slot) */
+.fundo>#fOrbHide{flex:0 0 auto;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--p-bd);border-radius:7px;background:var(--p-btn);color:var(--p-tx);cursor:pointer}
+.fundo>#fOrbHide.on{background:#2f7bd2;border-color:#2f7bd2;color:#fff}
+.oslot.hid{opacity:.5;text-decoration:line-through}
 </style>
 
 <style>
@@ -2838,7 +2843,7 @@ window.__procSet=procSet;
 /* ---- ORBIT kept apart from ROUTE: st.orbit={c,r,n,pts,closed}, own map layer */
 (function(){
   const orbL=L.layerGroup().addTo(map);
-  function drawOrb(){orbL.clearLayers();const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor(st.orbSlot===1?1:0))||css("--route"),G=orbGeom(o);
+  function drawOrb(){orbL.clearLayers();if(st.orbHide&&st.orbHide[st.orbSlot===1?1:0])return;const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor(st.orbSlot===1?1:0))||css("--route"),G=orbGeom(o);
     if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++){const g=gc(w[i-1],w[i]);window.rpHalo&&rpHalo(g,col,orbL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}}
     else{window.rpHalo&&rpHalo(G.path,col,orbL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
@@ -3449,7 +3454,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   const ui=()=>B.forEach((b,k)=>{b.classList.toggle("on",k===st.orbSlot);b.classList.toggle("has",!!(k===st.orbSlot?st.orbit:st.orbs[k]))});
   const _sv=save;save=function(){try{st.orbs[st.orbSlot]=st.orbit||null;st.orbTypes[st.orbSlot]=st.orbType||"circle"}catch(e){}const r=_sv.apply(this,arguments);try{ui()}catch(e){}return r};
   const oL=L.layerGroup().addTo(map);
-  function drawOther(){oL.clearLayers();const o=st.orbs[1-st.orbSlot];if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor(1-st.orbSlot))||css("--route"),G=orbGeom(o);
+  function drawOther(){oL.clearLayers();if(st.orbHide&&st.orbHide[1-st.orbSlot])return;const o=st.orbs[1-st.orbSlot];if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor(1-st.orbSlot))||css("--route"),G=orbGeom(o);
     if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++){const g=gc(w[i-1],w[i]);window.rpHalo&&rpHalo(g,col,oL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(oL)}}
     else{window.rpHalo&&rpHalo(G.path,col,oL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(oL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
@@ -3489,6 +3494,22 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   pop.onclick=e=>{const x=e.target.closest("[data-c]");if(!x)return;st.orbCol[k()]=x.dataset.c||null;save();drawRoute();sw();pop.hidden=true;toast("ORBIT "+(k()+1)+" colour changed")};
   document.querySelectorAll(".oslot:not(.oscol)").forEach(b=>b.addEventListener("click",()=>setTimeout(()=>{sw();if(!pop.hidden)build()},0)));
   sw();drawRoute();
+})();
+
+
+(function(){
+  /* ---- ORBIT hide button next to the ORBIT undo: hides the selected ORBIT (1 or 2) from the map, keeps its data */
+  const u=$("fOrbUndo");if(!u)return;
+  if(!Array.isArray(st.orbHide))st.orbHide=[false,false];
+  const EYE='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_X='<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7c2.1 0 3.9.7 5.4 1.7M22 12s-3.6 7-10 7c-2.1 0-3.9-.7-5.4-1.7"/><path d="M3 3l18 18"/></svg>';
+  const b=document.createElement("button");b.id="fOrbHide";u.insertAdjacentElement("afterend",b);
+  const k=()=>st.orbSlot===1?1:0;
+  const ui=()=>{const h=!!st.orbHide[k()];b.innerHTML=h?EYE_X:EYE;b.classList.toggle("on",h);b.setAttribute("aria-label",h?"Show ORBIT on the map":"Hide ORBIT from the map");
+    document.querySelectorAll(".oslot:not(.oscol)").forEach((x,i)=>x.classList.toggle("hid",!!st.orbHide[i]))};
+  b.onclick=()=>{st.orbHide[k()]=!st.orbHide[k()];save();drawRoute();ui();toast("ORBIT "+(k()+1)+(st.orbHide[k()]?" hidden (kept)":" shown"))};
+  document.querySelectorAll(".oslot:not(.oscol)").forEach(x=>x.addEventListener("click",()=>setTimeout(ui,0)));
+  ui();drawRoute();
 })();
 
 })();
