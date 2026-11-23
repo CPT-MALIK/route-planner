@@ -765,6 +765,11 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .cvp .cvch button{height:50px}
 .cvp .cvr{text-align:center;font:700 16px var(--sans);min-height:22px;color:#2f7bd2}
 .cvp .cvr.bad{color:#d23a3a}
+
+/* ---- ORBIT circle fields: fixed unit inside the box (POINTS / NM) */
+.fsfx{position:relative;flex:1;min-width:0;display:flex}
+.fsfx>input{flex:1;min-width:0;padding-right:64px!important}
+.fsfx::after{content:attr(data-u);position:absolute;right:12px;top:50%;transform:translateY(-50%);font:700 13px var(--sans);color:var(--p-mu,#6b7584);pointer-events:none}
 </style>
 
 <style>
@@ -3365,6 +3370,13 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   if(ck)ck.addEventListener("click",()=>{pop.hidden=true;btn.classList.remove("ckrun")});
   btn.onclick=e=>{e.stopPropagation();const cp=document.querySelector(".ckpop:not(.cvp)");if(pop.hidden&&cp&&!cp.hidden&&ck)ck.click();
     pop.hidden=!pop.hidden;btn.classList.toggle("ckrun",!pop.hidden)};
+})();
+
+
+(function(){
+  /* ---- ORBIT circle: fixed unit words inside the number-of-points and radius boxes */
+  [["pn","POINTS","NUMBER"],["pr","NM","RADIUS"]].forEach(([id,u,ph])=>{const x=$(id);if(!x||!x.parentNode)return;
+    const w=document.createElement("span");w.className="fsfx";w.dataset.u=u;x.parentNode.insertBefore(w,x);w.appendChild(x);x.placeholder=ph});
 })();
 
 })();
