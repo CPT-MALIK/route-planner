@@ -3452,6 +3452,15 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   ui();drawRoute();
 })();
 
+
+(function(){
+  /* ---- "Show center point" only where the shape has one: hidden for LINE, label per type */
+  const c=$("pShowC"),seg=document.querySelector(".oseg");if(!c||!seg)return;const l=c.closest("label");
+  const T={circle:"Show center point",rt:"Show points A and B",f8:"Show centres 1 and 2"};
+  const upd=()=>{const t=st.orbType||"circle";l.hidden=t==="line";if(T[t])l.lastChild.textContent=" "+T[t]};
+  seg.addEventListener("click",()=>setTimeout(upd,0));upd();
+})();
+
 })();
 </script>
 <script>(function(){var e=document.getElementById("splash");if(!e)return;var w=Math.max(0,3000-(Date.now()-(window.__spT||0)));setTimeout(function(){e.classList.add("out");setTimeout(function(){e.remove()},500)},w)})();</script>
