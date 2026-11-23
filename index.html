@@ -861,11 +861,12 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
         <label class="f">Leg length<input id="hl" type="number" inputmode="decimal" value="1" step="0.5"></label>
         <label class="f">Unit<select id="hu"><option value="min">min</option><option value="nm">NM</option></select></label>
       </div>
+      <label class="f">Bank angle (°) — empty = standard rate 3°/s<input id="hb" type="number" inputmode="decimal" placeholder="standard rate"></label>
       <label class="f">Aircraft heading at fix (°M) — for entry<input id="hh" type="number" inputmode="decimal" value="135"></label>
       <p class="err" id="hErr"></p>
       <div class="row"><button class="btn" id="hGo">Draw HOLD</button><button class="btn ghost" id="hClr">Remove</button></div>
       <div class="kv" id="hInfo" hidden></div>
-      <p class="hint">Standard-rate turns (3°/s), no wind. Inbound course is the course flown toward the fix.</p>
+      <p class="hint">Turns at the bank angle entered, or standard rate (3°/s) if empty; no wind. Inbound course is the course flown toward the fix.</p>
     </div>
 
     <div class="body" id="p-awy" hidden>
@@ -1248,11 +1249,13 @@ function buildHold(){
   if(!isFinite(cm)||!(tas>40)||!(len>0)){$("hErr").textContent="Check inbound course, TAS and leg length";return null}
   $("hErr").textContent="";
   const C=norm(cm+v), s=turn==="R"?90:-90, sg=turn==="R"?1:-1;
-  const r=tas/(60*Math.PI); // standard rate: 360° in 2 min
+  const bk=parseFloat($("hb").value),bank=isFinite(bk)&&bk>=5&&bk<=60?bk:null;
+  if($("hb").value.trim()&&!bank){$("hErr").textContent="Bank angle must be 5–60°, or empty for standard rate";return null}
+  const r=bank?tas*tas/(68625*Math.tan(bank*Math.PI/180)):tas/(60*Math.PI), turnS=bank?180*tas/(1091*Math.tan(bank*Math.PI/180)):60;
   const L_=unit==="min"?tas*len/60:len;
   const A=dest(F,L_,C+180), c1=dest(F,r,C+s), B=dest(F,2*r,C+s), Dp=dest(B,L_,C+180), c2=dest(A,r,C+s);
   const pts=[A,F,...arc(c1,r,C-s,sg*180,24),B,Dp,...arc(c2,r,C+s,sg*180,24),A];
-  return {F,C,cm,r,L_,tas,len,unit,hh,turn,pts,inbound:[A,F]};
+  return {F,C,cm,r,L_,tas,len,unit,hh,turn,bank,turnS,pts,inbound:[A,F]};
 }
 function drawHold(){
   holdL.clearLayers();const h=st.hold;$("hInfo").hidden=!h;if(!h)return;const col=css("--hold");
@@ -1270,14 +1273,15 @@ function drawHold(){
     '<span>Outbound course</span><span>'+deg3(outT-v)+'M</span>'+
     '<span>Turns</span><span>'+(h.turn==="R"?"Right":"Left")+'</span>'+
     '<span>Leg length</span><span>'+h.L_.toFixed(1)+' NM</span>'+
+    '<span>Turns flown at</span><span>'+(h.bank?h.bank+'° bank · '+(180/h.turnS).toFixed(1)+'°/s':'Standard rate 3°/s · '+(Math.atan(h.tas*3/1091)*180/Math.PI).toFixed(0)+'° bank')+'</span>'+
     '<span>Turn radius</span><span>'+h.r.toFixed(2)+' NM</span>'+
     '<span>Pattern width</span><span>'+(2*h.r).toFixed(1)+' NM</span>'+
-    '<span>Full circuit time</span><span>'+((h.L_*2/h.tas)*60+2).toFixed(1)+' min</span>';
+    '<span>Full circuit time</span><span>'+((h.L_*2/h.tas)*60+2*(h.turnS||60)/60).toFixed(1)+' min</span>';
 }
 $("hGo").onclick=()=>{const h=buildHold();if(!h)return;st.hold=h;save();drawHold();map.fitBounds(L.latLngBounds(h.pts).pad(0.4),{maxZoom:11})};
 $("hClr").onclick=()=>{st.hold=null;save();drawHold()};
 $("hv").addEventListener("input",()=>{renderList();if(st.hold){const h=buildHold();if(h){st.hold=h;save();drawHold()}}});
-if(st.hold){if(st.hold.turn==="L")$("hL").click();drawHold()}
+if(st.hold){if(st.hold.turn==="L")$("hL").click();if(st.hold.bank)$("hb").value=st.hold.bank;drawHold()}
 
 // ---- info sheet (long press, waypoints, navaids)
 let ownPos=null,ownGS=null,ownFix=null,suppress=0;
