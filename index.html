@@ -2926,11 +2926,15 @@ window.__procSet=procSet;
       (kind==="saved"?'<div class="svsort">Sort By: <button class="svlnk" data-a="sort">'+(sortBy==="date"?"Date Saved":"Name")+'</button></div>':'')+
       '<div class="svlist">'+(A.length?ix.map(i=>item(A[i],i,kind)).join(""):'<div class="svempty">'+(kind==="saved"?"No saved flights yet":"Nothing cleared yet")+'</div>')+'</div>';
     wire(kind)}
+  const orbDet=q=>{const t=q.type||"circle",L=[({circle:"CIRCLE",rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]||t].concat(orbText(q).slice(1));
+    if(t==="circle")L.push("POINTS: "+q.n);
+    if(t==="line")(q.lpts||[]).forEach((p,k)=>L.push("POINT "+String.fromCharCode(65+k)+": "+fmt(p)));
+    else L.push(q.ccw===false?"CLOCKWISE":"COUNTER-CLOCKWISE");return L.join("<br>")};
   function detail(kind,i){const f=(kind==="saved"?st.flights:st.cleared)[i];if(!f)return list(kind);const o=f.orbit;
     sv.innerHTML=head("list",kind==="saved"?"Saved Flight":"Cleared Flight",'<button class="svlnk" data-a="share" aria-label="Copy route">'+$("fShare").innerHTML+'</button>')+
       '<div class="svd"><b>'+escH(f.name||"NO NAME")+'</b><small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
       '<label>ROUTE</label><p>'+(f.wps&&f.wps.length?escH(rStr(f))+(f.closed?' <span class="svm">(CLOSED)</span>':''):'Not Specified')+'</p>'+
-      fOrbs(f).map((q,k)=>'<label>ORBIT '+(k+1)+'</label><p>'+(q?orbText(q).slice(1).join('<br>')+((q.type||'circle')!=='line'?(q.ccw===false?'<br>CLOCKWISE':'<br>COUNTER-CLOCKWISE'):''):'Not Specified')+'</p>').join("")+'</div>'+
+      fOrbs(f).map((q,k)=>'<label>ORBIT '+(k+1)+'</label><p>'+(q?orbDet(q):'Not Specified')+'</p>').join("")+'</div>'+
       '<button class="svload" data-a="load">Load Flight</button>';
     wire(kind,i)}
   function load(f){const c=cur();if(!empty(c)&&JSON.stringify([c.wps,fOrbs(c)])!==JSON.stringify([f.wps,fOrbs(f)]))pushCleared(c);
@@ -2986,7 +2990,7 @@ function orbText(o){const t=o.type||"circle";
   if(t==="rt")return["ORBIT: RACE TRACK","POINT A: "+fmt(o.a),"POINT B: "+fmt(o.b),"WIDTH: "+o.w+" NM"];
   if(t==="f8")return["ORBIT: FIGURE 8","CENTRE 1: "+fmt(o.a),"CENTRE 2: "+fmt(o.b),"RADIUS: "+(Math.round(dist(o.a,o.b)/2*10)/10)+" NM"];
   return["ORBIT: LINE"]}
-function orbSum(o){const t=o.type||"circle";if(t==="circle")return fmt(o.c)+' · '+o.r+' NM · '+o.n+' POINTS';
+function orbSum(o){const t=o.type||"circle";if(t==="circle")return 'CIRCLE · '+fmt(o.c)+' · '+o.r+' NM · '+o.n+' POINTS';
   if(t==="line")return 'LINE · '+(o.lpts||[0,0]).length+' POINTS';return({rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]+' · '+fmt(o.a)+' → '+fmt(o.b)+(t==="rt"?' · '+o.w+' NM':'')}
 function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&&o.type)||st.orbType||"circle";
   set("pc",o&&t==="circle"?fmt(o.c):"");set("pn",o&&t==="circle"?o.n:"");set("pr",o&&t==="circle"?o.r:"");
