@@ -2884,8 +2884,10 @@ window.__procSet=procSet;
   const zt=t=>{const d=new Date(t);return String(d.getUTCHours()).padStart(2,"0")+String(d.getUTCMinutes()).padStart(2,"0")+"Z "+String(d.getUTCDate()).padStart(2,"0")+" "+MON[d.getUTCMonth()]};
   const word=p=>{const n=p[2];if(n&&/^[A-Z0-9]{2,6}$/.test(n)){const f=resolveFix(n);if(f&&Math.abs(f[0]-p[0])<1e-4&&Math.abs(f[1]-p[1])<1e-4)return n}return fmt(p)};
   const rStr=f=>(f.wps||[]).map(word).join(" ");
-  const cur=()=>({name:(st.fname||"").trim(),wps:JSON.parse(JSON.stringify(st.wps||[])),closed:!!st.closed,orbit:st.orbit?JSON.parse(JSON.stringify(st.orbit)):null});
-  const empty=f=>!(f.wps&&f.wps.length)&&!f.orbit;
+  const cur=()=>({name:(st.fname||"").trim(),wps:JSON.parse(JSON.stringify(st.wps||[])),closed:!!st.closed,orbit:st.orbit?JSON.parse(JSON.stringify(st.orbit)):null,
+    orbs:(()=>{const a=(Array.isArray(st.orbs)?st.orbs:[null,null]).slice(0,2);a[st.orbSlot===1?1:0]=st.orbit||null;return a.some(Boolean)?JSON.parse(JSON.stringify(a)):null})(),slot:st.orbSlot===1?1:0});
+  const fOrbs=f=>f.orbs&&f.orbs.some(Boolean)?f.orbs:[f.orbit||null,null];
+  const empty=f=>!(f.wps&&f.wps.length)&&!fOrbs(f).some(Boolean);
   const pushCleared=f=>{if(empty(f))return;f.t=Date.now();st.cleared.unshift(f);st.cleared=st.cleared.slice(0,20);save()};
   /* remember what CLEAR ALL removes (the second, confirming tap) */
   const _clr=$("clr").onclick;$("clr").onclick=()=>{if($("clr").dataset.c)pushCleared(cur());_clr()};
@@ -2909,7 +2911,7 @@ window.__procSet=procSet;
     const o=f.orbit;
     return '<div class="svit" data-i="'+i+'">'+(edit?'<button class="svsel'+(selIx.has(i)?' on':'')+'" data-s="'+i+'"><i></i></button>':'')+
       '<div class="svtx"><b>'+escH(f.name||"NO NAME")+'</b>'+(act?'<em>ACTIVE FLIGHT</em>':'')+'<small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
-      (f.wps&&f.wps.length?'<label>ROUTE</label><p>'+escH(rStr(f))+'</p>':'')+(o?'<label>ORBIT</label><p>'+orbSum(o)+'</p>':'')+'</div><i class="svch">›</i></div>'}
+      (f.wps&&f.wps.length?'<label>ROUTE</label><p>'+escH(rStr(f))+'</p>':'')+fOrbs(f).map((q,k)=>q?'<label>ORBIT '+(k+1)+'</label><p>'+orbSum(q)+'</p>':'').join("")+'</div><i class="svch">›</i></div>'}
   function list(kind){sv.hidden=false;const A=kind==="saved"?st.flights:st.cleared;
     let ix=A.map((f,i)=>i);if(kind==="saved"&&sortBy==="name")ix.sort((a,b)=>(A[a].name||"").localeCompare(A[b].name||""));else ix.sort((a,b)=>A[b].t-A[a].t);
     const right=kind==="saved"?(edit?'<button class="svlnk" data-a="done">Done</button>':'<button class="svlnk" data-a="edit">Edit</button>'):(A.length?'<button class="svlnk" data-a="clrall">Clear</button>':'');
@@ -2921,15 +2923,16 @@ window.__procSet=procSet;
     sv.innerHTML=head("list",kind==="saved"?"Saved Flight":"Cleared Flight",'<button class="svlnk" data-a="share" aria-label="Copy route">'+$("fShare").innerHTML+'</button>')+
       '<div class="svd"><b>'+escH(f.name||"NO NAME")+'</b><small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
       '<label>ROUTE</label><p>'+(f.wps&&f.wps.length?escH(rStr(f))+(f.closed?' <span class="svm">(CLOSED)</span>':''):'Not Specified')+'</p>'+
-      '<label>ORBIT</label><p>'+(o?orbText(o).slice(1).join('<br>')+((o.type||'circle')!=='line'?(o.ccw===false?'<br>CLOCKWISE':'<br>COUNTER-CLOCKWISE'):''):'Not Specified')+'</p></div>'+
+      fOrbs(f).map((q,k)=>'<label>ORBIT '+(k+1)+'</label><p>'+(q?orbText(q).slice(1).join('<br>')+((q.type||'circle')!=='line'?(q.ccw===false?'<br>CLOCKWISE':'<br>COUNTER-CLOCKWISE'):''):'Not Specified')+'</p>').join("")+'</div>'+
       '<button class="svload" data-a="load">Load Flight</button>';
     wire(kind,i)}
-  function load(f){const c=cur();if(!empty(c)&&JSON.stringify([c.wps,c.orbit])!==JSON.stringify([f.wps,f.orbit]))pushCleared(c);
-    st.wps=JSON.parse(JSON.stringify(f.wps||[]));st.closed=!!f.closed;st.center=null;st.orbit=f.orbit?JSON.parse(JSON.stringify(f.orbit)):null;st.fname=f.name||"";$("fName").value=st.fname;
+  function load(f){const c=cur();if(!empty(c)&&JSON.stringify([c.wps,fOrbs(c)])!==JSON.stringify([f.wps,fOrbs(f)]))pushCleared(c);
+    st.orbs=JSON.parse(JSON.stringify(fOrbs(f)));st.orbSlot=f.orbs&&f.slot===1?1:0;
+    st.wps=JSON.parse(JSON.stringify(f.wps||[]));st.closed=!!f.closed;st.center=null;st.orbit=st.orbs[st.orbSlot]?JSON.parse(JSON.stringify(st.orbs[st.orbSlot])):null;st.fname=f.name||"";$("fName").value=st.fname;
     const o=st.orbit;orbFill(o);
     const ob=$("fOrbPts");if(ob){const P=(o&&o.pts)||[];ob.classList.toggle("fph",!P.length);ob.innerHTML=P.length?P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"}
-    $("closed").checked=st.closed;update();save();
-    const pts=st.wps.concat(o?o.pts:[]);if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11});
+    $("closed").checked=st.closed;update();save();try{drawRoute()}catch(e){}
+    const pts=st.wps.concat(...st.orbs.map(q=>q&&q.pts?q.pts:[]));if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11});
     close();toast("Loaded: "+(f.name||"flight"))}
   function wire(kind,i){
     sv.querySelectorAll("[data-a]").forEach(b=>b.onclick=e=>{e.stopPropagation();const a=b.dataset.a;
