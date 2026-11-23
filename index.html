@@ -791,6 +791,13 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .oslot{flex:none;width:52px;height:46px;border:2px solid var(--p-bd);border-radius:11px;background:var(--p-btn);color:var(--p-tx);font:700 20px var(--sans);cursor:pointer;position:relative;padding:0}
 .oslot.on{background:#2f7bd2;border-color:#2f7bd2;color:#fff}
 .oslot.has::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#52b56b}
+
+/* ---- ORBIT line colour per slot */
+.oscol{display:flex;align-items:center;justify-content:center}
+.oscol i{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.ocpop{display:flex;flex-wrap:wrap;gap:8px;padding:10px;border:2px solid var(--p-bd);border-radius:11px;background:var(--p-btn)}
+.ocpop button{width:40px;height:40px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);cursor:pointer;padding:0;font:700 11px var(--sans);color:#fff}
+.ocpop button.on{box-shadow:0 0 0 3px #2f7bd2}
 </style>
 
 <style>
@@ -2830,7 +2837,7 @@ window.__procSet=procSet;
 /* ---- ORBIT kept apart from ROUTE: st.orbit={c,r,n,pts,closed}, own map layer */
 (function(){
   const orbL=L.layerGroup().addTo(map);
-  function drawOrb(){orbL.clearLayers();const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=css("--route"),G=orbGeom(o);
+  function drawOrb(){orbL.clearLayers();const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor(st.orbSlot===1?1:0))||css("--route"),G=orbGeom(o);
     if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++){const g=gc(w[i-1],w[i]);window.rpHalo&&rpHalo(g,col,orbL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}}
     else{window.rpHalo&&rpHalo(G.path,col,orbL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
@@ -3437,7 +3444,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   const ui=()=>B.forEach((b,k)=>{b.classList.toggle("on",k===st.orbSlot);b.classList.toggle("has",!!(k===st.orbSlot?st.orbit:st.orbs[k]))});
   const _sv=save;save=function(){try{st.orbs[st.orbSlot]=st.orbit||null;st.orbTypes[st.orbSlot]=st.orbType||"circle"}catch(e){}const r=_sv.apply(this,arguments);try{ui()}catch(e){}return r};
   const oL=L.layerGroup().addTo(map);
-  function drawOther(){oL.clearLayers();const o=st.orbs[1-st.orbSlot];if(!o||!o.pts||!o.pts.length)return;const col=css("--route"),G=orbGeom(o);
+  function drawOther(){oL.clearLayers();const o=st.orbs[1-st.orbSlot];if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor(1-st.orbSlot))||css("--route"),G=orbGeom(o);
     if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++){const g=gc(w[i-1],w[i]);window.rpHalo&&rpHalo(g,col,oL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(oL)}}
     else{window.rpHalo&&rpHalo(G.path,col,oL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(oL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
@@ -3459,6 +3466,24 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   const T={circle:"Show center point",rt:"Show points A and B",f8:"Show centres 1 and 2"};
   const upd=()=>{const t=st.orbType||"circle";l.hidden=t==="line";if(T[t])l.lastChild.textContent=" "+T[t]};
   seg.addEventListener("click",()=>setTimeout(upd,0));upd();
+})();
+
+
+(function(){
+  /* ---- ORBIT line colour: swatch button after "2"; the colour applies to the selected ORBIT (1 or 2) */
+  const b2=document.querySelectorAll(".oslot");if(b2.length<2)return;const row=b2[1].parentNode;
+  const COLS=[null,"#e53935","#2e9b4f","#f39c12","#8e44ad","#e91e8c","#00bcd4","#111111","#ffffff"];
+  if(!Array.isArray(st.orbCol))st.orbCol=[null,null];
+  window.orbColor=k=>st.orbCol[k]||null;
+  const btn=document.createElement("button");btn.className="oslot oscol";btn.setAttribute("aria-label","ORBIT line colour");btn.innerHTML="<i></i>";row.appendChild(btn);
+  const pop=document.createElement("div");pop.className="ocpop";pop.hidden=true;row.insertAdjacentElement("afterend",pop);
+  const k=()=>st.orbSlot===1?1:0,cur=()=>st.orbCol[k()]||css("--route");
+  const sw=()=>{btn.querySelector("i").style.background=cur()};
+  function build(){pop.innerHTML=COLS.map(c=>'<button data-c="'+(c||"")+'" class="'+((st.orbCol[k()]||null)===c?"on":"")+'" style="background:'+(c||css("--route"))+'">'+(c?"":"STD")+'</button>').join("")}
+  btn.onclick=()=>{pop.hidden=!pop.hidden;if(!pop.hidden)build()};
+  pop.onclick=e=>{const x=e.target.closest("[data-c]");if(!x)return;st.orbCol[k()]=x.dataset.c||null;save();drawRoute();sw();pop.hidden=true;toast("ORBIT "+(k()+1)+" colour changed")};
+  document.querySelectorAll(".oslot:not(.oscol)").forEach(b=>b.addEventListener("click",()=>setTimeout(()=>{sw();if(!pop.hidden)build()},0)));
+  sw();drawRoute();
 })();
 
 })();
