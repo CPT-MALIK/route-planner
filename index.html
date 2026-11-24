@@ -2975,7 +2975,7 @@ window.__procSet=procSet;
   function detail(kind,i){const f=(kind==="saved"?st.flights:st.cleared)[i];if(!f)return list(kind);const o=f.orbit;
     sv.innerHTML=head("list",kind==="saved"?"Saved Flight":"Cleared Flight",'<button class="svlnk" data-a="share" aria-label="Copy route">'+$("fShare").innerHTML+'</button>')+
       '<div class="svd"><b>'+escH(f.name||"NO NAME")+'</b><small>'+(kind==="saved"?"SAVED: ":"CLEARED: ")+zt(f.t)+'</small>'+
-      (()=>{const A=fRts(f),two=A[1]&&A[1].wps&&A[1].wps.length;return A.map((r,k)=>(k&&!two)?'':'<label>ROUTE'+(two?' '+(k+1):'')+'</label><p>'+(r&&r.wps&&r.wps.length?escH(rStr(r))+(r.closed?' <span class="svm">(CLOSED)</span>':''):'Not Specified')+'</p>').join("")})()+
+      (()=>{const A=fRts(f),two=A[1]&&A[1].wps&&A[1].wps.length;return A.map((r,k)=>(k&&!two)?'':'<label>ROUTE'+(two?' '+(k+1):'')+'</label><p>'+(r&&r.wps&&r.wps.length?escH(rStr(r)):'Not Specified')+'</p>').join("")})()+
       (fOrbs(f).some(Boolean)?fOrbs(f).map((q,k)=>q?'<label>ORBIT '+(k+1)+'</label><p>'+orbDet(q)+'</p>':'').join(""):'<label>ORBIT</label><p>Not Specified</p>')+'</div>'+
       '<button class="svload" data-a="load">Load Flight</button>';
     wire(kind,i)}
