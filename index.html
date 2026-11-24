@@ -3591,6 +3591,13 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   ui();drawRoute();
 })();
 
+
+(function(){
+  /* ---- TAP MAP TO ADD on its own row under ROUTE */
+  const a=$("fSlotAdd");if(!a)return;const row=a.closest(".frow");if(!row)return;
+  const r=document.createElement("div");r.className="frow";row.insertAdjacentElement("afterend",r);r.appendChild(a);a.style.flex="1";
+})();
+
 })();
 </script>
 <script>(function(){var e=document.getElementById("splash");if(!e)return;var w=Math.max(0,3000-(Date.now()-(window.__spT||0)));setTimeout(function(){e.classList.add("out");setTimeout(function(){e.remove()},500)},w)})();</script>
