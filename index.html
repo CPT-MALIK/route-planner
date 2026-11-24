@@ -804,6 +804,15 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .fundo>#fOrbHide{flex:0 0 auto;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--p-bd);border-radius:7px;background:var(--p-btn);color:var(--p-tx);cursor:pointer}
 .fundo>#fOrbHide.on{background:#2f7bd2;border-color:#2f7bd2;color:#fff}
 .oslot.hid{opacity:.5;text-decoration:line-through}
+
+/* ---- ORBIT copy: whole ORBIT button + copy icon on each point */
+.fundo>#fOrbCopy{flex:0 0 auto;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--p-bd);border-radius:7px;background:var(--p-btn);color:var(--p-tx);cursor:pointer}
+.fundo>#fOrbCopy.ok,.orow .ocp.ok{background:#1f8a4c;border-color:#1f8a4c;color:#fff}
+.orow{align-items:center}
+.fundo:has(#fOrbCopy){gap:6px}
+.fundo:has(#fOrbCopy)>button{width:36px!important;height:36px!important}
+.fundo:has(#fOrbCopy)>label{font-size:15px}
+.orow .ocp{margin-left:auto;flex:none;width:32px;height:28px;padding:0;border:1px solid var(--p-bd);border-radius:7px;background:var(--p-btn);color:var(--p-tx);cursor:pointer;display:flex;align-items:center;justify-content:center}
 </style>
 
 <style>
@@ -3511,6 +3520,26 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   b.onclick=()=>{st.orbHide[k()]=!st.orbHide[k()];save();drawRoute();ui();toast("ORBIT "+(k()+1)+(st.orbHide[k()]?" hidden (kept)":" shown"))};
   document.querySelectorAll(".oslot:not(.oscol)").forEach(x=>x.addEventListener("click",()=>setTimeout(ui,0)));
   ui();drawRoute();
+})();
+
+
+(function(){
+  /* ---- ORBIT copy: button next to undo/hide copies the selected ORBIT; copy icon on every ORBIT point row */
+  const u=$("fOrbUndo"),box=$("fOrbPts");if(!u||!box)return;
+  const CP='<svg viewBox="0 0 24 24" width="SZ" height="SZ" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="display:block"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>';
+  const flash=(b,msg)=>{b.classList.add("ok");clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove("ok"),1500);toast(msg)};
+  const cp=(t,b,msg)=>(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>flash(b,msg),()=>{try{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();const ok=document.execCommand("copy");ta.remove();ok?flash(b,msg):toast(t)}catch(e){toast(t)}});
+  const b=document.createElement("button");b.id="fOrbCopy";b.setAttribute("aria-label","Copy ORBIT");b.innerHTML=CP.replace(/SZ/g,22);
+  ($("fOrbHide")||u).insertAdjacentElement("afterend",b);
+  b.onclick=()=>{const o=st.orbit;if(!o||!o.pts||!o.pts.length){toast("No ORBIT to copy");return}
+    const t=o.type||"circle",n=(st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0)+1;
+    const L=["ORBIT "+n+": "+({circle:"CIRCLE",rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t]].concat(orbText(o).slice(1));
+    if(t!=="line")L.push(o.ccw===false?"CLOCKWISE":"COUNTER-CLOCKWISE");
+    L.push("POINTS:");o.pts.forEach((p,i)=>L.push((i+1)+" "+fmt(p)));
+    cp(L.join("\n"),b,"ORBIT "+n+" copied")};
+  function deco(){box.querySelectorAll(".orow").forEach((r,i)=>{if(r.querySelector(".ocp"))return;const x=document.createElement("button");x.className="ocp";x.setAttribute("aria-label","Copy coordinates");x.innerHTML=CP.replace(/SZ/g,16);
+    x.onclick=e=>{e.stopPropagation();const p=st.orbit&&st.orbit.pts&&st.orbit.pts[i];if(!p)return;const t=fmt(p);cp(t,x,"Copied "+t)};r.appendChild(x)})}
+  new MutationObserver(deco).observe(box,{childList:true});deco();
 })();
 
 })();
