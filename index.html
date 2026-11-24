@@ -2166,10 +2166,24 @@ function rulDraw(){rulG.clearLayers();if(!rulA||!rulB)return;
   let ang=Math.atan2(dy,dx)*180/Math.PI,flip=false;if(ang>90||ang<-90){ang+=180;flip=true}
   const top=flip?ba+"°M-> "+dt+" <-"+ab+"°M":ab+"°M-> "+dt+" <-"+ba+"°M",bot=flip?ab+"°M-> "+dt+" <-"+ba+"°M":ba+"°M-> "+dt+" <-"+ab+"°M";
   const mid=map.layerPointToLatLng(L.point((a.x+b.x)/2,(a.y+b.y)/2)),off=W+16,sgn=flip?-1:1;
-  const lab=(txt,k,rot)=>L.marker(P(map.latLngToLayerPoint(mid),k),{pane:"ruler",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rull" style="transform:translate(-50%,-50%) rotate('+rot+'deg)">'+txt+'</div>'})}).addTo(rulG);
+  const lmid=rulVisMid(a,b,Math.max(top.length,bot.length)*4.7+16);
+  const lab=(txt,k,rot)=>L.marker(P(lmid,k),{pane:"ruler",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rull" style="transform:translate(-50%,-50%) rotate('+rot+'deg)">'+txt+'</div>'})}).addTo(rulG);
   lab(top,-off*sgn,ang);lab(bot,off*sgn,ang+180);
   if(rulHA)rulHA.setLatLng(rulA);if(rulHB)rulHB.setLatLng(rulB);
   if(rulHM&&!rulMv){rulHM.setLatLng(mid);rulHM.setIcon(L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulm" style="width:'+Math.max(40,len-70).toFixed(0)+'px;transform:translate(-50%,-50%) rotate('+(Math.atan2(dy,dx)*180/Math.PI)+'deg)"></div>'}))}}
+function rulVisMid(a,b,hw){
+  const mc=map.getContainer(),R=mc.getBoundingClientRect(),o=map.latLngToLayerPoint(map.containerPointToLatLng(L.point(0,0)));
+  const lr=document.querySelector(".lrail"),rc=document.querySelector(".rcol");
+  let x0=8,x1=R.width-8,y0=8,y1=R.height-8;
+  if(lr){const r=lr.getBoundingClientRect();if(r.width)x0=Math.max(x0,r.right-R.left+8)}
+  if(rc){const r=rc.getBoundingClientRect();if(r.width&&r.left-R.left>R.width/2)x1=Math.min(x1,r.left-R.left-8)}
+  const ax=a.x-o.x,ay=a.y-o.y,dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;let t0=0,t1=1;
+  const cl=(p,q)=>{if(p===0)return q>=0;const r=q/p;if(p<0){if(r>t1)return false;if(r>t0)t0=r}else{if(r<t0)return false;if(r<t1)t1=r}return true};
+  if(!(cl(-dx,ax-x0)&&cl(dx,x1-ax)&&cl(-dy,ay-y0)&&cl(dy,y1-ay)))return L.point((a.x+b.x)/2,(a.y+b.y)/2);
+  let t=(t0+t1)/2;const h=hw/len;
+  if(t1-t0>2*h)t=Math.min(Math.max(.5,t0+h),t1-h);else if(t1<1&&t0<=0)t=t1-h;else if(t0>0&&t1>=1)t=t0+h;
+  if(!(t>=0&&t<=1))t=.5;
+  return L.point(a.x+dx*t,a.y+dy*t)}
 function rulOn(){const c=map.getSize(),y=c.y*0.5;rulA=map.containerPointToLatLng(L.point(c.x*0.3,y));rulB=map.containerPointToLatLng(L.point(c.x*0.7,y));
   const h=()=>L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulh"></div>'});
   rulHA=L.marker(rulA,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulA=e.target.getLatLng();rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
@@ -2181,7 +2195,7 @@ function rulOn(){const c=map.getSize(),y=c.y*0.5;rulA=map.containerPointToLatLng
     .on("dragend",()=>{rulMv=null;rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
   rulL.addTo(map);rulDraw()}
 function rulOff(){map.removeLayer(rulL);rulL.removeLayer(rulHA);rulL.removeLayer(rulHB);rulL.removeLayer(rulHM);rulHA=rulHB=rulHM=rulA=rulB=null;rulMv=null;rulG.clearLayers()}
-map.on("zoomend viewreset",()=>{if(rulA)rulDraw()});
+map.on("zoomend viewreset moveend",()=>{if(rulA)rulDraw()});
 $("grd").setAttribute("aria-pressed",String(st.showGrid!==false));
 $("grd").onclick=()=>{st.showGrid=st.showGrid===false;$("grd").setAttribute("aria-pressed",String(st.showGrid));save();drawGrid()};
 $("rul").onclick=()=>{const on=$("rul").getAttribute("aria-pressed")!=="true";$("rul").setAttribute("aria-pressed",String(on));on?rulOn():rulOff()};
