@@ -2198,8 +2198,8 @@ function rulOn(){const c=map.getSize(),y=c.y*0.5;rulA=map.containerPointToLatLng
   rulHB=L.marker(rulB,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulB=e.target.getLatLng();rulReq()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
   // hold and drag the middle of the ruler to move the whole ruler
   rulHM=L.marker(rulA,{pane:"ruler",draggable:true,autoPan:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulm"></div>'})})
-    .on("dragstart",e=>{rulMv={m:map.latLngToLayerPoint(e.target.getLatLng()),a:map.latLngToLayerPoint(rulA),b:map.latLngToLayerPoint(rulB)}})
-    .on("drag",e=>{if(!rulMv)return;const p=map.latLngToLayerPoint(e.target.getLatLng()),d=p.subtract(rulMv.m);rulA=map.layerPointToLatLng(rulMv.a.add(d));rulB=map.layerPointToLatLng(rulMv.b.add(d));rulReq()})
+    .on("dragstart",e=>{const m=e.target.getLatLng(),M=[m.lat,m.lng],A=[rulA.lat,rulA.lng],B=[rulB.lat,rulB.lng];rulMv={dA:dist(M,A),bA:brg(M,A),dB:dist(M,B),bB:brg(M,B)}})
+    .on("drag",e=>{if(!rulMv)return;const m=e.target.getLatLng(),M=[m.lat,m.lng],A=dest(M,rulMv.dA,rulMv.bA),B=dest(M,rulMv.dB,rulMv.bB);rulA=L.latLng(A[0],A[1]);rulB=L.latLng(B[0],B[1]);rulReq()})
     .on("dragend",()=>{rulMv=null;rulNv=null;rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
   rulL.addTo(map);rulBox();rulDraw()}
 function rulOff(){map.removeLayer(rulL);rulL.removeLayer(rulHA);rulL.removeLayer(rulHB);rulL.removeLayer(rulHM);rulHA=rulHB=rulHM=rulA=rulB=null;rulMv=null;rulG.clearLayers();rulR=null;rulNv=null}
