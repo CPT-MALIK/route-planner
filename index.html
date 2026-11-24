@@ -2991,8 +2991,11 @@ window.__procSet=procSet;
   $("fSaved").onclick=menu;
   /* copy text: name, route, orbit with numbered points */
   const fText=f=>{const L_=[];if(f.name)L_.push("FLIGHT NAME: "+f.name,"");
-    if(f.wps&&f.wps.length)L_.push("ROUTE:",rStr(f),"","");
-    const o=f.orbit;if(o){L_.push(...orbText(o),"");(o.pts||[]).forEach((p,k)=>L_.push((k+1)+"- "+fmt(p)))}
+    const RA=fRts(f),two=!!(RA[1]&&RA[1].wps&&RA[1].wps.length);
+    RA.forEach((r,k)=>{if(r&&r.wps&&r.wps.length)L_.push("ROUTE"+(two?" "+(k+1):"")+":"+(r.closed?" (CLOSED)":""),rStr(r),"")});
+    const OA=fOrbs(f),many=OA.filter(Boolean).length>1;
+    OA.forEach((o,k)=>{if(!o)return;const t=o.type||"circle";L_.push("ORBIT"+(many||k?" "+(k+1):"")+": "+({circle:"CIRCLE",rt:"RACE TRACK",f8:"FIGURE 8",line:"LINE"})[t],...orbText(o).slice(1));
+      if(t!=="line")L_.push(o.ccw===false?"CLOCKWISE":"COUNTER-CLOCKWISE");(o.pts||[]).forEach((p,q)=>L_.push((q+1)+"- "+fmt(p)));L_.push("")});
     return L_.join("\n").replace(/\n+$/,"")};
   const copyT=t=>{if(!t){toast("Nothing to copy");return}(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Flight copied"),()=>toast("Copy failed"))};
   $("fShare").onclick=()=>copyT(fText(cur()));
