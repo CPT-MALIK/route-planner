@@ -1166,7 +1166,7 @@ map.on("zoomend",navVis);navVis();
 
 {const p_=map.createPane("wpt");p_.style.zIndex=620} // route waypoint circles + labels: above navaids, airway points (600) and marks (612)
 function drawRoute(){
-  routeL.clearLayers();const w=(st.rtHide&&st.rtHide[st.rtSlot===1?1:0])?[]:st.wps;const col=css("--route");
+  routeL.clearLayers();const w=(st.rtHide&&st.rtHide[st.rtSlot===1?1:0])?[]:st.wps;const col=(st.rtCol&&st.rtCol[st.rtSlot===1?1:0])||css("--route");
   if(w.length>1){const pts=w.slice();if(st.closed&&w.length>2)pts.push(w[0]);
     for(let i=1;i<pts.length;i++){const g=gc(pts[i-1],pts[i]);window.rpHalo&&rpHalo(g,col,routeL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(routeL)}}
   const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})}); // points at the same position share one marker: "1+10"
@@ -2919,7 +2919,7 @@ window.__procSet=procSet;
   const rStr=f=>(f.wps||[]).map(word).join(" ");
   const cur=()=>({name:(st.fname||"").trim(),wps:JSON.parse(JSON.stringify(st.wps||[])),closed:!!st.closed,orbit:st.orbit?JSON.parse(JSON.stringify(st.orbit)):null,
     orbs:(()=>{const a=pad3(st.orbs,null);a[(st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0)]=st.orbit||null;return a.some(Boolean)?JSON.parse(JSON.stringify(a)):null})(),slot:(st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0),cols:pad3(st.orbCol,null),
-    routes:(()=>{const a=Array.isArray(st.routes)?st.routes.slice(0,2):[null,null];while(a.length<2)a.push(null);const k=st.rtSlot===1?1:0;a[k]={wps:st.wps||[],closed:!!st.closed};return a.some(r=>r&&r.wps&&r.wps.length)?JSON.parse(JSON.stringify(a)):null})(),rtSlot:st.rtSlot===1?1:0});
+    routes:(()=>{const a=Array.isArray(st.routes)?st.routes.slice(0,2):[null,null];while(a.length<2)a.push(null);const k=st.rtSlot===1?1:0;a[k]={wps:st.wps||[],closed:!!st.closed};return a.some(r=>r&&r.wps&&r.wps.length)?JSON.parse(JSON.stringify(a)):null})(),rtSlot:st.rtSlot===1?1:0,rtCols:Array.isArray(st.rtCol)?st.rtCol.slice(0,2):[null,null]});
   const fRts=f=>f.routes&&f.routes.some(r=>r&&r.wps&&r.wps.length)?f.routes:[{wps:f.wps||[],closed:!!f.closed},null];
   const fOrbs=f=>f.orbs&&f.orbs.some(Boolean)?pad3(f.orbs,null):[f.orbit||null,null,null];
   const empty=f=>!fRts(f).some(r=>r&&r.wps&&r.wps.length)&&!fOrbs(f).some(Boolean);
@@ -2966,13 +2966,13 @@ window.__procSet=procSet;
       '<button class="svload" data-a="load">Load Flight</button>';
     wire(kind,i)}
   function load(f){const c=cur();if(!empty(c)&&JSON.stringify([fRts(c),fOrbs(c)])!==JSON.stringify([fRts(f),fOrbs(f)]))pushCleared(c);
-    st.routes=JSON.parse(JSON.stringify(fRts(f)));st.rtSlot=f.routes&&f.rtSlot===1?1:0;const RA=st.routes[st.rtSlot]||{wps:[],closed:false};f={...f,wps:RA.wps,closed:RA.closed};
+    st.routes=JSON.parse(JSON.stringify(fRts(f)));st.rtSlot=f.routes&&f.rtSlot===1?1:0;if(Array.isArray(f.rtCols))st.rtCol=f.rtCols.slice(0,2);const RA=st.routes[st.rtSlot]||{wps:[],closed:false};f={...f,wps:RA.wps,closed:RA.closed};
     st.orbs=JSON.parse(JSON.stringify(fOrbs(f)));st.orbSlot=f.orbs&&f.slot>0&&f.slot<3?f.slot:0;if(Array.isArray(f.cols))st.orbCol=pad3(f.cols,null);
     st.wps=JSON.parse(JSON.stringify(f.wps||[]));st.closed=!!f.closed;st.center=null;st.orbit=st.orbs[st.orbSlot]?JSON.parse(JSON.stringify(st.orbs[st.orbSlot])):null;st.fname=f.name||"";$("fName").value=st.fname;
     const o=st.orbit;orbFill(o);
     const ob=$("fOrbPts");if(ob){const P=(o&&o.pts)||[];ob.classList.toggle("fph",!P.length);ob.innerHTML=P.length?P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join(""):"ORBIT POINTS"}
     $("closed").checked=st.closed;update();save();try{drawRoute()}catch(e){}try{window._orbSw&&_orbSw()}catch(e){}
-    const pts=st.wps.concat(...st.orbs.map(q=>q&&q.pts?q.pts:[]),...st.routes.map(r=>r&&r.wps?r.wps:[]));try{window._rtUi&&_rtUi()}catch(e){}if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11});
+    const pts=st.wps.concat(...st.orbs.map(q=>q&&q.pts?q.pts:[]),...st.routes.map(r=>r&&r.wps?r.wps:[]));try{window._rtUi&&_rtUi()}catch(e){}try{window._rtSw&&_rtSw()}catch(e){}if(pts.length)map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:11});
     close();toast("Loaded: "+(f.name||"flight"))}
   function wire(kind,i){
     sv.querySelectorAll("[data-a]").forEach(b=>b.onclick=e=>{e.stopPropagation();const a=b.dataset.a;
@@ -3575,7 +3575,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   window._rtUi=ui;
   const _sv=save;save=function(){try{norm();st.routes[st.rtSlot===1?1:0]={wps:st.wps||[],closed:!!st.closed}}catch(e){}const r=_sv.apply(this,arguments);try{ui()}catch(e){}return r};
   const rL=L.layerGroup().addTo(map);
-  function drawOther(){rL.clearLayers();norm();const k=1-st.rtSlot,r=st.routes[k];if(st.rtHide[k]||!r||!r.wps||!r.wps.length)return;const w=r.wps,col=css("--route");
+  function drawOther(){rL.clearLayers();norm();const k=1-st.rtSlot,r=st.routes[k];if(st.rtHide[k]||!r||!r.wps||!r.wps.length)return;const w=r.wps,col=(st.rtCol&&st.rtCol[k])||css("--route");
     if(w.length>1){const pts=w.slice();if(r.closed&&w.length>2)pts.push(w[0]);for(let i=1;i<pts.length;i++){const g=gc(pts[i-1],pts[i]);window.rpHalo&&rpHalo(g,col,rL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(rL)}}
     const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ix.map(q=>q+1).join("+"),wd=Math.max(26,12+t.length*8);
@@ -3596,6 +3596,23 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   /* ---- TAP MAP TO ADD on its own row under ROUTE */
   const a=$("fSlotAdd");if(!a)return;const row=a.closest(".frow");if(!row)return;
   const r=document.createElement("div");r.className="frow";row.insertAdjacentElement("afterend",r);r.appendChild(a);a.style.flex="1";
+})();
+
+
+(function(){
+  /* ---- ROUTE line colour: swatch after ROUTE "2"; applies to the selected route */
+  const rb=document.querySelectorAll(".rslot");if(rb.length<2)return;const row=rb[1].parentNode;
+  const COLS=[null,"#e53935","#2e9b4f","#f39c12","#8e44ad","#e91e8c","#00bcd4","#111111","#ffffff"];
+  if(!Array.isArray(st.rtCol))st.rtCol=[null,null];
+  const btn=document.createElement("button");btn.className="rslot oscol";btn.setAttribute("aria-label","ROUTE line colour");btn.innerHTML="<i></i>";rb[1].insertAdjacentElement("afterend",btn);
+  const pop=document.createElement("div");pop.className="ocpop";pop.hidden=true;row.insertAdjacentElement("afterend",pop);
+  const k=()=>st.rtSlot===1?1:0,cur=()=>st.rtCol[k()]||css("--route");
+  const sw=()=>{btn.querySelector("i").style.background=cur()};window._rtSw=sw;
+  function build(){pop.innerHTML=COLS.map(c=>'<button data-c="'+(c||"")+'" class="'+((st.rtCol[k()]||null)===c?"on":"")+'" style="background:'+(c||css("--route"))+'">'+(c?"":"STD")+'</button>').join("")}
+  btn.onclick=()=>{pop.hidden=!pop.hidden;if(!pop.hidden)build()};
+  pop.onclick=e=>{const x=e.target.closest("[data-c]");if(!x)return;st.rtCol[k()]=x.dataset.c||null;save();drawRoute();sw();pop.hidden=true;toast("ROUTE "+(k()+1)+" colour changed")};
+  rb.forEach(b=>b.addEventListener("click",()=>setTimeout(()=>{sw();if(!pop.hidden)build()},0)));
+  sw();drawRoute();
 })();
 
 })();
