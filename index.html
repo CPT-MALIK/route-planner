@@ -2153,30 +2153,38 @@ function wpAsk(i,m){const p=st.wps[i],N=wpNm(i),title=m==="edit"?"Edit "+N:m==="
 // ---- measuring ruler: drag the two round handles; top label reads A->B, bottom label (upside down) reads B->A
 map.createPane("ruler").style.zIndex=640;
 const rulL=L.layerGroup(),rulG=L.layerGroup().addTo(rulL);let rulA=null,rulB=null,rulHA=null,rulHB=null,rulHM=null,rulMv=null;
-function rulDraw(){rulG.clearLayers();if(!rulA||!rulB)return;
-  const a=map.latLngToLayerPoint(rulA),b=map.latLngToLayerPoint(rulB),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux,W=44,C=62;
-  const P=(p,k,e)=>map.layerPointToLatLng(L.point(p.x+nx*k+ux*(e||0),p.y+ny*k+uy*(e||0)));
-  L.polygon([P(a,W),P(b,W),P(b,-W),P(a,-W)],{pane:"ruler",stroke:false,fillColor:"#9a9a9a",fillOpacity:.55,interactive:false}).addTo(rulG);
-  [W,-W].forEach(k=>L.polyline([P(a,k),P(b,k)],{pane:"ruler",color:"#111",weight:2,dashArray:"7 5",interactive:false}).addTo(rulG));
-  L.polyline([rulA,rulB],{pane:"ruler",color:"#111",weight:2.5,interactive:false}).addTo(rulG);
-  [a,b].forEach((p,i)=>{L.polyline([P(p,-C),P(p,C)],{pane:"ruler",color:"#111",weight:2.5,interactive:false}).addTo(rulG);
-    [W,-W].forEach(k=>L.polyline([P(p,k,i?0:-38),P(p,k,i?38:0)],{pane:"ruler",color:"#111",weight:2.5,interactive:false}).addTo(rulG))});
-  const A=[rulA.lat,rulA.lng],B=[rulB.lat,rulB.lng],d=distE(A,B),m=[(A[0]+B[0])/2,(A[1]+B[1])/2],nv=nearestNav(m),dec=nv?nv.decl:0;
-  const ab=deg3(brg(A,B)-dec),ba=deg3(brg(B,A)-dec),dt=(d<100?d.toFixed(1):Math.round(d)+"")+"nm"+(+d.toFixed(1)<=3?" ("+Math.round(d*6076.12).toLocaleString("en-US")+"ft)":"");
-  let ang=Math.atan2(dy,dx)*180/Math.PI,flip=false;if(ang>90||ang<-90){ang+=180;flip=true}
-  const top=flip?ba+"°M-> "+dt+" <-"+ab+"°M":ab+"°M-> "+dt+" <-"+ba+"°M",bot=flip?ab+"°M-> "+dt+" <-"+ba+"°M":ba+"°M-> "+dt+" <-"+ab+"°M";
-  const mid=map.layerPointToLatLng(L.point((a.x+b.x)/2,(a.y+b.y)/2)),off=W+16,sgn=flip?-1:1;
-  const lmid=rulVisMid(a,b,Math.max(top.length,bot.length)*4.7+16);
-  const lab=(txt,k,rot)=>L.marker(P(lmid,k),{pane:"ruler",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rull" style="transform:translate(-50%,-50%) rotate('+rot+'deg)">'+txt+'</div>'})}).addTo(rulG);
-  lab(top,-off*sgn,ang);lab(bot,off*sgn,ang+180);
-  if(rulHA)rulHA.setLatLng(rulA);if(rulHB)rulHB.setLatLng(rulB);
-  if(rulHM&&!rulMv){rulHM.setLatLng(mid);rulHM.setIcon(L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulm" style="width:'+Math.max(40,len-70).toFixed(0)+'px;transform:translate(-50%,-50%) rotate('+(Math.atan2(dy,dx)*180/Math.PI)+'deg)"></div>'}))}}
-function rulVisMid(a,b,hw){
-  const mc=map.getContainer(),R=mc.getBoundingClientRect(),o=map.latLngToLayerPoint(map.containerPointToLatLng(L.point(0,0)));
-  const lr=document.querySelector(".lrail"),rc=document.querySelector(".rcol");
+let rulR=null,rulRaf=0,rulNv=null,rulBx=null;
+function rulReq(){if(rulRaf)return;rulRaf=requestAnimationFrame(()=>{rulRaf=0;rulDraw()})}
+function rulBox(){const R=map.getContainer().getBoundingClientRect(),lr=document.querySelector(".lrail"),rc=document.querySelector(".rcol");
   let x0=8,x1=R.width-8,y0=8,y1=R.height-8;
   if(lr){const r=lr.getBoundingClientRect();if(r.width)x0=Math.max(x0,r.right-R.left+8)}
   if(rc){const r=rc.getBoundingClientRect();if(r.width&&r.left-R.left>R.width/2)x1=Math.min(x1,r.left-R.left-8)}
+  rulBx={x0,x1,y0,y1}}
+function rulDraw(){if(!rulA||!rulB){rulG.clearLayers();rulR=null;return}
+  const a=map.latLngToLayerPoint(rulA),b=map.latLngToLayerPoint(rulB),dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len,nx=-uy,ny=ux,W=44,C=62;
+  const P=(p,k,e)=>map.layerPointToLatLng(L.point(p.x+nx*k+ux*(e||0),p.y+ny*k+uy*(e||0)));
+  if(!rulR){const o={pane:"ruler",color:"#111",weight:2.5,interactive:false},z=[rulA,rulB];
+    rulR={poly:L.polygon(z,{pane:"ruler",stroke:false,fillColor:"#9a9a9a",fillOpacity:.55,interactive:false}).addTo(rulG),
+      ed:[0,1].map(()=>L.polyline(z,{pane:"ruler",color:"#111",weight:2,dashArray:"7 5",interactive:false}).addTo(rulG)),
+      ctr:L.polyline(z,o).addTo(rulG),ends:[0,1].map(()=>L.polyline(z,o).addTo(rulG)),tk:[0,1,2,3].map(()=>L.polyline(z,o).addTo(rulG)),
+      lb:[0,1].map(()=>L.marker(rulA,{pane:"ruler",interactive:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rull"></div>'})}).addTo(rulG)),lt:["",""],lr:["",""]}}
+  const R=rulR;R.poly.setLatLngs([P(a,W),P(b,W),P(b,-W),P(a,-W)]);
+  [W,-W].forEach((k,q)=>R.ed[q].setLatLngs([P(a,k),P(b,k)]));R.ctr.setLatLngs([rulA,rulB]);
+  [a,b].forEach((p,i)=>{R.ends[i].setLatLngs([P(p,-C),P(p,C)]);[W,-W].forEach((k,q)=>R.tk[i*2+q].setLatLngs([P(p,k,i?0:-38),P(p,k,i?38:0)]))});
+  const A=[rulA.lat,rulA.lng],B=[rulB.lat,rulB.lng],d=distE(A,B),m=[(A[0]+B[0])/2,(A[1]+B[1])/2];
+  if(!rulNv||dist(rulNv.m,m)>3)rulNv={m,nv:nearestNav(m)};const nv=rulNv.nv,dec=nv?nv.decl:0;
+  const ab=deg3(brg(A,B)-dec),ba=deg3(brg(B,A)-dec),dt=(d<100?d.toFixed(1):Math.round(d)+"")+"nm"+(+d.toFixed(1)<=3?" ("+Math.round(d*6076.12).toLocaleString("en-US")+"ft)":"");
+  let ang=Math.atan2(dy,dx)*180/Math.PI,flip=false;if(ang>90||ang<-90){ang+=180;flip=true}
+  const top=flip?ba+"°M-> "+dt+" <-"+ab+"°M":ab+"°M-> "+dt+" <-"+ba+"°M",bot=flip?ab+"°M-> "+dt+" <-"+ba+"°M":ba+"°M-> "+dt+" <-"+ab+"°M";
+  const off=W+16,sgn=flip?-1:1,lmid=rulVisMid(a,b,Math.max(top.length,bot.length)*4.7+16);
+  [[top,-off*sgn,ang],[bot,off*sgn,ang+180]].forEach(([txt,k,rot],q)=>{const mk=R.lb[q];mk.setLatLng(P(lmid,k));const el=mk.getElement()&&mk.getElement().firstChild;if(!el)return;
+    if(R.lt[q]!==txt){el.textContent=txt;R.lt[q]=txt}const tr="translate(-50%,-50%) rotate("+rot.toFixed(1)+"deg)";if(R.lr[q]!==tr){el.style.transform=tr;R.lr[q]=tr}});
+  if(rulHA)rulHA.setLatLng(rulA);if(rulHB)rulHB.setLatLng(rulB);
+  if(rulHM&&!rulMv){rulHM.setLatLng(map.layerPointToLatLng(L.point((a.x+b.x)/2,(a.y+b.y)/2)));const el=rulHM.getElement()&&rulHM.getElement().firstChild;
+    if(el){el.style.width=Math.max(40,len-70).toFixed(0)+"px";el.style.transform="translate(-50%,-50%) rotate("+(Math.atan2(dy,dx)*180/Math.PI).toFixed(1)+"deg)"}}}
+function rulVisMid(a,b,hw){
+  const o=map.latLngToLayerPoint(map.containerPointToLatLng(L.point(0,0)));
+  if(!rulBx)rulBox();const{x0,x1,y0,y1}=rulBx;
   const ax=a.x-o.x,ay=a.y-o.y,dx=b.x-a.x,dy=b.y-a.y,len=Math.hypot(dx,dy)||1;let t0=0,t1=1;
   const cl=(p,q)=>{if(p===0)return q>=0;const r=q/p;if(p<0){if(r>t1)return false;if(r>t0)t0=r}else{if(r<t0)return false;if(r<t1)t1=r}return true};
   if(!(cl(-dx,ax-x0)&&cl(dx,x1-ax)&&cl(-dy,ay-y0)&&cl(dy,y1-ay)))return L.point((a.x+b.x)/2,(a.y+b.y)/2);
@@ -2186,16 +2194,16 @@ function rulVisMid(a,b,hw){
   return L.point(a.x+dx*t,a.y+dy*t)}
 function rulOn(){const c=map.getSize(),y=c.y*0.5;rulA=map.containerPointToLatLng(L.point(c.x*0.3,y));rulB=map.containerPointToLatLng(L.point(c.x*0.7,y));
   const h=()=>L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulh"></div>'});
-  rulHA=L.marker(rulA,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulA=e.target.getLatLng();rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
-  rulHB=L.marker(rulB,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulB=e.target.getLatLng();rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
+  rulHA=L.marker(rulA,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulA=e.target.getLatLng();rulReq()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
+  rulHB=L.marker(rulB,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulB=e.target.getLatLng();rulReq()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
   // hold and drag the middle of the ruler to move the whole ruler
   rulHM=L.marker(rulA,{pane:"ruler",draggable:true,autoPan:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulm"></div>'})})
     .on("dragstart",e=>{rulMv={m:map.latLngToLayerPoint(e.target.getLatLng()),a:map.latLngToLayerPoint(rulA),b:map.latLngToLayerPoint(rulB)}})
-    .on("drag",e=>{if(!rulMv)return;const p=map.latLngToLayerPoint(e.target.getLatLng()),d=p.subtract(rulMv.m);rulA=map.layerPointToLatLng(rulMv.a.add(d));rulB=map.layerPointToLatLng(rulMv.b.add(d));rulDraw()})
-    .on("dragend",()=>{rulMv=null;rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
-  rulL.addTo(map);rulDraw()}
-function rulOff(){map.removeLayer(rulL);rulL.removeLayer(rulHA);rulL.removeLayer(rulHB);rulL.removeLayer(rulHM);rulHA=rulHB=rulHM=rulA=rulB=null;rulMv=null;rulG.clearLayers()}
-map.on("zoomend viewreset moveend",()=>{if(rulA)rulDraw()});
+    .on("drag",e=>{if(!rulMv)return;const p=map.latLngToLayerPoint(e.target.getLatLng()),d=p.subtract(rulMv.m);rulA=map.layerPointToLatLng(rulMv.a.add(d));rulB=map.layerPointToLatLng(rulMv.b.add(d));rulReq()})
+    .on("dragend",()=>{rulMv=null;rulNv=null;rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
+  rulL.addTo(map);rulBox();rulDraw()}
+function rulOff(){map.removeLayer(rulL);rulL.removeLayer(rulHA);rulL.removeLayer(rulHB);rulL.removeLayer(rulHM);rulHA=rulHB=rulHM=rulA=rulB=null;rulMv=null;rulG.clearLayers();rulR=null;rulNv=null}
+map.on("zoomend viewreset moveend resize",()=>{if(rulA){rulBox();rulDraw()}});
 $("grd").setAttribute("aria-pressed",String(st.showGrid!==false));
 $("grd").onclick=()=>{st.showGrid=st.showGrid===false;$("grd").setAttribute("aria-pressed",String(st.showGrid));save();drawGrid()};
 $("rul").onclick=()=>{const on=$("rul").getAttribute("aria-pressed")!=="true";$("rul").setAttribute("aria-pressed",String(on));on?rulOn():rulOff()};
