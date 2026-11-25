@@ -3029,7 +3029,7 @@ window.__procSet=procSet;
 function orbGeom(o){const t=o.type||"circle",s=o.ccw===false?-1:1,pts=[],path=[],anchors=[];
   if(t==="circle"){const dir=o.ccw===false?1:-1;for(let i=0;i<o.n;i++)pts.push(dest(o.c,o.r,dir*i*360/o.n));anchors.push([o.c,""]);return{pts,path:pts,anchors}}
   const A=o.a,B=o.b,th=brg(A,B),tB=brg(B,A)+180;
-  if(t==="line"){const P=o.lpts||[A,B];return{pts:P.slice(),path:P.slice(),anchors:[]}}
+  if(t==="line"){const P=o.lpts||[A,B];return{pts:P.slice(),path:o.closed&&P.length>2?P.concat([P[0]]):P.slice(),anchors:[]}}
   if(t==="rt"){const r=o.w/2,M=dest(A,dist(A,B)/2,th);
     pts.push(dest(A,r,th+s*90),dest(M,r,th+s*90),dest(B,r,tB+s*90),dest(B,r,tB+s*30),dest(B,r,tB-s*30),dest(B,r,tB-s*90),dest(A,r,th-s*90),dest(A,r,th-s*150),dest(A,r,th+s*150));
     path.push(dest(A,r,th+s*90));for(let k=0;k<=36;k++)path.push(dest(B,r,tB+s*90-s*k*5));for(let k=0;k<=36;k++)path.push(dest(A,r,th-s*90-s*k*5));
@@ -3068,13 +3068,13 @@ function orbFill(o){const set=(id,v)=>{const e=$(id);if(e)e.value=v};const t=(o&
   const pair=$("pn").parentNode,cw=$("pccw").closest("label"),cl=$("pclosed").closest("label");
   const NOTE={rt:"Point A and point B are the turn centres (the two ends of the centre line). Width = turn diameter.",f8:"Centre 1 and centre 2 are the circle centres. The circles meet halfway between them.",line:"Enter the number of points, then the coordinates of each point. The line is drawn A to B to C ...",circle:""};
   function setT(t){st.orbType=t;save();seg.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.ot===t));
-    const c=t==="circle";pc.hidden=!c;pair.hidden=!c;cl.hidden=!c;oA.hidden=c;oB.hidden=c;oW.hidden=t!=="rt";oN.hidden=t!=="line";lb.hidden=t!=="line";if(t==="line"){oA.hidden=true;oB.hidden=true}cw.hidden=t==="line";
+    const c=t==="circle";pc.hidden=!c;pair.hidden=!c;cl.hidden=!(c||t==="line");oA.hidden=c;oB.hidden=c;oW.hidden=t!=="rt";oN.hidden=t!=="line";lb.hidden=t!=="line";if(t==="line"){oA.hidden=true;oB.hidden=true}cw.hidden=t==="line";
     oA.placeholder=t==="f8"?"CENTRE 1":"POINT A";oB.placeholder=t==="f8"?"CENTRE 2":"POINT B";note.textContent=NOTE[t];note.hidden=!NOTE[t];$("pErr").textContent=""}
   seg.querySelectorAll("button").forEach(b=>b.onclick=()=>setT(b.dataset.ot));
   const _go=$("pGo").onclick;
   $("pGo").onclick=()=>{const t=st.orbType||"circle";if(t==="circle"){_go();if(st.orbit)st.orbit.type="circle";save();return}
     if(t==="line"){const I=[...lb.querySelectorAll("input")],P=[];for(let k=0;k<I.length;k++){const v=I[k].value.trim();if(!v){$("pErr").textContent="Enter point "+LET(k);return}const q=parse(v);if(!q){$("pErr").textContent="Point "+LET(k)+" coordinates not recognized";return}P.push(q)}
-      $("pErr").textContent="";const o={type:"line",lpts:P,a:P[0],b:P[P.length-1],c:P[0],ccw:true,closed:false,n:P.length,r:0};o.pts=P.slice();st.orbit=o;save();drawRoute();
+      $("pErr").textContent="";const o={type:"line",lpts:P,a:P[0],b:P[P.length-1],c:P[0],ccw:true,closed:$("pclosed").checked,n:P.length,r:0};o.pts=P.slice();st.orbit=o;save();drawRoute();
       const ob=$("fOrbPts");ob.classList.remove("fph");ob.innerHTML=P.map((p,k)=>'<div class="orow"><span>'+(k+1)+'</span>'+fmt(p)+'</div>').join("");
       map.fitBounds(L.latLngBounds(P).pad(0.15),{maxZoom:11});toast("LINE: "+P.length+" points");return}
     const E=m=>{$("pErr").textContent=m},a=parse(oA.value),b=parse(oB.value),w=parseFloat(oW.value),nm=t==="f8"?["Centre 1","Centre 2"]:["Point A","Point B"];
