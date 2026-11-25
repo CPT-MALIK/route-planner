@@ -1,7 +1,7 @@
 // Offline support: keeps the app (page, Leaflet, three.js, fonts) in the device cache so it opens without a connection.
 // The page itself is network-first (so updates arrive when online, with a 4 s timeout), everything else cache-first.
 const V = "rp-v2";
-const CORE = ["./", "index.html", "lib/leaflet-1.9.4.js", "lib/three-r128.min.js", "manifest.webmanifest", "icon-180.png"];
+const CORE = ["./", "index.html", "lib/leaflet-1.9.4b.js", "lib/three-r128.min.js", "manifest.webmanifest", "icon-180.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener("fetch", e => {
