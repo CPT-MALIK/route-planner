@@ -824,6 +824,7 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .fundo:has(#fRtHide)>button{width:36px!important;height:36px!important}
 .fundo:has(#fRtHide)>label{white-space:normal!important;font-size:15px;line-height:1.2}
 .fundo>#fRtHide.on{background:#2f7bd2;border-color:#2f7bd2;color:#fff}
+.rulh.snap{box-shadow:0 0 0 4px #52b56b,0 0 0 6px rgba(0,0,0,.5)!important;background:rgba(82,181,107,.45)!important}
 </style>
 
 <style>
@@ -2188,7 +2189,7 @@ function rulDraw(){if(!rulA||!rulB){rulG.clearLayers();rulR=null;return}
   const off=W+16,sgn=flip?-1:1,lmid=rulVisMid(a,b,Math.max(top.length,bot.length)*4.7+16);
   [[top,-off*sgn,ang],[bot,off*sgn,ang+180]].forEach(([txt,k,rot],q)=>{const mk=R.lb[q];mk.setLatLng(P(lmid,k));const el=mk.getElement()&&mk.getElement().firstChild;if(!el)return;
     if(R.lt[q]!==txt){el.textContent=txt;R.lt[q]=txt}const tr="translate(-50%,-50%) rotate("+rot.toFixed(1)+"deg)";if(R.lr[q]!==tr){el.style.transform=tr;R.lr[q]=tr}});
-  if(rulHA)rulHA.setLatLng(rulA);if(rulHB)rulHB.setLatLng(rulB);
+  const mv=m=>m&&m.dragging&&m.dragging._draggable&&m.dragging._draggable._moving;if(rulHA&&!mv(rulHA))rulHA.setLatLng(rulA);if(rulHB&&!mv(rulHB))rulHB.setLatLng(rulB);
   if(rulHM&&!rulMv){rulHM.setLatLng(map.layerPointToLatLng(L.point((a.x+b.x)/2,(a.y+b.y)/2)));const el=rulHM.getElement()&&rulHM.getElement().firstChild;
     if(el){el.style.width=Math.max(40,len-70).toFixed(0)+"px";el.style.transform="translate(-50%,-50%) rotate("+(Math.atan2(dy,dx)*180/Math.PI).toFixed(1)+"deg)"}}}
 function rulVisMid(a,b,hw){
@@ -2201,10 +2202,25 @@ function rulVisMid(a,b,hw){
   if(t1-t0>2*h)t=Math.min(Math.max(.5,t0+h),t1-h);else if(t1<1&&t0<=0)t=t1-h;else if(t0>0&&t1>=1)t=t0+h;
   if(!(t>=0&&t<=1))t=.5;
   return L.point(a.x+dx*t,a.y+dy*t)}
+// ruler end handle snaps to a nearby point (route, ORBIT, navaid, airport, waypoint, mark)
+let rulSC=null;
+function rulSnapStart(){const b=map.getBounds().pad(0.1),c=[],add=p=>{if(p&&isFinite(p[0])&&isFinite(p[1])&&b.contains([p[0],p[1]]))c.push([+p[0],+p[1]])};
+  try{(st.wps||[]).forEach(add);(st.routes||[]).forEach(r=>r&&(r.wps||[]).forEach(add));
+    [st.orbit].concat(st.orbs||[]).forEach(o=>{if(o){(o.pts||[]).forEach(add);if(o.c)add(o.c)}});if(st.center)add(st.center.p);
+    (st.marks||[]).forEach(m=>add(m.p));NAV.forEach(n=>add(n.p));APTS.forEach(a=>add([a[3],a[4]]));
+    if(map.getZoom()>=7)Object.values(WPTS).forEach(add);if(typeof AIP_PT!=="undefined"&&map.getZoom()>=7)Object.values(AIP_PT).forEach(add)}catch(e){}
+  rulSC=c.map(p=>[p,map.latLngToContainerPoint(p)])}
+function rulSnap(mk){const ll=mk.getLatLng();let best=null,bd=20;if(rulSC){const q=map.latLngToContainerPoint(ll);
+    for(const [p,cp] of rulSC){const d=Math.hypot(cp.x-q.x,cp.y-q.y);if(d<bd){bd=d;best=p}}}
+  const el=mk.getElement()&&mk.getElement().firstChild;if(el)el.classList.toggle("snap",!!best);
+  return best?L.latLng(best[0],best[1]):ll}
+function rulSnapEnd(mk){const q=rulSnap(mk);if(mk===rulHA)rulA=q;else rulB=q;mk.setLatLng(q);rulSC=null;const el=mk.getElement()&&mk.getElement().firstChild;if(el)setTimeout(()=>el.classList.remove("snap"),600)}
 function rulOn(){const c=map.getSize(),y=c.y*0.5;rulA=map.containerPointToLatLng(L.point(c.x*0.3,y));rulB=map.containerPointToLatLng(L.point(c.x*0.7,y));
   const h=()=>L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulh"></div>'});
-  rulHA=L.marker(rulA,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulA=e.target.getLatLng();rulReq()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
-  rulHB=L.marker(rulB,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("drag",e=>{rulB=e.target.getLatLng();rulReq()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
+  const hd=(k)=>L.marker(k?rulB:rulA,{pane:"ruler",draggable:true,icon:h(),autoPan:false}).on("dragstart",rulSnapStart)
+    .on("drag",e=>{const q=rulSnap(e.target);if(k)rulB=q;else rulA=q;rulReq()}).on("dragend",e=>{rulSnapEnd(e.target);rulDraw()}).on("click",()=>{suppress=Date.now()}).addTo(rulL);
+  rulHA=hd(0);rulHB=hd(1);
+  [rulHA,rulHB].forEach(m=>{try{L.setOptions(m.dragging._draggable,{clickTolerance:1})}catch(e){}});
   // hold and drag the middle of the ruler to move the whole ruler
   rulHM=L.marker(rulA,{pane:"ruler",draggable:true,autoPan:false,icon:L.divIcon({className:"",iconSize:[0,0],html:'<div class="rulm"></div>'})})
     .on("dragstart",e=>{const m=e.target.getLatLng(),M=[m.lat,m.lng],A=[rulA.lat,rulA.lng],B=[rulB.lat,rulB.lng];rulMv={dA:dist(M,A),bA:brg(M,A),dB:dist(M,B),bB:brg(M,B)}})
