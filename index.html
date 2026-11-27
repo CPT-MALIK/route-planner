@@ -825,6 +825,11 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .fundo:has(#fRtHide)>label{white-space:normal!important;font-size:15px;line-height:1.2}
 .fundo>#fRtHide.on{background:#2f7bd2;border-color:#2f7bd2;color:#fff}
 .rulh.snap{box-shadow:0 0 0 4px #52b56b,0 0 0 6px rgba(0,0,0,.5)!important;background:rgba(82,181,107,.45)!important}
+.nfbtn.nfv{flex-direction:column}
+.nfbtn.nfv button+button{border-left:0;border-top:1px solid #d8d8d8}
+.nfbtn.nfv button{flex:none;height:54px}
+.nfbtn.nfv #svUp{color:#4a98e8}
+.nfbtn.nfv #svNew{color:#4caf3a}
 </style>
 
 <style>
@@ -2847,7 +2852,7 @@ window.__procSet=procSet;
   $("fNew").onclick=()=>{ov.hidden=false};
   $("nfNo").onclick=()=>{ov.hidden=true};
   ov.addEventListener("pointerdown",e=>{if(e.target===ov)ov.hidden=true});
-  $("nfYes").onclick=()=>{ov.hidden=true;const c=$("clr");if(!c.dataset.c)c.click();c.click();st.fname="";$("fName").value="";save()};
+  $("nfYes").onclick=()=>{ov.hidden=true;st.fromT=null;const c=$("clr");if(!c.dataset.c)c.click();c.click();st.fname="";$("fName").value="";save()};
   const b=document.createElement("button");b.id="zLoc";b.setAttribute("aria-label","Go to aircraft");
   b.innerHTML='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>';
   $("zctl").appendChild(b);
@@ -2972,14 +2977,30 @@ window.__procSet=procSet;
   const empty=f=>!fRts(f).some(r=>r&&r.wps&&r.wps.length)&&!fOrbs(f).some(Boolean);
   const pushCleared=f=>{if(empty(f))return;f.t=Date.now();st.cleared.unshift(f);st.cleared=st.cleared.slice(0,20);save()};
   /* remember what CLEAR ALL removes (the second, confirming tap) */
-  const _clr=$("clr").onclick;$("clr").onclick=()=>{if($("clr").dataset.c)pushCleared(cur());_clr()};
+  const _clr=$("clr").onclick;$("clr").onclick=()=>{if($("clr").dataset.c){pushCleared(cur());st.fromT=null}_clr()};
   /* SAVE */
+  const svOv=document.createElement("div");svOv.className="nfov";svOv.hidden=true;document.body.appendChild(svOv);
+  svOv.addEventListener("pointerdown",e=>{if(e.target===svOv)svOv.hidden=true});
+  const strip=x=>{const y={...x};delete y.t;return JSON.stringify(y)};
+  const nmIx=(n,skip)=>st.flights.findIndex((x,k)=>k!==skip&&(x.name||"").toUpperCase()===n.toUpperCase());
   $("fSave").onclick=()=>{const f=cur();
     if(!f.name){toast("Enter the flight name first");$("fName").focus();return}
     if(empty(f)){toast("Nothing to save: the route and orbit are empty");return}
+    const j=st.fromT?st.flights.findIndex(x=>x.t===st.fromT):-1;
+    if(j>=0){const old=st.flights[j];
+      if(strip(old)===strip(f)){toast("Saved: "+f.name);return}
+      svOv.innerHTML='<div class="nfbox"><h3>SAVE FLIGHT</h3><p>This flight was opened from saved flight "'+escH(old.name)+'".</p><p class="nfg">Update it, or keep it and save a new flight?</p><div class="nfbtn nfv"><button id="svUp">Update "'+escH(old.name)+'"</button><button id="svNew">Save as New Flight</button><button id="svNo">Cancel</button></div></div>';
+      svOv.hidden=false;$("svNo").onclick=()=>{svOv.hidden=true};
+      $("svUp").onclick=()=>{svOv.hidden=true;const k=nmIx(f.name,j);
+        if(k>=0&&!confirm('Another flight named "'+f.name+'" is already saved. Replace it?'))return;
+        const keep=st.flights[j];if(k>=0)st.flights.splice(k,1);const jj=st.flights.indexOf(keep);if(jj>=0)st.flights.splice(jj,1);
+        f.t=Date.now();st.flights.unshift(f);st.fromT=f.t;save();toast("Updated: "+f.name)};
+      $("svNew").onclick=()=>{svOv.hidden=true;if(nmIx(f.name,-1)>=0){toast("Change the flight name first");$("fName").focus();$("fName").select&&$("fName").select();return}
+        f.t=Date.now();st.flights.unshift(f);st.fromT=f.t;save();toast("Saved as new: "+f.name)};
+      return}
     const i=st.flights.findIndex(x=>x.name.toUpperCase()===f.name.toUpperCase());
     if(i>=0&&!confirm('A flight named "'+f.name+'" is already saved. Replace it?'))return;
-    if(i>=0)st.flights.splice(i,1);f.t=Date.now();st.flights.unshift(f);save();toast("Saved: "+f.name)};
+    if(i>=0)st.flights.splice(i,1);f.t=Date.now();st.flights.unshift(f);st.fromT=f.t;save();toast("Saved: "+f.name)};
   /* view over the FLIGHT page */
   const sv=document.createElement("div");sv.className="svp";sv.id="svP";sv.hidden=true;(document.querySelector(".mapwrap")||panel).appendChild(sv);
   let sortBy="date",edit=false,selIx=new Set();let shareF=()=>{};
@@ -3012,7 +3033,7 @@ window.__procSet=procSet;
       (fOrbs(f).some(Boolean)?fOrbs(f).map((q,k)=>q?'<label>ORBIT '+(k+1)+'</label><p>'+orbDet(q)+'</p>':'').join(""):'<label>ORBIT</label><p>Not Specified</p>')+'</div>'+
       '<button class="svload" data-a="load">Load Flight</button>';
     wire(kind,i)}
-  function load(f){const c=cur();if(!empty(c)&&JSON.stringify([fRts(c),fOrbs(c)])!==JSON.stringify([fRts(f),fOrbs(f)]))pushCleared(c);
+  function load(f){st.fromT=f&&f.t&&st.flights.some(x=>x.t===f.t)?f.t:null;const c=cur();if(!empty(c)&&JSON.stringify([fRts(c),fOrbs(c)])!==JSON.stringify([fRts(f),fOrbs(f)]))pushCleared(c);
     st.routes=JSON.parse(JSON.stringify(fRts(f)));st.rtSlot=f.routes&&f.rtSlot===1?1:0;if(Array.isArray(f.rtCols))st.rtCol=f.rtCols.slice(0,2);const RA=st.routes[st.rtSlot]||{wps:[],closed:false};f={...f,wps:RA.wps,closed:RA.closed};
     st.orbs=JSON.parse(JSON.stringify(fOrbs(f)));st.orbSlot=f.orbs&&f.slot>0&&f.slot<3?f.slot:0;if(Array.isArray(f.cols))st.orbCol=pad3(f.cols,null);
     st.wps=JSON.parse(JSON.stringify(f.wps||[]));st.closed=!!f.closed;st.center=null;st.orbit=st.orbs[st.orbSlot]?JSON.parse(JSON.stringify(st.orbs[st.orbSlot])):null;st.fname=f.name||"";$("fName").value=st.fname;
