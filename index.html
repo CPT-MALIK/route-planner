@@ -1180,7 +1180,7 @@ function legDraw(grp,a,b,col,legs,i,ctx,straight){const s_=legs&&legs[i];if(s_&&
   window.rpHalo&&rpHalo(g,c,grp);L.polyline(g,{color:c,weight:5,opacity:.95,interactive:false}).addTo(grp);
   if(ctx)L.polyline(g,{pane:legPane(),color:"#000",weight:26,opacity:0,interactive:true}).on("click",e=>{L.DomEvent.stopPropagation(e);try{suppress=Date.now()}catch(x){}window.legCard&&legCard(ctx,i)}).addTo(grp)}
 function rtLegs(k){if(!Array.isArray(st.rtLegs))st.rtLegs=[{},{},{}];while(st.rtLegs.length<3)st.rtLegs.push({});if(!st.rtLegs[k]||typeof st.rtLegs[k]!=="object")st.rtLegs[k]={};return st.rtLegs[k]}
-function ptT(ix,f,sep){return ix.map(k=>f(k)||String(k+1)).join(sep)}
+function ptT(ix,f,sep){const n=ix.map(k=>f(k));if(ix.length>1&&n[0]&&n.every(x=>x===n[0]))return n[0];return ix.map((k,j)=>n[j]||String(k+1)).join(sep)}
 function renameAsk(title,curv,cb){
   $("wpmBox").innerHTML='<div class="wpm-h">'+escH(title)+'</div><input class="wpm-in" id="wpmIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" value="'+escH(curv||"")+'">'+
     '<div class="wpm-hint">Name shown inside the circle. Leave empty to show the number.</div>'+
@@ -1940,8 +1940,10 @@ function inspectAt(ll,fromPoint){
   const sh=$("sheet");let html='<div class="sh-h"><div class="sh-t" style="text-align:left"><h2>Location Inspector</h2><div class="mono-s">'+fmt([ll.lat,ll.lng])+'</div></div><button class="sh-x" id="shX" aria-label="Close">✕</button></div>';
   ["Points","Airspace"].forEach(g=>{const list=items.map((o,k)=>[o,k]).filter(([o])=>o.g===g);if(!list.length)return;
     html+='<div class="insp-h">'+(g==="Points"?"At this location":"Airspace at this point")+'</div><div class="insp">'+list.map(([o,k])=>'<button class="insp-row" data-k="'+k+'"><span><b>'+escH(o.t)+'</b><small>'+escH(o.s)+'</small></span><i>›</i></button>').join("")+'</div>'});
-  html+='<div class="sh-a" style="grid-template-columns:1fr;padding-top:12px"><button class="sbtn" id="inspDrop">Drop a Point<small>'+fmt([ll.lat,ll.lng])+'</small></button></div>';
+  const same=(()=>{const W=st.wps.map((p,k)=>k).filter(k=>near(st.wps[k][0],st.wps[k][1]));for(const k of W){const g=W.filter(j=>samePt(st.wps[j],st.wps[k]));if(g.length>1)return g}return null})();
+  html+='<div class="sh-a" style="grid-template-columns:1fr;padding-top:12px">'+(same?'<button class="sbtn" id="inspOne">RENAME AS ONE POINT<small>Waypoints '+same.map(k=>k+1).join(" + ")+'</small></button>':'')+'<button class="sbtn" id="inspDrop">Drop a Point<small>'+fmt([ll.lat,ll.lng])+'</small></button></div>';
   sh.innerHTML=html;sh.hidden=false;$("shX").onclick=closeSheet;
+  if(same)$("inspOne").onclick=()=>renameAsk("Rename Waypoints "+same.map(k=>k+1).join(" + "),st.wps[same[0]][3],v=>{same.forEach(i=>{const q=st.wps[i];if(!q)return;while(q.length<3)q.push(null);if(v)q[3]=v;else q.length=3;if(q.length===3&&q[2]==null)q.length=2});update()});
   sh.querySelectorAll(".insp-row").forEach(b=>{const o=items[+b.dataset.k];if(o.hl)b.onmouseenter=o.hl;b.onclick=()=>o.open(back)});
   $("inspDrop").onclick=()=>showPoint([ll.lat,ll.lng],back);
 }
