@@ -1929,7 +1929,7 @@ function inspectAt(ll,fromPoint){
   const near=(la,lo)=>{const q=map.latLngToContainerPoint([la,lo]);return Math.hypot(q.x-P.x,q.y-P.y)<=R};
   if(map.hasLayer(aptL))APTS.forEach((a,k)=>{if(near(a[3],a[4]))items.push({g:"Points",t:a[0],s:"Airport · "+a[1],open:b=>showApt(k,b)})});
   if(map.hasLayer(navL))NAV.forEach((n,k)=>{if(n.kind==="nav"&&near(n.p[0],n.p[1]))items.push({g:"Points",t:n.ident+" · "+n.id,s:n.navType+" · "+(n.freq||""),open:b=>showNav(k,b)})});
-  st.wps.forEach((p,k)=>{if(near(p[0],p[1]))items.push({g:"Points",t:"Waypoint "+(k+1),s:(p[2]?p[2]+" · ":"")+fmt(p),open:b=>showWp(k,b)})});
+  st.wps.forEach((p,k)=>{if(near(p[0],p[1]))items.push({g:"Points",wi:k,t:"Waypoint "+(k+1),s:(p[2]?p[2]+" · ":"")+fmt(p),open:b=>showWp(k,b)})});
   if(typeof awPtL!=="undefined"&&map.hasLayer(awPtL)&&map.getZoom()>=7.5)Object.keys(AIP_PT).forEach(id=>{const q=AIP_PT[id];if(NAVID.has(id)||!near(q[0],q[1]))return;
     items.push({g:"Points",t:id,s:"Airway point · "+Object.keys(AIP_AWY).filter(k=>AWYS[k].includes(id)).join(", "),open:b=>awPtCard(id,b)})});
   const kindOf=o=>o.fir?"FIR":o.cat==="P"?"Prohibited":o.cat==="R"?"Restricted":o.cat==="D"?"Danger":/SECTOR/.test(o.it.id)?"ACC sector":/CTA/.test(o.it.id)?"CTA":/TMA/.test(o.it.id)?"TMA":"Airspace";
@@ -1944,6 +1944,7 @@ function inspectAt(ll,fromPoint){
   const same=(()=>{const W=st.wps.map((p,k)=>k).filter(k=>near(st.wps[k][0],st.wps[k][1]));for(const k of W){const g=W.filter(j=>samePt(st.wps[j],st.wps[k]));if(g.length>1)return g}return null})();
   html+='<div class="sh-a" style="grid-template-columns:1fr;padding-top:12px">'+(same?'<button class="sbtn" id="inspOne">RENAME AS ONE POINT<small>Waypoints '+same.map(k=>k+1).join(" + ")+'</small></button>':'')+'<button class="sbtn" id="inspDrop">Drop a Point<small>'+fmt([ll.lat,ll.lng])+'</small></button></div>';
   sh.innerHTML=html;sh.hidden=false;$("shX").onclick=closeSheet;
+  try{window._wpHl&&_wpHl(items.filter(o=>o.wi!=null).map(o=>o.wi))}catch(e){}
   if(same)$("inspOne").onclick=()=>renameAsk("Rename Waypoints "+same.map(k=>k+1).join(" + "),st.wps[same[0]][3],v=>{same.forEach(i=>{const q=st.wps[i];if(!q)return;while(q.length<3)q.push(null);if(v)q[3]=v;else q.length=3;if(q.length===3&&q[2]==null)q.length=2});update()});
   sh.querySelectorAll(".insp-row").forEach(b=>{const o=items[+b.dataset.k];if(o.hl)b.onmouseenter=o.hl;b.onclick=()=>o.open(back)});
   $("inspDrop").onclick=()=>showPoint([ll.lat,ll.lng],back);
@@ -3734,14 +3735,15 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   /* ---- the FLIGHT list row of the waypoint whose card is open stays highlighted until the card closes */
   let sel=null;
   const mark=()=>{const ul=$("wpList");if(!ul)return;const L_=[...ul.children].filter(x=>!x.classList.contains("empty"));
-    L_.forEach((li,k)=>li.classList.toggle("wpsel",k===sel));
-    if(sel!=null&&L_[sel]){try{L_[sel].scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}}};
+    L_.forEach((li,k)=>li.classList.toggle("wpsel",Array.isArray(sel)?sel.includes(k):k===sel));
+    const f0=Array.isArray(sel)?sel[0]:sel;if(f0!=null&&L_[f0]){try{L_[sel].scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}}};
   let osel=[];const omark=sc=>{const ob=$("fOrbPts");if(!ob)return;const R_=[...ob.querySelectorAll(".orow")];R_.forEach((r,k)=>r.classList.toggle("wpsel",osel.includes(k)));
     const f=R_[osel[0]];if(sc&&f){try{f.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}}};
   const ob_=$("fOrbPts");if(ob_)new MutationObserver(()=>omark(false)).observe(ob_,{childList:true});
   const _o=openSheet;openSheet=function(o){sel=o&&o.wpIndex!=null?o.wpIndex:null;osel=o&&o.orbIx?o.orbIx:[];const r=_o.apply(this,arguments);mark();omark(true);return r};
   const _c=closeSheet;closeSheet=function(){sel=null;osel=[];const r=_c.apply(this,arguments);mark();omark(false);return r};
-  const _r=renderList;renderList=function(){const r=_r.apply(this,arguments);if(sel!=null&&$("sheet").hidden)sel=null;const ul=$("wpList");if(ul)[...ul.children].forEach((li,k)=>li.classList.toggle("wpsel",k===sel));return r};
+  const _r=renderList;renderList=function(){const r=_r.apply(this,arguments);if(sel!=null&&$("sheet").hidden)sel=null;const ul=$("wpList");if(ul)[...ul.children].forEach((li,k)=>li.classList.toggle("wpsel",Array.isArray(sel)?sel.includes(k):k===sel));return r};
+  window._wpHl=a=>{sel=a&&a.length?a.slice():null;osel=[];mark();omark(false)};
   const sh=$("sheet");if(sh)new MutationObserver(()=>{if(sh.hidden&&(sel!=null||osel.length)){sel=null;osel=[];mark();omark(false)}}).observe(sh,{attributes:true,attributeFilter:["hidden"]});
 })();
 
