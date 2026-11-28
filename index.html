@@ -1181,7 +1181,7 @@ map.on("zoomend",navVis);navVis();
 {const p_=map.createPane("wpt");p_.style.zIndex=620} // route waypoint circles + labels: above navaids, airway points (600) and marks (612)
 function tapPtAt(p){setTimeout(()=>{const c=map.latLngToContainerPoint([p[0],p[1]]),r=map.getContainer().getBoundingClientRect();
   const el=document.elementsFromPoint(r.left+c.x,r.top+c.y).find(e=>e.classList&&e.classList.contains("hit")&&!e.classList.contains("oth")&&e.classList.contains("leaflet-marker-icon"));if(el)el.click()},30)}
-function legPane(){if(!map.getPane("leghit")){map.createPane("leghit").style.zIndex=604}return "leghit"}
+function legPane(){if(!map.getPane("leghit")){map.createPane("leghit").style.zIndex=597}return "leghit"}
 function legDraw(grp,a,b,col,legs,i,ctx,straight){const s_=legs&&legs[i];if(s_&&s_.h)return;const c=(s_&&s_.c)||col,g=straight?[a,b]:gc(a,b);
   window.rpHalo&&rpHalo(g,c,grp);L.polyline(g,{color:c,weight:5,opacity:.95,interactive:false}).addTo(grp);
   if(ctx)L.polyline(g,{pane:legPane(),color:"#000",weight:34,opacity:0,interactive:true}).on("click",e=>{L.DomEvent.stopPropagation(e);try{suppress=Date.now()}catch(x){}window.legCard&&legCard(ctx,i)}).addTo(grp)}
