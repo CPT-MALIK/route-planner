@@ -830,6 +830,10 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .nfbtn.nfv button{flex:none;height:54px}
 .nfbtn.nfv #svUp{color:#4a98e8}
 .nfbtn.nfv #svNew{color:#4caf3a}
+.lgcol{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.lgcol button{height:48px;border-radius:10px;border:2px solid rgba(0,0,0,.25);font:700 15px var(--sans);color:#fff;text-shadow:0 0 3px #000;cursor:pointer}
+.lgcol button.on{outline:3px solid #2f7bd2;outline-offset:2px}
+.lgshow{width:100%;margin-top:8px}
 </style>
 
 <style>
@@ -1171,6 +1175,11 @@ function navVis(){const z=map.getZoom();
 map.on("zoomend",navVis);navVis();
 
 {const p_=map.createPane("wpt");p_.style.zIndex=620} // route waypoint circles + labels: above navaids, airway points (600) and marks (612)
+function legPane(){if(!map.getPane("leghit")){map.createPane("leghit").style.zIndex=604}return "leghit"}
+function legDraw(grp,a,b,col,legs,i,ctx,straight){const s_=legs&&legs[i];if(s_&&s_.h)return;const c=(s_&&s_.c)||col,g=straight?[a,b]:gc(a,b);
+  window.rpHalo&&rpHalo(g,c,grp);L.polyline(g,{color:c,weight:5,opacity:.95,interactive:false}).addTo(grp);
+  if(ctx)L.polyline(g,{pane:legPane(),color:"#000",weight:26,opacity:0,interactive:true}).on("click",e=>{L.DomEvent.stopPropagation(e);try{suppress=Date.now()}catch(x){}window.legCard&&legCard(ctx,i)}).addTo(grp)}
+function rtLegs(k){if(!Array.isArray(st.rtLegs))st.rtLegs=[{},{},{}];while(st.rtLegs.length<3)st.rtLegs.push({});if(!st.rtLegs[k]||typeof st.rtLegs[k]!=="object")st.rtLegs[k]={};return st.rtLegs[k]}
 function ptT(ix,f,sep){return ix.map(k=>f(k)||String(k+1)).join(sep)}
 function renameAsk(title,curv,cb){
   $("wpmBox").innerHTML='<div class="wpm-h">'+escH(title)+'</div><input class="wpm-in" id="wpmIn" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="12" value="'+escH(curv||"")+'">'+
@@ -1182,7 +1191,7 @@ function renameAsk(title,curv,cb){
 function drawRoute(){
   routeL.clearLayers();const w=(st.rtHide&&st.rtHide[(st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0)])?[]:st.wps;const col=(st.rtCol&&st.rtCol[(st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0)])||css("--route");
   if(w.length>1){const pts=w.slice();if(st.closed&&w.length>2)pts.push(w[0]);
-    for(let i=1;i<pts.length;i++){const g=gc(pts[i-1],pts[i]);window.rpHalo&&rpHalo(g,col,routeL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(routeL)}}
+    const LG=rtLegs((st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0));for(let i=1;i<pts.length;i++)legDraw(routeL,pts[i-1],pts[i],col,LG,i-1,{kind:"route"})}
   const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})}); // points at the same position share one marker: "1+10"
   grp.forEach(({p,ix})=>{const i=ix[0],t=ptT(ix,k=>w[k][3],"+"),wd=Math.max(26,12+t.length*8);
     const mk=L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
@@ -2852,7 +2861,7 @@ window.__procSet=procSet;
   $("fNew").onclick=()=>{ov.hidden=false};
   $("nfNo").onclick=()=>{ov.hidden=true};
   ov.addEventListener("pointerdown",e=>{if(e.target===ov)ov.hidden=true});
-  $("nfYes").onclick=()=>{ov.hidden=true;st.fromT=null;const c=$("clr");if(!c.dataset.c)c.click();c.click();st.fname="";$("fName").value="";save()};
+  $("nfYes").onclick=()=>{ov.hidden=true;st.fromT=null;st.rtLegs=[{},{},{}];const c=$("clr");if(!c.dataset.c)c.click();c.click();st.fname="";$("fName").value="";save()};
   const b=document.createElement("button");b.id="zLoc";b.setAttribute("aria-label","Go to aircraft");
   b.innerHTML='<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4"/></svg>';
   $("zctl").appendChild(b);
@@ -2917,6 +2926,7 @@ window.__procSet=procSet;
   const orbL=L.layerGroup().addTo(map);
   function drawOrb(){orbL.clearLayers();if(st.orbHide&&st.orbHide[(st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0)])return;const o=st.orbit;if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor((st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0)))||css("--route"),G=orbGeom(o);
     if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++){const g=gc(w[i-1],w[i]);window.rpHalo&&rpHalo(g,col,orbL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}}
+    else if(o.type==="line"){const P=G.path;for(let i=1;i<P.length;i++)legDraw(orbL,P[i-1],P[i],col,o.legs,i-1,{kind:"orbit"},true)}
     else{window.rpHalo&&rpHalo(G.path,col,orbL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ptT(ix,k=>o.names&&o.names[k],"/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{suppress=Date.now();const ln=(o.type||"circle")==="line";
@@ -2971,14 +2981,14 @@ window.__procSet=procSet;
   const rStr=f=>(f.wps||[]).map(p=>word(p)+(p[3]?" ("+p[3]+")":"")).join(" ");
   const cur=()=>({name:(st.fname||"").trim(),wps:JSON.parse(JSON.stringify(st.wps||[])),closed:!!st.closed,orbit:st.orbit?JSON.parse(JSON.stringify(st.orbit)):null,
     orbs:(()=>{const a=pad3(st.orbs,null);a[(st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0)]=st.orbit||null;return a.some(Boolean)?JSON.parse(JSON.stringify(a)):null})(),slot:(st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0),cols:pad3(st.orbCol,null),
-    routes:(()=>{const a=Array.isArray(st.routes)?st.routes.slice(0,3):[null,null,null];while(a.length<3)a.push(null);const k=(st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0);a[k]={wps:st.wps||[],closed:!!st.closed};return a.some(r=>r&&r.wps&&r.wps.length)?JSON.parse(JSON.stringify(a)):null})(),rtSlot:(st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0),rtCols:pad3(st.rtCol,null)});
+    routes:(()=>{const a=Array.isArray(st.routes)?st.routes.slice(0,3):[null,null,null];while(a.length<3)a.push(null);const k=(st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0);a[k]={wps:st.wps||[],closed:!!st.closed};return a.some(r=>r&&r.wps&&r.wps.length)?JSON.parse(JSON.stringify(a)):null})(),rtSlot:(st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0),rtCols:pad3(st.rtCol,null),rtLegs:JSON.parse(JSON.stringify([0,1,2].map(rtLegs)))});
   const fRts=f=>f.routes&&f.routes.some(r=>r&&r.wps&&r.wps.length)?pad3(f.routes,null):[{wps:f.wps||[],closed:!!f.closed},null,null];
   const rHas=r=>!!(r&&r.wps&&r.wps.length),rMany=A=>A.some((r,k)=>k>0&&rHas(r));
   const fOrbs=f=>f.orbs&&f.orbs.some(Boolean)?pad3(f.orbs,null):[f.orbit||null,null,null];
   const empty=f=>!fRts(f).some(r=>r&&r.wps&&r.wps.length)&&!fOrbs(f).some(Boolean);
   const pushCleared=f=>{if(empty(f))return;f.t=Date.now();st.cleared.unshift(f);st.cleared=st.cleared.slice(0,20);save()};
   /* remember what CLEAR ALL removes (the second, confirming tap) */
-  const _clr=$("clr").onclick;$("clr").onclick=()=>{if($("clr").dataset.c){pushCleared(cur());st.fromT=null}_clr()};
+  const _clr=$("clr").onclick;$("clr").onclick=()=>{if($("clr").dataset.c){pushCleared(cur());st.fromT=null;st.rtLegs=[{},{},{}]}_clr()};
   /* SAVE */
   const svOv=document.createElement("div");svOv.className="nfov";svOv.hidden=true;document.body.appendChild(svOv);
   svOv.addEventListener("pointerdown",e=>{if(e.target===svOv)svOv.hidden=true});
@@ -3035,7 +3045,7 @@ window.__procSet=procSet;
       '<button class="svload" data-a="load">Load Flight</button>';
     wire(kind,i)}
   function load(f){st.fromT=f&&f.t&&st.flights.some(x=>x.t===f.t)?f.t:null;const c=cur();if(!empty(c)&&JSON.stringify([fRts(c),fOrbs(c)])!==JSON.stringify([fRts(f),fOrbs(f)]))pushCleared(c);
-    st.routes=JSON.parse(JSON.stringify(fRts(f)));st.rtSlot=f.routes&&f.rtSlot>0&&f.rtSlot<3?f.rtSlot:0;if(Array.isArray(f.rtCols))st.rtCol=pad3(f.rtCols,null);const RA=st.routes[st.rtSlot]||{wps:[],closed:false};f={...f,wps:RA.wps,closed:RA.closed};
+    st.routes=JSON.parse(JSON.stringify(fRts(f)));st.rtSlot=f.routes&&f.rtSlot>0&&f.rtSlot<3?f.rtSlot:0;if(Array.isArray(f.rtCols))st.rtCol=pad3(f.rtCols,null);st.rtLegs=Array.isArray(f.rtLegs)?JSON.parse(JSON.stringify(pad3(f.rtLegs,{}))):[{},{},{}];const RA=st.routes[st.rtSlot]||{wps:[],closed:false};f={...f,wps:RA.wps,closed:RA.closed};
     st.orbs=JSON.parse(JSON.stringify(fOrbs(f)));st.orbSlot=f.orbs&&f.slot>0&&f.slot<3?f.slot:0;if(Array.isArray(f.cols))st.orbCol=pad3(f.cols,null);
     st.wps=JSON.parse(JSON.stringify(f.wps||[]));st.closed=!!f.closed;st.center=null;st.orbit=st.orbs[st.orbSlot]?JSON.parse(JSON.stringify(st.orbs[st.orbSlot])):null;st.fname=f.name||"";$("fName").value=st.fname;
     const o=st.orbit;orbFill(o);
@@ -3552,6 +3562,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   function drawOther(){oL.clearLayers();st.orbs=pad3(st.orbs,null);[0,1,2].forEach(k=>{if(k!==st.orbSlot)drawOne(k)})}
   function drawOne(sk){if(st.orbHide&&st.orbHide[sk])return;const o=st.orbs[sk];if(!o||!o.pts||!o.pts.length)return;const col=(window.orbColor&&orbColor(sk))||css("--route"),G=orbGeom(o);
     if((o.type||"circle")==="circle"){const w=o.pts.slice();if(o.closed&&w.length>2)w.push(w[0]);for(let i=1;i<w.length;i++){const g=gc(w[i-1],w[i]);window.rpHalo&&rpHalo(g,col,oL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(oL)}}
+    else if(o.type==="line"){const P=G.path;for(let i=1;i<P.length;i++)legDraw(oL,P[i-1],P[i],col,o.legs,i-1,null,true)}
     else{window.rpHalo&&rpHalo(G.path,col,oL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(oL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ptT(ix,k=>o.names&&o.names[k],"/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",interactive:false,keyboard:false,icon:L.divIcon({className:"",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).addTo(oL)})}
@@ -3648,7 +3659,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   const rL=L.layerGroup().addTo(map);
   function drawOther(){rL.clearLayers();norm();[0,1,2].forEach(k=>{if(k!==st.rtSlot)drawOne(k)})}
   function drawOne(k){const r=st.routes[k];if(st.rtHide[k]||!r||!r.wps||!r.wps.length)return;const w=r.wps,col=(st.rtCol&&st.rtCol[k])||css("--route");
-    if(w.length>1){const pts=w.slice();if(r.closed&&w.length>2)pts.push(w[0]);for(let i=1;i<pts.length;i++){const g=gc(pts[i-1],pts[i]);window.rpHalo&&rpHalo(g,col,rL);L.polyline(g,{color:col,weight:5,opacity:.95,interactive:false}).addTo(rL)}}
+    if(w.length>1){const pts=w.slice();if(r.closed&&w.length>2)pts.push(w[0]);const LG=rtLegs(k);for(let i=1;i<pts.length;i++)legDraw(rL,pts[i-1],pts[i],col,LG,i-1,null)}
     const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ptT(ix,q=>w[q][3],"+"),wd=Math.max(26,12+t.length*8);
       L.marker(p,{pane:"wpt",interactive:false,keyboard:false,icon:L.divIcon({className:"",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).addTo(rL);
@@ -3685,6 +3696,35 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   pop.onclick=e=>{const x=e.target.closest("[data-c]");if(!x)return;st.rtCol[k()]=x.dataset.c||null;save();drawRoute();sw();pop.hidden=true;toast("ROUTE "+(k()+1)+" colour changed")};
   rb.forEach(b=>b.addEventListener("click",()=>setTimeout(()=>{sw();if(!pop.hidden)build()},0)));
   sw();drawRoute();
+})();
+
+(function(){
+  /* ---- tap a ROUTE / ORBIT LINE leg: distance, hide this line, colour this line; SHOW HIDDEN LINES in FLIGHT */
+  const COLS=[null,"#e53935","#2e9b4f","#f39c12","#8e44ad","#e91e8c","#00bcd4","#111111","#ffffff"];
+  const sl=()=>st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0,os=()=>st.orbSlot>0&&st.orbSlot<3?st.orbSlot:0;
+  function info(ctx,i){if(ctx.kind==="route"){const w=st.wps||[],P=w.slice();if(st.closed&&w.length>2)P.push(w[0]);if(!P[i+1])return null;
+      return{a:P[i],b:P[i+1],na:i+1,nb:(i+1<w.length?i+2:1),sub:"ROUTE "+(sl()+1),legs:rtLegs(sl()),base:(st.rtCol&&st.rtCol[sl()])||css("--route")}}
+    const o=st.orbit;if(!o||o.type!=="line")return null;const G=orbGeom(o),P=G.path,n=(o.lpts||[]).length;if(!P[i+1])return null;if(!o.legs)o.legs={};
+    return{a:P[i],b:P[i+1],na:i+1,nb:(i+1<n?i+2:1),sub:"ORBIT "+(os()+1)+" · LINE",legs:o.legs,base:(window.orbColor&&orbColor(os()))||css("--route")}}
+  const set=(I,i,k,v)=>{const x=I.legs[i]||{};if(v==null)delete x[k];else x[k]=v;if(Object.keys(x).length)I.legs[i]=x;else delete I.legs[i];save();drawRoute()};
+  window.legCard=function(ctx,i){const I=info(ctx,i);if(!I)return;const d=dist(I.a,I.b),m=[(I.a[0]+I.b[0])/2,(I.a[1]+I.b[1])/2];
+    openSheet({title:"LEG "+I.na+" → "+I.nb,sub:I.sub,p:m,rows:[["DISTANCE",(d<100?d.toFixed(1):Math.round(d))+" NM"]],noDct:true,
+      custom:[{label:"Hide line",small:"SHOW HIDDEN LINES in FLIGHT shows it again",fn:()=>{closeSheet();set(I,i,"h",true);toast("Line "+I.na+" → "+I.nb+" hidden")}},
+              {label:"Line colour",small:"this line only",fn:()=>colour(ctx,i)}]})};
+  function colour(ctx,i){const I=info(ctx,i);if(!I)return;const curc=(I.legs[i]&&I.legs[i].c)||null;
+    openSheet({title:"LINE COLOUR",sub:"LEG "+I.na+" → "+I.nb+" · "+I.sub,p:[(I.a[0]+I.b[0])/2,(I.a[1]+I.b[1])/2],noDct:true,custom:[],back:()=>legCard(ctx,i),
+      html:'<div class="lgcol">'+COLS.map(c=>'<button data-c="'+(c||"")+'" class="'+(curc===c?"on":"")+'" style="background:'+(c||I.base)+'">'+(c?"":"STD")+'</button>').join("")+'</div>',
+      bind:sh=>{sh.querySelector(".lgcol").onclick=e=>{const x=e.target.closest("[data-c]");if(!x)return;set(I,i,"c",x.dataset.c||null);closeSheet();toast("Line colour changed")}}})}
+  const has=o=>o&&Object.values(o).some(x=>x&&x.h);
+  const unhide=o=>{let n=0;Object.keys(o).forEach(k=>{const x=o[k];if(x&&x.h){delete x.h;n++;if(!Object.keys(x).length)delete o[k]}});return n};
+  const mk=(id,fn)=>{const b=document.createElement("button");b.id=id;b.className="btn ghost lgshow";b.textContent="SHOW HIDDEN LINES";b.onclick=fn;return b};
+  const fu=document.querySelector(".fundo");
+  if(fu){fu.insertAdjacentElement("afterend",mk("fLegShow",()=>{const n=unhide(rtLegs(sl()));save();drawRoute();toast(n?"ROUTE "+(sl()+1)+": hidden lines shown":"No hidden lines in ROUTE "+(sl()+1))}))}
+  const pl=$("pclosed")&&$("pclosed").closest("label");let ob=null;
+  if(pl){ob=mk("fOrbLegShow",()=>{const o=st.orbit;const n=o&&o.legs?unhide(o.legs):0;save();drawRoute();toast(n?"ORBIT "+(os()+1)+": hidden lines shown":"No hidden lines in this ORBIT")});pl.insertAdjacentElement("afterend",ob);
+    const sync=()=>{const t=document.querySelector(".oseg .on");ob.hidden=!(t&&t.dataset.ot==="line")};
+    document.querySelectorAll(".oseg [data-ot]").forEach(b=>b.addEventListener("click",()=>setTimeout(sync,0)));
+    const _dr=drawRoute;drawRoute=function(){const r=_dr.apply(this,arguments);try{sync()}catch(e){}return r};sync()}
 })();
 
 })();
