@@ -835,6 +835,9 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .lgcol button.on{outline:3px solid #2f7bd2;outline-offset:2px}
 .lgshow{width:100%;margin-top:8px}
 #fOrbPts .orow.wpsel,#wpList li.wpsel{background:rgba(47,123,210,.28)!important;box-shadow:inset 4px 0 0 #2f7bd2}
+.leaflet-marker-icon.hit::after{content:"";position:absolute;inset:-12px;border-radius:50%}
+/* labels that are not tappable let taps through to points and lines underneath */
+.leaflet-marker-icon:not(.leaflet-interactive){pointer-events:none}
 </style>
 
 <style>
@@ -1181,7 +1184,7 @@ function tapPtAt(p){setTimeout(()=>{const c=map.latLngToContainerPoint([p[0],p[1
 function legPane(){if(!map.getPane("leghit")){map.createPane("leghit").style.zIndex=604}return "leghit"}
 function legDraw(grp,a,b,col,legs,i,ctx,straight){const s_=legs&&legs[i];if(s_&&s_.h)return;const c=(s_&&s_.c)||col,g=straight?[a,b]:gc(a,b);
   window.rpHalo&&rpHalo(g,c,grp);L.polyline(g,{color:c,weight:5,opacity:.95,interactive:false}).addTo(grp);
-  if(ctx)L.polyline(g,{pane:legPane(),color:"#000",weight:26,opacity:0,interactive:true}).on("click",e=>{L.DomEvent.stopPropagation(e);try{suppress=Date.now()}catch(x){}window.legCard&&legCard(ctx,i)}).addTo(grp)}
+  if(ctx)L.polyline(g,{pane:legPane(),color:"#000",weight:34,opacity:0,interactive:true}).on("click",e=>{L.DomEvent.stopPropagation(e);try{suppress=Date.now()}catch(x){}window.legCard&&legCard(ctx,i)}).addTo(grp)}
 function rtLegs(k){if(!Array.isArray(st.rtLegs))st.rtLegs=[{},{},{}];while(st.rtLegs.length<3)st.rtLegs.push({});if(!st.rtLegs[k]||typeof st.rtLegs[k]!=="object")st.rtLegs[k]={};return st.rtLegs[k]}
 function ptT(ix,f,sep){const n=ix.map(k=>f(k));if(ix.length>1&&n[0]&&n.every(x=>x===n[0]))return n[0];return ix.map((k,j)=>n[j]||String(k+1)).join(sep)}
 function renameAsk(title,curv,cb){
@@ -1197,7 +1200,7 @@ function drawRoute(){
     const LG=rtLegs((st.rtSlot>0&&st.rtSlot<3?st.rtSlot:0));for(let i=1;i<pts.length;i++)legDraw(routeL,pts[i-1],pts[i],col,LG,i-1,{kind:"route"})}
   const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})}); // points at the same position share one marker: "1+10"
   grp.forEach(({p,ix})=>{const i=ix[0],t=ptT(ix,k=>w[k][3],"+"),wd=Math.max(26,12+t.length*8);
-    const mk=L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
+    const mk=L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{if(Date.now()-wpDragEnd<500)return;suppress=Date.now();if(ix.length===1)showWp(i);else inspectAt(L.latLng(p[0],p[1]),true)}).addTo(routeL);
     wpDragHook(mk,i);
     if(p[2])L.marker(p,{pane:"wpt",interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate('+(wd/2+3)+'px,-8px)">'+escH(p[2])+'</div>',iconSize:[0,0]})}).addTo(routeL); // name only; coordinates are on the card when the point is tapped
   });
@@ -3668,7 +3671,7 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
     if(w.length>1){const pts=w.slice();if(r.closed&&w.length>2)pts.push(w[0]);const LG=rtLegs(k);for(let i=1;i<pts.length;i++)legDraw(rL,pts[i-1],pts[i],col,LG,i-1,null)}
     const grp=[];w.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ptT(ix,q=>w[q][3],"+"),wd=Math.max(26,12+t.length*8);
-      L.marker(p,{pane:"wpt",keyboard:false,icon:L.divIcon({className:"hit oth",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",e=>{L.DomEvent.stopPropagation(e);try{suppress=Date.now()}catch(x){}pick(k);setTimeout(()=>inspectAt(L.latLng(p[0],p[1]),true),0)}).addTo(rL);
+      L.marker(p,{pane:"wpt",keyboard:false,icon:L.divIcon({className:"hit oth",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",e=>{L.DomEvent.stopPropagation(e);try{suppress=Date.now()}catch(x){}pick(k);setTimeout(()=>{if(ix.length===1)showWp(ix[0]);else inspectAt(L.latLng(p[0],p[1]),true)},0)}).addTo(rL);
       if(p[2])L.marker(p,{pane:"wpt",interactive:false,icon:L.divIcon({className:"",html:'<div class="lbl" style="transform:translate('+(wd/2+3)+'px,-8px)">'+escH(p[2])+'</div>',iconSize:[0,0]})}).addTo(rL)})}
   const _dr=drawRoute;drawRoute=function(){const r=_dr.apply(this,arguments);try{drawOther()}catch(e){}return r};
   function pick(k){if(k===st.rtSlot)return;norm();st.routes[st.rtSlot]={wps:st.wps||[],closed:!!st.closed};
