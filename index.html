@@ -838,6 +838,8 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .leaflet-marker-icon.hit::after{content:"";position:absolute;inset:-12px;border-radius:50%}
 /* labels that are not tappable let taps through to points and lines underneath */
 .leaflet-marker-icon:not(.leaflet-interactive){pointer-events:none}
+#fOrbPts .orow .onm{margin-right:8px;color:#2f7bd2}
+#wpList .coord .wnm{color:#2f7bd2}
 </style>
 
 <style>
@@ -1073,7 +1075,7 @@ function parseNamed(line){line=(line||"").trim();const m=line.match(/^([A-Za-z][
   if(m&&!/^[NSEWnsew]\d/.test(m[1])){const p=parse(m[2]);if(p)return{p,name:m[1].toUpperCase()}}
   const p=parse(line);return p?{p,name:null}:null}
 const withName=r=>r.name?[r.p[0],r.p[1],r.name]:r.p;
-const wpName=(p,i)=>p[2]||("WPT "+(i+1));
+const wpName=(p,i)=>p[3]||p[2]||("WPT "+(i+1));
 const DEMO_AWY=[{name:"DEMO1",example:true,mea:"",pts:[{id:"DEMOA",p:[25,46+10/60]},{id:"DEMOB",p:[25+10/60,45.5]},{id:"DEMOC",p:[25+20/60,44+50/60]}]}];
 
 // ---- state
@@ -1259,7 +1261,7 @@ function renderList(){
     const li=document.createElement("li");
     let legTxt="";if(i>0){const d=dist(w[i-1],p),b=brg(w[i-1],p);legTxt=deg3(b)+"T / "+deg3(b-v)+"M · "+d.toFixed(1)+" NM"}
     else if(st.closed&&w.length>2){const d=dist(w[w.length-1],p),b=brg(w[w.length-1],p);legTxt="↩ "+deg3(b)+"T / "+deg3(b-v)+"M · "+d.toFixed(1)+" NM"}
-    li.innerHTML='<span class="num">'+(i+1)+'</span><div style="min-width:0"><div class="coord">'+(p[2]?'<b>'+escH(p[2])+'</b>  ':'')+fmt(p)+'</div><div class="leg">'+legTxt+'</div></div><div class="ops"><button aria-label="Copy coordinates" data-a="cpy"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="display:block;margin:auto"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button><button aria-label="Delete" data-a="del">✕</button></div>';
+    li.innerHTML='<span class="num">'+(i+1)+'</span><div style="min-width:0"><div class="coord">'+(p[3]?'<b class="wnm">'+escH(p[3])+'</b>  ':'')+(p[2]?'<b>'+escH(p[2])+'</b>  ':'')+fmt(p)+'</div><div class="leg">'+legTxt+'</div></div><div class="ops"><button aria-label="Copy coordinates" data-a="cpy"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="display:block;margin:auto"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button><button aria-label="Delete" data-a="del">✕</button></div>';
     li.querySelector(".coord").parentElement.style.cursor="pointer";li.querySelector(".coord").parentElement.onclick=()=>{if(Date.now()-listDragEnd<500)return;wpMenu(i)};
     li.querySelectorAll("button").forEach(btn=>btn.onclick=ev=>{const a=btn.dataset.a;
       if(a==="cpy"){ev.stopPropagation();const t=fmt(p),ok=()=>{btn.classList.add("ok");clearTimeout(btn._t);btn._t=setTimeout(()=>btn.classList.remove("ok"),1500);toast("Copied "+t)};(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(ok,()=>toast(t));return}
@@ -3757,6 +3759,16 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
      because the point's own touch handler stops the event before the map sees it) */
   const reset=()=>{try{const d=map.dragging&&map.dragging._draggable;if(d&&!d._moving)d._moved=false}catch(e){}};
   const c=map.getContainer();["pointerdown","touchstart","mousedown"].forEach(n=>c.addEventListener(n,reset,{capture:true,passive:true}));
+})();
+
+(function(){
+  /* ---- ORBIT point names shown at the start of their rows in FLIGHT */
+  const ob=$("fOrbPts");if(!ob)return;let busy=false;
+  const deco=()=>{if(busy)return;busy=true;try{const N=(st.orbit&&st.orbit.names)||{};
+    ob.querySelectorAll(".orow").forEach((r,k)=>{const o=r.querySelector(".onm");const n=N[k]||"";
+      if(o&&o.textContent===n)return;if(o)o.remove();if(n){const b=document.createElement("b");b.className="onm";b.textContent=n;const sp=r.querySelector("span");if(sp)sp.insertAdjacentElement("afterend",b);else r.prepend(b)}})}finally{busy=false}};
+  new MutationObserver(()=>deco()).observe(ob,{childList:true});
+  const _dr=drawRoute;drawRoute=function(){const r=_dr.apply(this,arguments);try{deco()}catch(e){}return r};deco();
 })();
 
 })();
