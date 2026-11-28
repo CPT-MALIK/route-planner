@@ -834,7 +834,7 @@ html:root[data-map="dark"] #chpop,html:root[data-map="dark"] #tbPop,html:root[da
 .lgcol button{height:48px;border-radius:10px;border:2px solid rgba(0,0,0,.25);font:700 15px var(--sans);color:#fff;text-shadow:0 0 3px #000;cursor:pointer}
 .lgcol button.on{outline:3px solid #2f7bd2;outline-offset:2px}
 .lgshow{width:100%;margin-top:8px}
-#wpList li.wpsel{background:rgba(47,123,210,.28)!important;box-shadow:inset 4px 0 0 #2f7bd2}
+#fOrbPts .orow.wpsel,#wpList li.wpsel{background:rgba(47,123,210,.28)!important;box-shadow:inset 4px 0 0 #2f7bd2}
 </style>
 
 <style>
@@ -2933,7 +2933,7 @@ window.__procSet=procSet;
     else{window.rpHalo&&rpHalo(G.path,col,orbL);L.polyline(G.path,{color:col,weight:5,opacity:.95,interactive:false}).addTo(orbL)}
     const grp=[];o.pts.forEach((p,i)=>{const g=grp.find(x=>samePt(x.p,p));if(g)g.ix.push(i);else grp.push({p,ix:[i]})});
     grp.forEach(({p,ix})=>{const t=ptT(ix,k=>o.names&&o.names[k],"/"),wd=Math.max(26,12+t.length*8);L.marker(p,{pane:"wpt",icon:L.divIcon({className:"hit",html:'<div class="wpi" style="width:'+wd+'px;border-radius:13px">'+escH(t)+'</div>',iconSize:[wd,26],iconAnchor:[wd/2,13]})}).on("click",()=>{suppress=Date.now();const ln=(o.type||"circle")==="line";
-      openSheet({title:"ORBIT "+t,sub:fmt(p),p:[p[0],p[1]],rows:[],rename:()=>renameAsk("Rename ORBIT "+(ix[0]+1),o.names&&o.names[ix[0]],v=>{o.names=o.names||{};ix.forEach(k=>{if(v)o.names[k]=v;else delete o.names[k]});save();drawRoute()}),custom:ln?[{label:"Set HOLD Fix",small:"send to HOLD tab",fn:()=>{$("hf").value=fmt(p);$("t-hold").click();closeSheet();toast("Holding fix set. Complete the details and tap Draw HOLD")}}]:(ix[0]===0?[]:[{label:"Set as Point 1",small:"renumber from here",cls:"go",fn:()=>{o.p1=[p[0],p[1]];o.pts=orbGeom(o).pts;save();drawRoute();box();closeSheet();toast("Point 1 moved")}}])})}).addTo(orbL)});
+      openSheet({title:"ORBIT "+t,sub:fmt(p),p:[p[0],p[1]],rows:[],orbIx:ix.slice(),rename:()=>renameAsk("Rename ORBIT "+(ix[0]+1),o.names&&o.names[ix[0]],v=>{o.names=o.names||{};ix.forEach(k=>{if(v)o.names[k]=v;else delete o.names[k]});save();drawRoute()}),custom:ln?[{label:"Set HOLD Fix",small:"send to HOLD tab",fn:()=>{$("hf").value=fmt(p);$("t-hold").click();closeSheet();toast("Holding fix set. Complete the details and tap Draw HOLD")}}]:(ix[0]===0?[]:[{label:"Set as Point 1",small:"renumber from here",cls:"go",fn:()=>{o.p1=[p[0],p[1]];o.pts=orbGeom(o).pts;save();drawRoute();box();closeSheet();toast("Point 1 moved")}}])})}).addTo(orbL)});
     (st.orbShowC===false?[]:G.anchors).forEach(([q,lb])=>{const m=L.marker(q,{icon:L.divIcon({className:"hit",html:'<div class="ctr"></div>'+(lb?'<div class="lbl" style="position:absolute;left:26px;top:2px">'+lb+'</div>':''),iconSize:[24,24],iconAnchor:[12,12]})}).addTo(orbL);
       if(!lb)m.on("click",()=>{const sv=st.center;st.center={p:o.c,r:o.r,n:o.n};try{showCenter()}finally{st.center=sv}});else m.on("click",()=>inspectAt(L.latLng(q[0],q[1]),true))})}
   const _dr=drawRoute;drawRoute=function(){_dr();drawOrb()};
@@ -3736,10 +3736,13 @@ function rwyCharts(k,ids){closeSheet();st.chApt=k;save();try{chRail()}catch(e){}
   const mark=()=>{const ul=$("wpList");if(!ul)return;const L_=[...ul.children].filter(x=>!x.classList.contains("empty"));
     L_.forEach((li,k)=>li.classList.toggle("wpsel",k===sel));
     if(sel!=null&&L_[sel]){try{L_[sel].scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}}};
-  const _o=openSheet;openSheet=function(o){sel=o&&o.wpIndex!=null?o.wpIndex:null;const r=_o.apply(this,arguments);mark();return r};
-  const _c=closeSheet;closeSheet=function(){sel=null;const r=_c.apply(this,arguments);mark();return r};
+  let osel=[];const omark=sc=>{const ob=$("fOrbPts");if(!ob)return;const R_=[...ob.querySelectorAll(".orow")];R_.forEach((r,k)=>r.classList.toggle("wpsel",osel.includes(k)));
+    const f=R_[osel[0]];if(sc&&f){try{f.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}}};
+  const ob_=$("fOrbPts");if(ob_)new MutationObserver(()=>omark(false)).observe(ob_,{childList:true});
+  const _o=openSheet;openSheet=function(o){sel=o&&o.wpIndex!=null?o.wpIndex:null;osel=o&&o.orbIx?o.orbIx:[];const r=_o.apply(this,arguments);mark();omark(true);return r};
+  const _c=closeSheet;closeSheet=function(){sel=null;osel=[];const r=_c.apply(this,arguments);mark();omark(false);return r};
   const _r=renderList;renderList=function(){const r=_r.apply(this,arguments);if(sel!=null&&$("sheet").hidden)sel=null;const ul=$("wpList");if(ul)[...ul.children].forEach((li,k)=>li.classList.toggle("wpsel",k===sel));return r};
-  const sh=$("sheet");if(sh)new MutationObserver(()=>{if(sh.hidden&&sel!=null){sel=null;mark()}}).observe(sh,{attributes:true,attributeFilter:["hidden"]});
+  const sh=$("sheet");if(sh)new MutationObserver(()=>{if(sh.hidden&&(sel!=null||osel.length)){sel=null;osel=[];mark();omark(false)}}).observe(sh,{attributes:true,attributeFilter:["hidden"]});
 })();
 
 })();
